@@ -1,0 +1,668 @@
+*
+{
+    font-family: Arial, Helvetica, sans-serif;
+    box-sizing: border-box;
+}
+
+.clicky
+{
+    cursor: pointer;
+}
+
+.noclicky
+{
+    cursor: default !important;
+}
+
+.noselect
+{
+    user-select: none;
+}
+
+html, body, #root
+{
+    padding: 0;
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    position: relative;
+    color: white;
+    background-color: #221922;
+}
+
+input, select
+{
+    font-size: 1em;
+    background-color: rgba(255,255,255,0.1);
+    color: white;
+    border: 0;
+    border-bottom: 1px solid #aaa;
+    padding: 4px 8px;
+
+    &:hover
+    {
+        background-color: rgba(255,255,255,0.2);
+    }
+
+    & > option
+    {
+        background-color: black;
+    }
+}
+
+select, input[type="checkbox"]
+{
+    cursor: pointer;
+}
+
+button:not(.nostyle)
+{
+    user-select: none;
+    background-color: rgba(255,255,255,0.1);
+    color: white;
+    border: 0px solid #555;
+    font-size: 1em;
+    cursor: pointer;
+    padding: 8px;
+
+    &:hover
+    {
+        background-color: rgba(255,255,255,0.2);
+    }
+
+    &:active
+    {
+        background-color: #222;
+    }
+}
+
+button.nostyle
+{
+    font-size: 1em;
+    user-select: none;
+    background-color: transparent;
+    border: 0;
+    cursor: pointer;
+    padding: 0;
+    margin: 0;
+}
+
+.app
+{
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    margin: 0;
+    position: relative;
+}
+
+.settings-backdrop, .lfoEditor-backdrop, .tokenSettings-backdrop
+{
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    margin: 0;
+    position: absolute;
+    background-color: rgba(0,0,0,0.7);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    .settings-content, .lfoEditor-content, .tokenSettings-content
+    {
+        min-width: 20%;
+        min-height: 20%;
+        background-color: #223;
+        padding: 16px 24px;
+        display: flex;
+        flex-direction: column;
+
+        h1
+        {
+            margin-top: 8px;
+            margin-bottom: 16px;
+        }
+
+        .tokenSetting
+        {
+            border: 1px solid #aaa;
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+
+            & > *
+            {
+                margin-bottom: 8px;
+
+                &:last-child
+                {
+                    margin-bottom: 0;
+                }
+            }
+
+            .tokenLabel
+            {
+                font-size: 1.2em;
+            }
+        }
+
+        .sequence
+        {
+            border: 1px solid #aaa;
+            padding: 8px;
+
+            & > *
+            {
+                margin-bottom: 8px;
+
+                &:last-child
+                {
+                    margin-bottom: 0;
+                }
+            }
+
+            .row
+            {
+                align-items: stretch;
+            }
+        }
+
+        .row
+        {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+
+            & > *
+            {
+                margin-right: 8px;
+
+                &:last-child
+                {
+                    margin-right: 0;
+                }
+            }
+
+            input, select
+            {
+                flex-grow: 1;
+            }
+        }
+
+        & > *
+        {
+            margin-bottom: 8px;
+        }
+
+        .midiSelect
+        {
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #aaa;
+            padding: 4px 4px;
+
+            & > *
+            {
+                margin: 4px;
+            }
+        }
+
+        .bottomButtons
+        {
+            text-align: right;
+            margin-top: auto;
+            margin-bottom: 0;
+        }
+    }
+}
+
+$statusBarHeight: 32px;
+
+.columns
+{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 0;
+    margin: 0;
+    position: relative;
+    flex-grow: 1;
+    height: calc(100% - #{$statusBarHeight});
+}
+
+.statusBar
+{
+    height: $statusBarHeight;
+    background-color: #101;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 0 8px;
+
+    .pulse
+    {
+        width: 20px;
+        height: 20px;
+        background-color: #AAA;
+        border-radius: 100%;
+    
+        &.active
+        {
+            background-color: #AFA;
+        }
+    }
+}
+
+.control
+{
+    margin: 5px 8px;
+    padding: 4px 8px;
+    display: flex;
+    align-items: stretch;
+    flex-direction: column;
+    justify-content: stretch;
+    background-color: rgba(255,255,255,0.03);
+    border: 1px solid #aaa;
+    padding: 8px;
+    border-radius: 4px;
+
+    & > *
+    {
+        margin-bottom: 8px;
+
+        &:last-child
+        {
+            margin-bottom: 0;
+        }
+    }
+
+    .labelRow
+    {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+
+        .label
+        {
+            margin-right: 16px;
+        }
+        
+        .valueType
+        {
+            margin-left: auto;
+        }
+    }
+
+    .controlRow
+    {
+        display: flex;
+        flex-direction: row;
+        justify-content: stretch;
+
+        input
+        {
+            flex-grow: 1;
+        }
+    }
+
+    .readonly
+    {
+        padding: 4px 0;
+    }
+
+    .triadRow, .directionRow
+    {
+        display: flex;
+        flex-direction: row;
+        width: 100%;
+
+        button
+        {
+            min-width: 32px;
+            flex-grow: 1;
+            height: 36px;
+            margin: 0;
+            background-color: transparent;
+            background-position: center;
+            background-repeat: no-repeat;
+            border: 1px solid #aaa;
+            border-left-width: 0;
+            border-right-width: 0;
+
+            &:first-of-type
+            {
+                border-left-width: 1px;
+                border-top-left-radius: 5px;
+                border-bottom-left-radius: 5px;
+            }
+
+            &:last-of-type
+            {
+                border-right-width: 1px;
+                border-top-right-radius: 5px;
+                border-bottom-right-radius: 5px;  
+            }
+
+            &:hover
+            {
+                background-color: rgba(255,255,255,0.1);
+            }
+
+            &.selected
+            {
+                background-color: rgba(200,50,200,0.5);
+            }
+        }
+
+        &.disabled button
+        {
+            &:hover:not(.selected)
+            {
+                background-color: transparent;
+            }
+        }
+    }
+}
+
+.leftColumn
+{
+    width: 256px;
+    height: 100%;
+    border-right: 1px solid #aaa;
+    display: flex;
+    flex-direction: column;
+    margin-right: 32px;
+}
+
+.middleColumn
+{
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    height: 100%;
+    justify-content: space-between;
+    align-content: stretch;
+    padding: 16px 0;
+
+    .layerSelectRow
+    {
+        display: flex;
+        flex-direction: row;
+        align-items: stretch;
+
+        & > *
+        {
+            margin-right: 8px;
+            font-size: 1em;
+        }
+
+        label
+        {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+
+            input, select
+            {
+                flex-grow: 1;
+                margin-left: 8px;
+            }
+        }
+    }
+}
+
+.elysiumControls
+{
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    border-radius: 12px;
+    background-color: rgba(255,255,255,0.0);
+    padding: 8px 8px;
+    border: 1px solid #aaa;
+
+    & > *
+    {
+        margin-right: 8px;
+    }
+
+    span
+    {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+    }
+}
+
+.hexGrid
+{
+    display: inline-block;
+    position: relative;
+
+    canvas
+    {
+        user-select: none;
+        position: absolute;
+        z-index: 1;
+        left: 0;
+        top: 0;
+        
+        &:focus
+        {
+            outline: none;
+        }
+
+        &:first-of-type
+        {
+            position: relative;
+        }
+    }
+}
+
+.multilayer-view
+{
+    position: relative;
+    width: 100%;
+    height: 100%;
+
+    .cols
+    {
+        position: absolute;
+        top: 0;
+        height: calc(100% - 88px);
+        width: 100%;
+
+        display: flex;
+        flex-direction: row;
+        align-items: stretch;
+    }
+
+    .multilayer
+    {
+        flex-grow: 1;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        padding: 16px;
+        padding-right: 0;
+
+        .layerContainer
+        {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+
+            .layerName
+            {
+                margin-bottom: 4px;
+            }
+
+            .hexGrid
+            {
+                canvas
+                {
+                    width: 600px;
+                    height: auto;
+                }
+            }
+
+            margin-right: 16px;
+            margin-bottom: 16px;
+        }
+    }
+
+    .inspector
+    {
+        flex-grow: 0;
+        margin: 0;
+        border-bottom: 1px solid #aaa;
+        border-bottom-left-radius: 12px;
+    }
+
+    .elysiumControls
+    {
+        position: absolute;
+        bottom: 16px;
+        left: 16px;
+        right: 16px;
+    }
+}
+
+.tabs
+{
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    justify-content: stretch;
+
+    button
+    {
+        flex-grow: 1;
+
+        &.active
+        {
+            background-color: white;
+            color: #111;
+        }
+    }
+}
+
+.playerSettings, .layerSettings
+{
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: stretch;
+    overflow: auto;
+}
+
+.header
+{
+    border: 1px solid #aaa;
+    border-left: 0;
+    border-right: 0;
+    padding: 4px 8px;
+    background: #525;
+    margin-bottom: 4px;
+
+    &:not(:first-of-type)
+    {
+        margin-top: 4px;
+    }
+}
+
+.inspector
+{
+    height: 100%;
+    flex-basis: 300px;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: stretch;
+
+    margin-left: 32px;
+    border-left: 1px solid #aaa;
+
+    & > *
+    {
+        margin-top: 8px;
+    }
+
+    .selectedHexLabel
+    {
+        padding: 0 8px;
+    }
+
+    .tokens
+    {
+        display: flex;
+        flex-direction: column;
+        justify-content: stretch;
+        overflow: auto;
+
+        .tokenControl
+        {
+            display: flex;
+            flex-direction: column;
+            justify-content: stretch;
+            
+            .control:last-child
+            {
+                margin-bottom: 8px;
+            }
+
+            .header
+            {
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+                cursor: pointer;
+
+                .remove
+                {
+                    margin-left: auto;
+    
+                    &:hover
+                    {
+                        background-color: rgba(255,255,255,0.5);
+                    }
+                }
+            }
+
+            .controlRow
+            {
+                input, select
+                {
+                    width: 100%;
+                }
+            }
+        }
+    }
+
+    .tokenAdder
+    {
+        display: flex;
+        flex-direction: column;
+        justify-content: stretch;
+        padding: 0px 8px;
+
+        .addButton
+        {
+            &.expanded
+            {
+                border-bottom: 1px solid #aaa;
+            }
+        }
+
+        .tokenAdderList
+        {
+            display: flex;
+            flex-direction: column;
+            justify-content: stretch;
+        }
+    }
+}

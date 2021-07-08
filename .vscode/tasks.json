@@ -1,0 +1,44 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "type": "npm",
+      "label": "Start Webpack Dev",
+      "script": "start:renderer",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "custom",
+        "pattern": {
+          "regexp": "____________"
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "Compiling\\.\\.\\.$",
+          "endsPattern": "(Compiled successfully|Failed to compile)\\.$"
+        }
+      }
+    },
+    {
+      "label": "Run on startup",
+      "type": "shell",
+      "command": "npm run start",
+      "windows": {
+        "command": "npm run start"
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": false
+      },
+      "runOptions": {
+        "runOn": "folderOpen"
+      }
+    }
+  ]
+}
