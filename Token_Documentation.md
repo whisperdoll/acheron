@@ -16,7 +16,7 @@ The first (JSON) half of a token defines its metadata and the controls that it e
 All tokens will start with the following line:
 
 ```
-/// acheron.token \<version\>
+/// acheron.token <version>
 ```
 
 Where `<version>` is the token version. The only supported version as of now is `v1`, so your first line will be:
