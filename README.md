@@ -6,13 +6,21 @@ Electron-based recreation of https://github.com/mmower/elysium
 
 Built with https://github.com/electron-react-boilerplate/electron-react-boilerplate
 
+## Setup
+
+You will need to import tokens from `src/tokens` when you first start the app. Just select all of the folders in there.
+
 ## Troubleshooting
 
-> My composition won't load after moving folders around.
+>I don't have any tokens to work with.
+
+Did you follow the setup...?
+
+>My composition won't load after moving folders around.
 
 Right now, tokens are saved by path in a composition file. I'll figure out a better way to do this eventually. You need to modify your composition file in a text editor and remedy the token paths.
 
-> I have another issue!
+>I have another issue!
 
 Contact me through the issues section of Github or however else you know how to contact me and I'll help.
 
