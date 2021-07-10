@@ -139,19 +139,19 @@ export default function App() {
 
     useEffect(() =>
     {
-        if (state.selectedHex !== -1 && state.settings.playNoteOnClick)
+        if (state.selectedHex.hexIndex !== -1 && state.settings.playNoteOnClick)
         {
             Midi.playNotes(
                 [transposeNote(
-                    hexNotes[state.selectedHex],
-                    getControlValue(state, state.controls[state.layers[state.currentLayerIndex].transpose])
+                    hexNotes[state.selectedHex.hexIndex],
+                    getControlValue(state, state.controls[state.layers[state.selectedHex.layerIndex].transpose])
                 )],
-                state.selectedOutputs, state.layers[state.currentLayerIndex].midiChannel, {
+                state.selectedOutputs, state.layers[state.selectedHex.layerIndex].midiChannel, {
                 velocity: getControlValue(state, state.controls[state.velocity])!,
                 durationMs: getControlValue(state, state.controls[state.noteLength])! * 1000
             });
         }
-    }, [ state.selectedHex ]);
+    }, [ state.selectedHex.hexIndex ]);
 
     function confirmRemoveLayer()
     {
@@ -168,7 +168,7 @@ export default function App() {
         else
         {
             if (!state.settings.confirmDelete ||
-                confirmPrompt(`Are you sure you want to delete the layer '${state.layers[state.currentLayerIndex].name}'?`, "Confirm delete"))
+                confirmPrompt(`Are you sure you want to delete the layer '${state.layers[state.selectedHex.layerIndex].name}'?`, "Confirm delete"))
             {
                 dispatch({ type: "removeCurrentLayer" });
             }
@@ -270,7 +270,7 @@ export default function App() {
             </>}
         </div>;
 
-    const inspector = isShowingInspector ? <Inspector layerIndex={state.currentLayerIndex} /> : <></>;
+    const inspector = isShowingInspector ? <Inspector layerIndex={state.selectedHex.layerIndex} /> : <></>;
 
     return (
         <div className="app">
@@ -301,7 +301,7 @@ export default function App() {
                         </div>
                         {isShowingPlayerSettings ?
                             <PlayerSettings /> :
-                            <LayerSettings layerIndex={state.currentLayerIndex}></LayerSettings>
+                            <LayerSettings layerIndex={state.selectedHex.layerIndex}></LayerSettings>
                         }
                     </div>
                     <div className="middleColumn">
@@ -310,13 +310,13 @@ export default function App() {
                                 <span className="layerLabel">Layer: </span>
                                 {isEditingLayerName ? 
                                     <input
-                                        value={state.layers[state.currentLayerIndex].name}
+                                        value={state.layers[state.selectedHex.layerIndex].name}
                                         onChange={(e) => dispatch({ type: "setCurrentLayerName", payload: e.currentTarget.value })}
                                     /> :
                                     <select
                                         className="layerSelect"
-                                        onChange={(e) => dispatch({ type: "setCurrentLayerIndex", payload: parseInt(e.currentTarget.value) })}
-                                        value={state.currentLayerIndex}
+                                        onChange={(e) => dispatch({ type: "setSelectedHex", payload: { ...state.selectedHex, layerIndex: parseInt(e.currentTarget.value) } })}
+                                        value={state.selectedHex.layerIndex}
                                     >
                                         {state.layers.map((layer, i) =>
                                         (
@@ -348,13 +348,13 @@ export default function App() {
                                 ✖ Delete Layer
                             </button>
                             <button
-                                onClick={(e) => dispatch({ type: "addLayer" })}
+                                onClick={(e) => dispatch({ type: "addLayer", payload: { select: true } })}
                             >
                                 + Add New Layer
                             </button>
                         </div>
                         <HexGrid
-                            layerIndex={state.currentLayerIndex}
+                            layerIndex={state.selectedHex.layerIndex}
                         />
                         {elysiumControls}
                     </div>

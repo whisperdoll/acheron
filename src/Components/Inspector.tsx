@@ -18,7 +18,7 @@ export default function(props: Props)
     const [ toggledToken, setToggledToken ] = useState("");
     const oldTokenIds = useRef<string[]>([]);
 
-    const tokenIds = state.layers[props.layerIndex].tokenIds[state.selectedHex];
+    const tokenIds = state.layers[props.layerIndex].tokenIds[state.selectedHex.hexIndex];
 
     function handleRemove(tokenIndex: number)
     {
@@ -31,7 +31,7 @@ export default function(props: Props)
 
     useEffect(() =>
     {
-        if (state.selectedHex === -1 || tokenIds.length === 0) return;
+        if (state.selectedHex.hexIndex === -1 || tokenIds.length === 0) return;
         
         setToggledToken(tokenIds[0]);
         oldTokenIds.current = tokenIds;
@@ -39,7 +39,7 @@ export default function(props: Props)
 
     useEffect(() =>
     {
-        if (state.selectedHex === -1 || tokenIds.length === 0) return;
+        if (state.selectedHex.hexIndex === -1 || tokenIds.length === 0) return;
 
         if (!tokenIds.includes(toggledToken) || tokenIds.length > oldTokenIds.current.length)
         {
@@ -51,10 +51,10 @@ export default function(props: Props)
 
     return (
         <div className="inspector">
-            {state.selectedHex === -1 ? (
+            {state.selectedHex.hexIndex === -1 ? (
                 <div className="selectedHexLabel">No hex selected.</div>
             ) : (<>
-                <div className="selectedHexLabel">Selected: {hexNotes[state.selectedHex]}</div>
+                <div className="selectedHexLabel">Selected: {hexNotes[state.selectedHex.hexIndex]}</div>
                 <TokenAdder />
                 <div className="tokens">
                     {tokenIds.map((tokenId, i) =>

@@ -50,12 +50,12 @@ export default function(props: Props)
 
             if (index === -1)
             {
-                index = state.currentLayerIndex;
+                index = state.selectedHex.layerIndex;
             }
 
             return index;
         },
-        [ props.controlId, state.currentLayerIndex ]
+        [ props.controlId, state.selectedHex.layerIndex ]
     );
     // const tempo = layerIndex === -1 ? getControlValue(state, state.controls[state.tempo]) : getControlValue(state, state.controls[state.layers[layerIndex].tempo]);
     // const bpms = 60 / tempo * 1000;

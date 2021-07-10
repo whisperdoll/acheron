@@ -47,7 +47,7 @@ export interface LayerState
 
 export interface AppState
 {
-    selectedHex: number;
+    selectedHex: { hexIndex: number, layerIndex: number };
     controls: Record<string, ControlState>;
     tokens: Record<string, Token>;
     tokenDefinitions: Record<string, TokenDefinition>;
@@ -62,7 +62,6 @@ export interface AppState
     pulseEvery: string;
     layers: LayerState[];
     settings: AppSettings;
-    currentLayerIndex: number;
     isPlaying: boolean;
     startTime: bigint;
     allowedOutputs: MidiOutput[];
@@ -85,7 +84,7 @@ const initialSettings : AppSettings = {
 
 const initialState : AppState = {
     settings: initialSettings,
-    selectedHex: -1,
+    selectedHex: { hexIndex: -1, layerIndex: 0 },
     controls: {...DefaultPlayerControls }, // appended to after layer contruction
     tokens: {},
     barLength: Object.entries(DefaultPlayerControls).find(e => e[1].key === "barLength")![0],
@@ -97,7 +96,6 @@ const initialState : AppState = {
     transpose: Object.entries(DefaultPlayerControls).find(e => e[1].key === "transpose")![0],
     velocity: Object.entries(DefaultPlayerControls).find(e => e[1].key === "velocity")![0],
     layers: [], // appended to after layer contruction
-    currentLayerIndex: 0,
     isPlaying: false,
     startTime: 0n,
     allowedOutputs: [],
@@ -157,7 +155,7 @@ export function loadSettings(): AppSettings
 type Action = (
     | { type: "setAppState", payload: AppState }
     | { type: "setSettings", payload: AppSettings }
-    | { type: "setSelectedHex", payload: number }
+    | { type: "setSelectedHex", payload: { hexIndex: number, layerIndex: number } }
     | { type: "setControl", payload: { id: string, controlState: ControlState }}
     | { type: "setToken", payload: { id: string, newToken: Token }}
     | { type: "setLayer", payload: { layerIndex: number, layerState: LayerState }}
@@ -166,8 +164,7 @@ type Action = (
     | { type: "removeTokenFromSelected", payload: { tokenIndex: number }}
     | { type: "removeTokenFromHex", payload: { tokenId: string, hexIndex: number, layerIndex: number }}
     | { type: "toggleIsPlaying" }
-    | { type: "setCurrentLayerIndex", payload: number }
-    | { type: "addLayer" }
+    | { type: "addLayer", payload?: { select: boolean }}
     | { type: "setCurrentLayerName", payload: string }
     | { type: "removeCurrentLayer" }
     | { type: "setLayers", payload: LayerState[] }
@@ -228,7 +225,7 @@ function reducer(state: AppState, action: Action): AppState
                 };
             case "addTokenToSelected":
             {
-                if (state.selectedHex === -1) return state;
+                if (state.selectedHex.hexIndex === -1) return state;
                 
                 const { tokenState, controls } = buildToken(state, action.payload.tokenKey);
 
@@ -242,9 +239,9 @@ function reducer(state: AppState, action: Action): AppState
                         ...state.controls,
                         ...controls
                     },
-                    layers: state.layers.map((layer, layerIndex) => layerIndex !== state.currentLayerIndex ? layer : ({
+                    layers: state.layers.map((layer, layerIndex) => layerIndex !== state.selectedHex.layerIndex ? layer : ({
                         ...layer,
-                        tokenIds: layer.tokenIds.map((tokenIdArray, hexIndex) => hexIndex !== state.selectedHex ? tokenIdArray : (
+                        tokenIds: layer.tokenIds.map((tokenIdArray, hexIndex) => hexIndex !== state.selectedHex.hexIndex ? tokenIdArray : (
                             tokenIdArray.concat([ tokenState.id ])
                         ))
                     }))
@@ -274,18 +271,18 @@ function reducer(state: AppState, action: Action): AppState
             }
             case "removeTokenFromSelected":
             {
-                if (state.selectedHex === -1) return state;
+                if (state.selectedHex.hexIndex === -1) return state;
 
-                const tokenId = state.layers[state.currentLayerIndex].tokenIds[state.selectedHex][action.payload.tokenIndex];
+                const tokenId = state.layers[state.selectedHex.layerIndex].tokenIds[state.selectedHex.hexIndex][action.payload.tokenIndex];
                 const token = state.tokens[tokenId];
                 
                 return {
                     ...state,
                     tokens: objectWithoutKeys(state.tokens, [tokenId]),
                     controls: objectWithoutKeys(state.controls, token.controlIds),
-                    layers: state.layers.map((layer, layerIndex) => layerIndex !== state.currentLayerIndex ? layer : ({
+                    layers: state.layers.map((layer, layerIndex) => layerIndex !== state.selectedHex.layerIndex ? layer : ({
                         ...layer,
-                        tokenIds: layer.tokenIds.map((tokenIdArray, hexIndex) => hexIndex !== state.selectedHex ? tokenIdArray : (
+                        tokenIds: layer.tokenIds.map((tokenIdArray, hexIndex) => hexIndex !== state.selectedHex.hexIndex ? tokenIdArray : (
                             tokenIdArray.filter(id => id !== tokenId)
                         )
                     )}))
@@ -324,13 +321,6 @@ function reducer(state: AppState, action: Action): AppState
                     startTime: process.hrtime.bigint()
                 };
             }
-            case "setCurrentLayerIndex":
-            {
-                return {
-                    ...state,
-                    currentLayerIndex: action.payload
-                }
-            }
             case "addLayer":
             {
                 const { layerState, controls } = buildLayer(state);
@@ -338,7 +328,7 @@ function reducer(state: AppState, action: Action): AppState
                 return {
                     ...state,
                     layers: state.layers.concat([ layerState ]),
-                    currentLayerIndex: state.layers.length,
+                    selectedHex: action.payload && action.payload.select ? { ...state.selectedHex, layerIndex: state.layers.length } : state.selectedHex,
                     controls: {
                         ...state.controls,
                         ...controls
@@ -348,8 +338,8 @@ function reducer(state: AppState, action: Action): AppState
             case "setCurrentLayerName":
             {
                 const newLayers = state.layers.slice(0);
-                newLayers[state.currentLayerIndex] = {
-                    ...newLayers[state.currentLayerIndex],
+                newLayers[state.selectedHex.layerIndex] = {
+                    ...newLayers[state.selectedHex.layerIndex],
                     name: action.payload
                 };
 
@@ -366,12 +356,12 @@ function reducer(state: AppState, action: Action): AppState
                 }
 
                 const newLayers = state.layers.slice(0);
-                newLayers.splice(state.currentLayerIndex, 1);
+                newLayers.splice(state.selectedHex.layerIndex, 1);
 
                 return {
                     ...state,
                     layers: newLayers,
-                    currentLayerIndex: Math.max(0, state.currentLayerIndex - 1)
+                    selectedHex: { hexIndex: state.selectedHex.hexIndex, layerIndex: Math.max(0, state.selectedHex.layerIndex - 1) }
                 };
             }
             case "setLayers":

@@ -39,6 +39,10 @@ export default function(props: Props)
     const lineWidth = 2;
     const startPosition = new Point(hexRadius + lineWidth / 2, hexRadius + lineWidth / 2);
     const animationFrameHandle = useRef<number | null>(null);
+    const animationCallback = useRef<() => any>(() => 0);
+
+    const layerIsSelected = state.selectedHex.layerIndex === props.layerIndex;
+    const hexIsSelected = state.selectedHex.hexIndex !== -1 && layerIsSelected;
 
     function closestHexIndex(point: Point)
     {
@@ -62,14 +66,14 @@ export default function(props: Props)
     {
         function keyDown(e: KeyboardEvent)
         {
-            if (state.selectedHex === -1 || state.currentLayerIndex !== props.layerIndex) return;
+            if (!hexIsSelected) return;
 
-            if (e.key === "Delete" && state.layers[props.layerIndex].tokenIds[state.selectedHex].length > 0)
+            if (e.key === "Delete" && state.layers[props.layerIndex].tokenIds[state.selectedHex.hexIndex].length > 0)
             {
                 if (!state.settings.confirmDelete ||
                     confirmPrompt("Are you sure you want to clear that hex?", "Confirm clear hex"))
                 {
-                    dispatch({ type: "clearHex", payload: { layerIndex: props.layerIndex, hexIndex: state.selectedHex }});
+                    dispatch({ type: "clearHex", payload: { layerIndex: props.layerIndex, hexIndex: state.selectedHex.hexIndex }});
                 }
             }
             else if ([...e.key].length === 1)
@@ -80,16 +84,16 @@ export default function(props: Props)
                     {
                         if (e.altKey)
                         {
-                            const tokenIds = state.layers[props.layerIndex].tokenIds[state.selectedHex];
+                            const tokenIds = state.layers[props.layerIndex].tokenIds[state.selectedHex.hexIndex];
                             const tokenToRemove = tokenIds.slice(0).reverse().find(tid => state.tokens[tid].path === path);
                             if (tokenToRemove)
                             {
-                                dispatch({ type: "removeTokenFromHex", payload: { tokenId: tokenToRemove, hexIndex: state.selectedHex, layerIndex: props.layerIndex } })
+                                dispatch({ type: "removeTokenFromHex", payload: { tokenId: tokenToRemove, hexIndex: state.selectedHex.hexIndex, layerIndex: props.layerIndex } })
                             }
                         }
                         else
                         {
-                            dispatch({ type: "addTokenToHex", payload: { tokenPath: path, hexIndex: state.selectedHex, layerIndex: props.layerIndex } });
+                            dispatch({ type: "addTokenToHex", payload: { tokenPath: path, hexIndex: state.selectedHex.hexIndex, layerIndex: props.layerIndex } });
                         }
                     }
                 }
@@ -141,6 +145,25 @@ export default function(props: Props)
         {
             hexPoints.current = pts;
         }
+
+        function anim()
+        {
+            animationCallback.current();
+
+            if (animationFrameHandle.current !== null)
+            {
+                animationFrameHandle.current = requestAnimationFrame(anim);
+            }
+        }
+
+        animationFrameHandle.current = requestAnimationFrame(anim);
+
+        return () =>
+        {
+            if (animationFrameHandle.current !== null) cancelAnimationFrame(animationFrameHandle.current);
+            animationFrameHandle.current = null;
+        };
+
     }, []);
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -176,7 +199,7 @@ export default function(props: Props)
                 return ret;
             })
         );
-    }, [ state.currentLayerIndex, Math.floor(state.layers[props.layerIndex].currentBeat), state.controls, state.layers[props.layerIndex].tokenIds ]);
+    }, [ state.selectedHex.layerIndex, Math.floor(state.layers[props.layerIndex].currentBeat), state.controls, state.layers[props.layerIndex].tokenIds ]);
 
     ////////////////////////////////////////////////////////////////////////////////
     //////////////////////////////////// EVENTS ////////////////////////////////////
@@ -197,8 +220,7 @@ export default function(props: Props)
                         srcHexIndex: state.draggingSourceHex.hexIndex,
                         destHexIndex: state.draggingDestHex.hexIndex
                     }});
-                    dispatch({ type: "setSelectedHex", payload: destIndex });
-                    dispatch({ type: "setCurrentLayerIndex", payload: props.layerIndex });
+                    dispatch({ type: "setSelectedHex", payload: { layerIndex: props.layerIndex, hexIndex: destIndex } });
                 }
                 // dispatch({ type: "setIsDragging", payload: false });
             }
@@ -207,6 +229,7 @@ export default function(props: Props)
         function documentMouseUp()
         {
             dispatch({ type: "setIsDragging", payload: false });
+            dispatch({ type: "setDraggingDestHex", payload: { hexIndex: -1, layerIndex: -1 }});
             document.body.style.cursor = "default";
         }
 
@@ -215,15 +238,13 @@ export default function(props: Props)
             const hexIndex = closestHexIndex(pos);
             if (hexIndex !== -1)
             {
-                dispatch({ type: "setSelectedHex", payload: hexIndex });
-                dispatch({ type: "setCurrentLayerIndex", payload: props.layerIndex });
+                dispatch({ type: "setSelectedHex", payload: { hexIndex, layerIndex: props.layerIndex } });
     
                 if (state.layers[props.layerIndex].tokenIds[hexIndex].length !== 0)
                 {
                     dispatch({ type: "setDraggingSourceHex", payload: { hexIndex: hexIndex, layerIndex: props.layerIndex }});
                     dispatch({ type: "setIsDragging", payload: true });
                     dispatch({ type: "setDraggingType", payload: e.shiftKey ? "copy" : "move"});
-                    document.body.style.cursor = (e.shiftKey ? "copy" : "move");
                 }
             }
         }
@@ -232,8 +253,8 @@ export default function(props: Props)
         {
             mouseLocation.current = pos;
         }
-        
-        function anim()
+
+        animationCallback.current = () =>
         {
             if (state.isDragging && mouseLocation.current)
             {
@@ -241,17 +262,13 @@ export default function(props: Props)
                 if (hoveredHex !== -1 && !(hoveredHex === state.draggingSourceHex.hexIndex && props.layerIndex === state.draggingSourceHex.layerIndex))
                 {
                     dispatch({ type: "setDraggingDestHex", payload: { hexIndex: hoveredHex, layerIndex: props.layerIndex }});
+                    document.body.style.cursor = (state.draggingType === "copy" ? "copy" : "move");
                 }
                 else
                 {
                     dispatch({ type: "setDraggingDestHex", payload: { hexIndex: -1, layerIndex: -1 }});
                 }
-            }
-
-            if (animationFrameHandle.current !== null)
-            {
-                animationFrameHandle.current = requestAnimationFrame(anim);
-            }
+            };
         }
 
         function mouseLeave(pos : Point, e : MouseEvent | TouchEvent)
@@ -263,7 +280,7 @@ export default function(props: Props)
         function contextMenu(e: MouseEvent)
         {
             e.preventDefault();
-            if (state.selectedHex !== -1 && state.currentLayerIndex === props.layerIndex)
+            if (hexIsSelected)
             {
                 const defs = Object.entries(state.tokenDefinitions);
                 const addItems = defs.map(([ path, def ]) => 
@@ -274,7 +291,7 @@ export default function(props: Props)
                     };
                 });
 
-                const removeItems = state.layers[props.layerIndex].tokenIds[state.selectedHex].map((tokenId) =>
+                const removeItems = state.layers[props.layerIndex].tokenIds[state.selectedHex.hexIndex].map((tokenId) =>
                 {
                     return {
                         label: "Remove " + state.tokens[tokenId].label,
@@ -288,7 +305,7 @@ export default function(props: Props)
 
         function handleContextMenuCommand(e: Electron.IpcRendererEvent, value: string)
         {
-            if (state.currentLayerIndex === props.layerIndex)
+            if (hexIsSelected)
             {
                 if (value.startsWith("add-"))
                 {
@@ -298,7 +315,7 @@ export default function(props: Props)
                 else if (value.startsWith("remove-"))
                 {
                     const tokenId = value.substr(7);
-                    dispatch({ type: "removeTokenFromHex", payload: { layerIndex: props.layerIndex, hexIndex: state.selectedHex, tokenId } });
+                    dispatch({ type: "removeTokenFromHex", payload: { ...state.selectedHex, tokenId } });
                 }
             }
         }
@@ -310,7 +327,6 @@ export default function(props: Props)
         document.body.addEventListener("mouseup", documentMouseUp);
         canvas.current?.canvas.addEventListener("contextmenu", contextMenu);
         ipcRenderer.addListener("context-menu-command", handleContextMenuCommand);
-        animationFrameHandle.current = requestAnimationFrame(anim);
 
         return () =>
         {
@@ -321,8 +337,6 @@ export default function(props: Props)
             document.body.removeEventListener("mouseup", documentMouseUp);
             canvas.current?.canvas.removeEventListener("contextmenu", contextMenu);
             ipcRenderer.removeListener("context-menu-command", handleContextMenuCommand);
-            if (animationFrameHandle.current !== null) cancelAnimationFrame(animationFrameHandle.current);
-            animationFrameHandle.current = null;
         }
     });
 
@@ -353,9 +367,9 @@ export default function(props: Props)
         }
 
         // draw selected //
-        if (state.selectedHex !== -1 && state.currentLayerIndex === props.layerIndex)
+        if (hexIsSelected)
         {
-            backCanvas.current?.fillHexagonCell(startPosition, new Point(~~(state.selectedHex / rows), state.selectedHex % rows), hexRadius, false, "#550");
+            backCanvas.current?.fillHexagonCell(startPosition, new Point(~~(state.selectedHex.hexIndex / rows), state.selectedHex.hexIndex % rows), hexRadius, false, "#550");
         }
 
         // draw dragging //
@@ -380,7 +394,7 @@ export default function(props: Props)
                 }
             }
         });
-    }, [ state.selectedHex, state.currentLayerIndex, state.layers, props.layerIndex, state.draggingDestHex ]);
+    }, [ state.selectedHex, state.layers, props.layerIndex, state.draggingDestHex, state.isDragging ]);
 
     // useEffect(() =>
     // {

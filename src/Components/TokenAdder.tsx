@@ -9,7 +9,7 @@ export default function TokenAdder()
     const { state, dispatch } = useContext(AppContext)!;
     const [ isShowingTokens, setIsShowingTokens ] = useState(false);
 
-    if (state.selectedHex === -1) return <></>;
+    if (state.selectedHex.hexIndex === -1) return <></>;
 
     function toggleTokens()
     {

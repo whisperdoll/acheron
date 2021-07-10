@@ -101,12 +101,11 @@ export default function LfoEditor()
                         <div>Sequence:</div>
                         {modifyingLfo.sequence.map((value, i) => (
                             <div className="row">
-                                <input
-                                    type="number"
+                                <NumberInput
                                     min={modifyingControl.min}
                                     max={modifyingControl.max}
                                     value={value}
-                                    onChange={e => modifyLfo({ sequence: modifyingLfo.sequence.map((v, vi) => vi === i ? coerce(e.currentTarget.value) : v) })}
+                                    onChange={newValue => modifyLfo({ sequence: modifyingLfo.sequence.map((v, vi) => vi === i ? coerce(newValue) : v) })}
                                 />
                                 <button
                                     onClick={() => modifyLfo({ sequence: modifyingLfo.sequence.filter((_, vi) => vi !== i) })}
