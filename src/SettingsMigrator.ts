@@ -15,7 +15,10 @@ export default function migrateSettings(settings: Record<string, any>): AppSetti
 
             if (uid !== null)
             {
-                newTokens[uid] = tokenSettings;
+                newTokens[uid] = {
+                    shortcut: tokenSettings.shortcut ?? "",
+                    enabled: true
+                };
             }
         });
 

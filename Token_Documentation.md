@@ -1,10 +1,10 @@
 # Making Custom Acheron Tokens
 
-Note: It is highly advised that you check out some of the [included tokens](./src/tokens) while reading this file. It will make more sense that way.
+Note: It is highly advised that you check out some of the [included tokens](./tokens) while reading this file. It will make more sense that way.
 
 ## File Structure
 
-Tokens live in a folder with their name as a `script.js` file. See [src/tokens](./src/tokens) directory for an example.
+Tokens live in a folder with their name as a `script.js` file. See the [tokens](/tokens) directory for an example.
 
 ## Format
 

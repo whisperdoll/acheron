@@ -29,7 +29,7 @@
       "package.json"
     ],
     "extraFiles": [
-      "src/tokens",
+      "tokens/",
       "src/timerWorker.js"
     ],
     "afterSign": ".erb/scripts/Notarize.js",
