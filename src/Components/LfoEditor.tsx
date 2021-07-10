@@ -68,10 +68,10 @@ export default function LfoEditor()
                 {modifyingLfo.type !== "square" && (
                     <div className="row">
                         <span>Period (seconds):</span>
-                        <input
-                            type="number"
+                        <NumberInput
                             value={modifyingLfo.period}
-                            onChange={e => modifyLfo({ period: Math.max(0.1, parseFloat(e.currentTarget.value)) })}
+                            min={0.1}
+                            onChange={newValue => modifyLfo({ period: Math.max(newValue) })}
                             step={0.1}
                         />
                     </div>
@@ -79,19 +79,19 @@ export default function LfoEditor()
                 {modifyingLfo.type === "square" && (<>
                     <div className="row">
                         <span>Low Period (seconds):</span>
-                        <input
-                            type="number"
+                        <NumberInput
                             value={modifyingLfo.lowPeriod}
-                            onChange={e => modifyLfo({ lowPeriod: Math.max(0.1, parseFloat(e.currentTarget.value)) })}
+                            min={0.1}
+                            onChange={newValue => modifyLfo({ lowPeriod: Math.max(newValue) })}
                             step={0.1}
                         />
                     </div>
                     <div className="row">
                         <span>High Period (seconds):</span>
-                        <input
-                            type="number"
+                        <NumberInput
                             value={modifyingLfo.hiPeriod}
-                            onChange={e => modifyLfo({ hiPeriod: Math.max(0.1, parseFloat(e.currentTarget.value)) })}
+                            min={0.1}
+                            onChange={newValue => modifyLfo({ hiPeriod: Math.max(newValue) })}
                             step={0.1}
                         />
                     </div>

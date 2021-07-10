@@ -4,6 +4,7 @@ import { KeyMap, ControlState, NumMIDIChannels } from '../Types';
 import { LayerControlKey } from '../utils/DefaultDefinitions';
 import { hexNotes } from '../utils/elysiumutils';
 import Control from './Control';
+import NumberInput from './NumberInput';
 
 interface Props
 {
@@ -29,13 +30,11 @@ export default function(props: Props)
         dispatch({ type: "setLayer", payload: { layerIndex: props.layerIndex, layerState: newState }});
     }
 
-    function handleMIDIChanged(e: React.ChangeEvent<HTMLInputElement>)
+    function handleMIDIChanged(value: number)
     {
-        const val = parseInt(e.currentTarget.value);
-        if (isNaN(val)) return;
-        if (val < 1 || val > NumMIDIChannels) return;
+        if (value < 1 || value > NumMIDIChannels) return;
 
-        onChange({ ...layer, midiChannel: val });
+        onChange({ ...layer, midiChannel: value });
     }
 
     function handleKeyChanged(e: React.ChangeEvent<HTMLSelectElement>)
@@ -76,8 +75,7 @@ export default function(props: Props)
                 <div className="labelRow">
                     <div className="label">MIDI Channel</div>
                 </div>
-                <input
-                    type="number"
+                <NumberInput
                     min={1}
                     max={NumMIDIChannels}
                     step={1}

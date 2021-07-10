@@ -19,6 +19,54 @@
     user-select: none;
 }
 
+
+.numberInput-container
+{
+    overflow: hidden;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    display: flex;
+    flex-direction: row;
+
+    input.numberInput
+    {
+        &::-webkit-inner-spin-button
+        {
+            -webkit-appearance: none;
+        }
+
+        flex-grow: 1;
+        min-width: 0;
+    }
+
+    .numberInput-buttons
+    {
+        display: flex;
+        flex-direction: column;
+
+        button
+        {
+            padding: 2px 4px;
+            font-size: 0.6em;
+
+            &:hover
+            {
+                background-color: white;
+                color: black;
+            }
+
+            &:active
+            {
+                background-color: #ddd;
+            }
+        }
+    }
+}
+
 html, body, #root
 {
     padding: 0;
@@ -185,7 +233,7 @@ button.nostyle
                 }
             }
 
-            input, select
+            input, select, .numberInput-container
             {
                 flex-grow: 1;
             }
@@ -301,7 +349,7 @@ $statusBarHeight: 32px;
         flex-direction: row;
         justify-content: stretch;
 
-        input
+        input, .numberInput-container
         {
             flex-grow: 1;
         }
@@ -405,7 +453,7 @@ $statusBarHeight: 32px;
             flex-direction: row;
             align-items: center;
 
-            input, select
+            input, select, .numberInput-container
             {
                 flex-grow: 1;
                 margin-left: 8px;
@@ -635,7 +683,7 @@ $statusBarHeight: 32px;
 
             .controlRow
             {
-                input, select
+                input, select, .numberInput-container
                 {
                     width: 100%;
                 }

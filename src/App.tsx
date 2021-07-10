@@ -17,6 +17,7 @@ import Settings from "./Components/Settings";
 import LfoEditor from "./Components/LfoEditor";
 import * as fs from "fs";
 import TokenSettings from './Components/TokenSettings';
+import NumberInput from './Components/NumberInput';
 
 export default function App() {
     const { state, dispatch } = useContext(AppContext)!;
@@ -260,12 +261,11 @@ export default function App() {
                     value={multiLayerSize}
                     onChange={(e) => setMultiLayerSize(e.currentTarget.value)}
                 />
-                <input
-                    type="number"
+                <NumberInput
                     min={multiLayerSizeMin}
                     max={multiLayerSizeMax}
                     value={multiLayerSize}
-                    onChange={(e) => setMultiLayerSize(e.currentTarget.value)}
+                    onChange={(v) => setMultiLayerSize(v)}
                 />
             </>}
         </div>;

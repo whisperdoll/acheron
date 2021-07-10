@@ -16,6 +16,7 @@ import direction3 from "../../assets/directions/3.png";
 import direction4 from "../../assets/directions/4.png";
 import direction5 from "../../assets/directions/5.png";
 import { buildLfo } from '../utils/DefaultDefinitions';
+import NumberInput from './NumberInput';
 
 interface Props
 {
@@ -72,36 +73,22 @@ export default function(props: Props)
         }}});
     }
 
-    const handleValueChanged = (e: React.ChangeEvent<HTMLInputElement>) =>
+    const handleValueChanged = (value: any) =>
     {
         let newValue: any = null;
 
         switch (controlState.type)
         {
             case "bool":
-                newValue = e.currentTarget.checked;
+                newValue = value;
                 break;
             case "int":
-                newValue = parseInt(e.currentTarget.value);
-                if (isNaN(newValue))
-                {
-                    return;
-                }
+                newValue = Math.floor(value);
                 break;
             case "decimal":
-                newValue = parseFloat(e.currentTarget.value);
-                if (isNaN(newValue))
-                {
-                    return;
-                }
                 break;
             case "direction":
-                newValue = parseInt(e.currentTarget.value);
-                if (isNaN(newValue))
-                {
-                    return;
-                }
-                newValue = Math.min(Math.max(0, newValue), 5);
+                newValue = Math.min(Math.max(0, Math.floor(value)), 5);
                 break;
             default:
                 throw "uh oh...";
@@ -139,14 +126,13 @@ export default function(props: Props)
             case "bool":
                 controlPart = <input
                     type="checkbox"
-                    onChange={handleValueChanged}
+                    onChange={(e) => handleValueChanged(e.currentTarget.checked)}
                     checked={controlValue as boolean ?? false}
                 />;
                 break;
             case "int":
             case "decimal":
-                controlPart = <input
-                    type="number"
+                controlPart = <NumberInput
                     onChange={handleValueChanged}
                     value={controlValue as number ?? 0}
                     max={controlState.max}
