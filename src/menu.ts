@@ -283,6 +283,13 @@ export default class MenuBuilder
                         {
                             shell.openExternal("https://github.com/SongSing/acheron/issues/new/choose");
                         }
+                    },
+                    {
+                        label: "Credits",
+                        click()
+                        {
+                            shell.openExternal("https://github.com/SongSing/acheron/blob/main/README.md#credits");
+                        }
                     }
                 ],
             },
