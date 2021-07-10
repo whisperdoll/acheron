@@ -7,7 +7,6 @@ import { Canvas } from '../utils/canvas';
 import { getNoteParts, hexNotes, indexFromNote, noteArray, noteFromIndex, NumHexes } from '../utils/elysiumutils';
 import Point from '../utils/point';
 import { confirmPrompt } from '../utils/utils';
-import HexCell from './HexCell';
 
 
 interface Props
@@ -78,14 +77,14 @@ export default function(props: Props)
             }
             else if ([...e.key].length === 1)
             {
-                for (const path in state.settings.tokens)
+                for (const uid in state.settings.tokens)
                 {
-                    if (state.settings.tokens[path].shortcut.toLowerCase() === e.key.toLowerCase())
+                    if (state.settings.tokens[uid].shortcut.toLowerCase() === e.key.toLowerCase())
                     {
                         if (e.altKey)
                         {
                             const tokenIds = state.layers[props.layerIndex].tokenIds[state.selectedHex.hexIndex];
-                            const tokenToRemove = tokenIds.slice(0).reverse().find(tid => state.tokens[tid].path === path);
+                            const tokenToRemove = tokenIds.slice(0).reverse().find(iid => state.tokens[iid].uid === uid);
                             if (tokenToRemove)
                             {
                                 dispatch({ type: "removeTokenFromHex", payload: { tokenId: tokenToRemove, hexIndex: state.selectedHex.hexIndex, layerIndex: props.layerIndex } })
@@ -93,7 +92,7 @@ export default function(props: Props)
                         }
                         else
                         {
-                            dispatch({ type: "addTokenToHex", payload: { tokenPath: path, hexIndex: state.selectedHex.hexIndex, layerIndex: props.layerIndex } });
+                            dispatch({ type: "addTokenToHex", payload: { tokenUid: uid, hexIndex: state.selectedHex.hexIndex, layerIndex: props.layerIndex } });
                         }
                     }
                 }
@@ -286,7 +285,7 @@ export default function(props: Props)
                 const addItems = defs.map(([ path, def ]) => 
                 {
                     return {
-                        label: "Add " + def.label,
+                        label: "Add " + def.label + (state.settings.tokens[def.uid].enabled ? "" : " (disabled)"),
                         value: "add-" + path
                     };
                 });

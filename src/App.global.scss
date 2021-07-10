@@ -31,6 +31,7 @@
     user-select: none;
     display: flex;
     flex-direction: row;
+    align-items: stretch;
 
     input.numberInput
     {
@@ -47,11 +48,13 @@
     {
         display: flex;
         flex-direction: column;
+        justify-content: stretch;
 
         button
         {
             padding: 2px 4px;
             font-size: 0.6em;
+            flex-grow: 1;
 
             &:hover
             {
@@ -173,26 +176,43 @@ button.nostyle
             margin-bottom: 16px;
         }
 
-        .tokenSetting
+        &.tokenSettings-content
         {
-            border: 1px solid #aaa;
-            padding: 8px;
+            max-width: 50%;
+            max-height: 80%;
+        }
+
+        .tokenSettings
+        {
             display: flex;
-            flex-direction: column;
+            flex-direction: row;
+            flex-wrap: wrap;
+            overflow: auto;
+            justify-content: stretch;
 
-            & > *
+            .tokenSetting
             {
-                margin-bottom: 8px;
-
-                &:last-child
+                border: 1px solid #aaa;
+                padding: 8px;
+                display: flex;
+                flex-direction: column;
+                flex: 1 0 calc(50% - 12px);
+                margin: 4px;
+    
+                & > *
                 {
-                    margin-bottom: 0;
+                    margin-bottom: 8px;
+    
+                    &:last-child
+                    {
+                        margin-bottom: 0;
+                    }
                 }
-            }
-
-            .tokenLabel
-            {
-                font-size: 1.2em;
+    
+                .tokenLabel
+                {
+                    font-size: 1.2em;
+                }
             }
         }
 

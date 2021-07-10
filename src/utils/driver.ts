@@ -144,6 +144,9 @@ export function performStartCallbacks(appState: AppState): AppState
         {
             hex.forEach((tokenId) =>
             {
+                console.log(appState.settings, tokenId, appState.tokens[tokenId]);
+                if (!appState.settings.tokens[appState.tokens[tokenId].uid].enabled) return;
+
                 const token = {...newTokens[tokenId]};
 
                 if (token.callbacks.onStart)
@@ -192,6 +195,8 @@ export function performStopCallbacks(appState: AppState): AppState
         {
             hex.forEach((tokenId) =>
             {
+                if (!appState.settings.tokens[appState.tokens[tokenId].uid].enabled) return;
+                
                 const token = {...newTokens[tokenId]};
 
                 if (token.callbacks.onStop)
@@ -294,6 +299,8 @@ export function progressLayer(appState: AppState, deltaNs: number, layerIndex: n
             {
                 hex.forEach((tokenId) =>
                 {
+                    if (!appState.settings.tokens[appState.tokens[tokenId].uid].enabled) return;
+
                     const token = {...newTokens[tokenId]};
 
                     if (!initializedTokens.has(tokenId))

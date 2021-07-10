@@ -3,6 +3,7 @@
 {
     "label": "Generate",
     "symbol": "G",
+    "uid": "whisperdoll.generate",
     "controls": {
         "triggerMode": {
             "label": "Trigger Mode",

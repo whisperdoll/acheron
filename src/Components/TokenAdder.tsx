@@ -1,6 +1,5 @@
 import React, { useContext, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { AppContext } from '../AppContext';
-import Tokens from '../Tokens';
 import { hexNotes } from '../utils/elysiumutils';
 import { capitalize } from '../utils/utils';
 
@@ -37,7 +36,7 @@ export default function TokenAdder()
                             onClick={() => { addToken(key); setIsShowingTokens(false); }}
                             key={key}
                         >
-                                {"Add " + definition.label}
+                                {"Add " + definition.label + (state.settings.tokens[definition.uid].enabled ? "" : " (disabled)")}
                         </button>
                     ))}
                 </div>

@@ -1,8 +1,9 @@
 /// acheron.token v1
 
 {
-    "label": "Skip",
-    "symbol": "K",
+    "label": "Split",
+    "symbol": "Y",
+    "uid": "whisperdoll.split",
     "controls": {
         "probability": {
             "label": "Probability",
@@ -10,13 +11,6 @@
             "min": 0,
             "max": 100,
             "defaultValue": 100
-        },
-        "skipAmount": {
-            "label": "Skip Amount",
-            "type": "int",
-            "min": -16,
-            "max": 16,
-            "defaultValue": 2
         },
         "gateOffset": {
             "label": "Gate Offset",
@@ -38,6 +32,11 @@
             "min": 0,
             "max": 128,
             "defaultValue": 0
+        },
+        "bounceback": {
+            "label": "Bounceback",
+            "type": "bool",
+            "defaultValue": false
         }
     }
 }
@@ -58,17 +57,25 @@ function onTick(store, helpers, playheads)
 {
     const { 
         probability,
-        skipAmount,
+        bounceback,
         gateOffset,
         gateOn,
         gateOff
     } = helpers.getControlValues();
 
-    function tryPerformSkip(playheadIndex)
+    function tryPerformSplit(playheadIndex)
     {
         if (probability / 100 > Math.random())
         {
-            helpers.skipPlayhead(playheadIndex, playheads[playheadIndex].direction, skipAmount);
+            const ph = playheads[playheadIndex];
+            const oppositeDirection = helpers.oppositeDirection(ph.direction);
+            for (let i = 0; i < 6; i++)
+            {
+                if (i !== ph.direction && !(!bounceback && i === oppositeDirection))
+                {
+                    helpers.spawnPlayhead(helpers.getHexIndex(), ph.lifespan - ph.age, i);
+                }
+            }
         }
     }
     
@@ -78,13 +85,13 @@ function onTick(store, helpers, playheads)
         
         if (gateOn + gateOff === 0)
         {
-            tryPerformSkip(playheadIndex);
+            tryPerformSplit(playheadIndex);
         }
         else
         {
             if (store.gateCounter >= gateOffset + gateOff || store.gateCounter < gateOffset)
             {
-                tryPerformSkip(playheadIndex);
+                tryPerformSplit(playheadIndex);
             }
             store.gateCounter++;
             if (store.gateCounter >= gateOffset + gateOff + gateOn)

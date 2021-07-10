@@ -1,8 +1,9 @@
 /// acheron.token v1
 
 {
-    "label": "Absorb",
-    "symbol": "x",
+    "label": "Note",
+    "symbol": "♫",
+    "uid": "whisperdoll.note",
     "controls": {
         "probability": {
             "label": "Probability",
@@ -10,6 +11,17 @@
             "min": 0,
             "max": 100,
             "defaultValue": 100
+        },
+        "triad": {
+            "label": "Triad",
+            "type": "triad"
+        },
+        "transpose": {
+            "label": "Transpose",
+            "type": "int",
+            "min": -24,
+            "max": 24,
+            "defaultValue": 0
         },
         "gateOffset": {
             "label": "Gate Offset",
@@ -30,6 +42,22 @@
             "type": "int",
             "min": 0,
             "max": 128,
+            "defaultValue": 0
+        },
+        "velocity": {
+            "inherit": "global.velocity"
+        },
+        "emphasis": {
+            "inherit": "global.emphasis"
+        },
+        "noteLength": {
+            "inherit": "global.noteLength"
+        },
+        "ghostBeats": {
+            "label": "Ghost Beats",
+            "type": "int",
+            "min": 0,
+            "max": 16,
             "defaultValue": 0
         }
     }
@@ -53,30 +81,39 @@ function onTick(store, helpers, playheads)
         probability,
         gateOffset,
         gateOn,
-        gateOff
+        gateOff,
+        velocity,
+        emphasis,
+        noteLength,
+        ghostBeats,
+        triad,
+        transpose
     } = helpers.getControlValues();
 
-    function tryPerformAbsorb(playheadIndex)
+    let hasPerformed = false;
+
+    function tryPerformNote(playheadIndex)
     {
         if (probability / 100 > Math.random())
         {
-            helpers.modifyPlayhead(playheadIndex, { age: playheads[playheadIndex].lifespan });
+            helpers.playTriad(helpers.getHexIndex(), triad, noteLength * 1000, helpers.getCurrentBeat() === 0 ? emphasis : velocity, transpose);
+            hasPerformed = true;
         }
     }
     
     playheads.forEach((playhead, playheadIndex) =>
     {
-        if (playhead.age === 0) return;
+        if (playhead.age === 0 || hasPerformed) return;
         
         if (gateOn + gateOff === 0)
         {
-            tryPerformAbsorb(playheadIndex);
+            tryPerformNote(playheadIndex);
         }
         else
         {
             if (store.gateCounter >= gateOffset + gateOff || store.gateCounter < gateOffset)
             {
-                tryPerformAbsorb(playheadIndex);
+                tryPerformNote(playheadIndex);
             }
             store.gateCounter++;
             if (store.gateCounter >= gateOffset + gateOff + gateOn)

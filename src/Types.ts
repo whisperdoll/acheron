@@ -9,6 +9,10 @@ export type ControlValueType = "scalar" | "lfo" | "inherit";
 
 export const NumMIDIChannels = 16;
 
+export type TokenUID = string;
+export type TokenInstanceId = string;
+export type ControlInstanceId = string;
+
 function major(root: number)
 {
     return [
@@ -194,12 +198,12 @@ export interface TokenCallbacks
 export interface Token
 {
     label: string;
+    uid: TokenUID;
     symbol: string;
     controlIds: string[];
     callbacks: TokenCallbacks;
     store: object;
     id: string;
-    path: string;
 }
 
 export interface TokenDefinition
@@ -207,6 +211,8 @@ export interface TokenDefinition
     label: string;
     symbol: string;
     controls: Record<string, ControlDefinition>;
+    uid: TokenUID;
+    path: string;
 }
 
 export const LfoTypes = ["sin","square","random","sequence","sawtooth"] as const;
@@ -269,11 +275,25 @@ export interface SerializedCompositionControl
     lfo: Lfo;
 }
 
-export interface SerializedCompositionToken
+export interface SerializedCompositionTokenV1
 {
     id: string;
     controls: SerializedCompositionControl[];
     path: string;
+}
+
+export interface SerializedCompositionTokenV1
+{
+    id: string;
+    controls: SerializedCompositionControl[];
+    path: string;
+}
+
+export interface SerializedCompositionToken
+{
+    id: string;
+    controls: SerializedCompositionControl[];
+    uid: string;
 }
 
 export interface SerializedCompositionLayer
@@ -296,8 +316,26 @@ export interface SerializedCompositionLayer
 
 export interface SerializedComposition
 {
-    version: 1;
+    version: number;
     tokens: SerializedCompositionToken[];
+    global: {
+        transpose: SerializedCompositionControl;
+        tempo: SerializedCompositionControl;
+        barLength: SerializedCompositionControl;
+        velocity: SerializedCompositionControl;
+        emphasis: SerializedCompositionControl;
+        noteLength: SerializedCompositionControl;
+        timeToLive: SerializedCompositionControl;
+        pulseEvery: SerializedCompositionControl;
+    };
+    layers: SerializedCompositionLayer[];
+}
+
+
+export interface SerializedCompositionV1
+{
+    version: number;
+    tokens: SerializedCompositionTokenV1[];
     global: {
         transpose: SerializedCompositionControl;
         tempo: SerializedCompositionControl;

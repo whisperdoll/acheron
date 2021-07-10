@@ -1,8 +1,9 @@
 /// acheron.token v1
 
 {
-    "label": "Split",
-    "symbol": "Y",
+    "label": "Absorb",
+    "symbol": "x",
+    "uid": "whisperdoll.absorb",
     "controls": {
         "probability": {
             "label": "Probability",
@@ -31,11 +32,6 @@
             "min": 0,
             "max": 128,
             "defaultValue": 0
-        },
-        "bounceback": {
-            "label": "Bounceback",
-            "type": "bool",
-            "defaultValue": false
         }
     }
 }
@@ -56,25 +52,16 @@ function onTick(store, helpers, playheads)
 {
     const { 
         probability,
-        bounceback,
         gateOffset,
         gateOn,
         gateOff
     } = helpers.getControlValues();
 
-    function tryPerformSplit(playheadIndex)
+    function tryPerformAbsorb(playheadIndex)
     {
         if (probability / 100 > Math.random())
         {
-            const ph = playheads[playheadIndex];
-            const oppositeDirection = helpers.oppositeDirection(ph.direction);
-            for (let i = 0; i < 6; i++)
-            {
-                if (i !== ph.direction && !(!bounceback && i === oppositeDirection))
-                {
-                    helpers.spawnPlayhead(helpers.getHexIndex(), ph.lifespan - ph.age, i);
-                }
-            }
+            helpers.modifyPlayhead(playheadIndex, { age: playheads[playheadIndex].lifespan });
         }
     }
     
@@ -84,13 +71,13 @@ function onTick(store, helpers, playheads)
         
         if (gateOn + gateOff === 0)
         {
-            tryPerformSplit(playheadIndex);
+            tryPerformAbsorb(playheadIndex);
         }
         else
         {
             if (store.gateCounter >= gateOffset + gateOff || store.gateCounter < gateOffset)
             {
-                tryPerformSplit(playheadIndex);
+                tryPerformAbsorb(playheadIndex);
             }
             store.gateCounter++;
             if (store.gateCounter >= gateOffset + gateOff + gateOn)

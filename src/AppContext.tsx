@@ -6,23 +6,27 @@ import { SafeWriter } from "./utils/safewriter";
 import * as path from "path";
 import * as fs from "fs";
 import { buildLayer } from "./Layers";
-import { ControlState, Token, ControlDefinition, Playhead, getControlValue, Lfo, TokenDefinition, TokenCallbacks } from "./Types";
+import { ControlState, Token, ControlDefinition, Playhead, getControlValue, Lfo, TokenDefinition, TokenCallbacks, TokenUID, TokenInstanceId, ControlInstanceId } from "./Types";
 import { buildFromDefs, DefaultPlayerControls, LayerControlKey, PlayerControlKey } from "./utils/DefaultDefinitions";
 import { MidiOutput } from "./utils/midi";
 import { v4 as uuidv4 } from 'uuid';
 import { buildToken, copyToken } from "./Tokens";
+import migrateSettings from "./SettingsMigrator";
 
 export interface TokenSettings
 {
     shortcut: string;
+    enabled: boolean;
 }
 
 export interface AppSettings
 {
+    version: number;
     playNoteOnClick: boolean;
     wrapPlayheads: boolean;
-    tokens: Record<string, TokenSettings>;
+    tokens: Record<TokenUID, TokenSettings>;
     confirmDelete: boolean;
+    tokenSearchPaths: string[];
 }
 
 export interface LayerState
@@ -48,18 +52,18 @@ export interface LayerState
 export interface AppState
 {
     selectedHex: { hexIndex: number, layerIndex: number };
-    controls: Record<string, ControlState>;
-    tokens: Record<string, Token>;
-    tokenDefinitions: Record<string, TokenDefinition>;
-    tokenCallbacks: Record<string, TokenCallbacks>;
-    transpose: string;
-    tempo: string;
-    barLength: string;
-    velocity: string;
-    emphasis: string;
-    noteLength: string;
-    timeToLive: string;
-    pulseEvery: string;
+    controls: Record<ControlInstanceId, ControlState>;
+    tokens: Record<TokenInstanceId, Token>;
+    tokenDefinitions: Record<TokenUID, TokenDefinition>;
+    tokenCallbacks: Record<TokenUID, TokenCallbacks>;
+    transpose: ControlInstanceId;
+    tempo: ControlInstanceId;
+    barLength: ControlInstanceId;
+    velocity: ControlInstanceId;
+    emphasis: ControlInstanceId;
+    noteLength: ControlInstanceId;
+    timeToLive: ControlInstanceId;
+    pulseEvery: ControlInstanceId;
     layers: LayerState[];
     settings: AppSettings;
     isPlaying: boolean;
@@ -75,11 +79,13 @@ export interface AppState
     draggingDestHex: { layerIndex: number, hexIndex: number };
 }
 
-const initialSettings : AppSettings = {
+export const initialSettings : AppSettings = {
+    version: 1,
     playNoteOnClick: true,
     wrapPlayheads: true,
     tokens: {},
-    confirmDelete: true
+    confirmDelete: true,
+    tokenSearchPaths: [ path.normalize("./tokens") ]
 };
 
 const initialState : AppState = {
@@ -134,7 +140,7 @@ export function loadSettings(): AppSettings
 
     try
     {
-        loadedSettings = JSON.parse(fs.readFileSync(path.join(getUserDataPath(), "settings.json"), "utf8"));
+        loadedSettings = migrateSettings(JSON.parse(fs.readFileSync(path.join(getUserDataPath(), "settings.json"), "utf8")));
     }
     catch
     {
@@ -160,7 +166,7 @@ type Action = (
     | { type: "setToken", payload: { id: string, newToken: Token }}
     | { type: "setLayer", payload: { layerIndex: number, layerState: LayerState }}
     | { type: "addTokenToSelected", payload: { tokenKey: string }}
-    | { type: "addTokenToHex", payload: { tokenPath: string, hexIndex: number, layerIndex: number }}
+    | { type: "addTokenToHex", payload: { tokenUid: TokenUID, hexIndex: number, layerIndex: number }}
     | { type: "removeTokenFromSelected", payload: { tokenIndex: number }}
     | { type: "removeTokenFromHex", payload: { tokenId: string, hexIndex: number, layerIndex: number }}
     | { type: "toggleIsPlaying" }
@@ -175,10 +181,10 @@ type Action = (
     | { type: "editLfo", payload: { controlId: string } }
     | { type: "stopEditingLfo" }
     | { type: "setLfo", payload: { controlId: string, lfo: Lfo }}
-    | { type: "setTokenDefinition", payload: { path: string, definition: TokenDefinition, callbacks: TokenCallbacks } }
-    | { type: "removeTokenDefinition", payload: { path: string } }
-    | { type: "setTokenShortcut", payload: { path: string, shortcut: string }}
-    | { type: "clearTokenShortcut", payload: { path: string } }
+    | { type: "setTokenDefinition", payload: { definition: TokenDefinition, callbacks: TokenCallbacks } }
+    | { type: "removeTokenDefinition", payload: TokenUID }
+    | { type: "setTokenShortcut", payload: { uid: TokenUID, shortcut: string }}
+    | { type: "clearTokenShortcut", payload: TokenUID }
     | { type: "copyHex", payload: { srcLayerIndex: number, destLayerIndex: number, srcHexIndex: number, destHexIndex: number }}
     | { type: "moveHex", payload: { srcLayerIndex: number, destLayerIndex: number, srcHexIndex: number, destHexIndex: number }}
     | { type: "clearHex", payload: { layerIndex: number, hexIndex: number }}
@@ -186,6 +192,7 @@ type Action = (
     | { type: "setDraggingDestHex", payload: { hexIndex: number, layerIndex: number } }
     | { type: "setDraggingType", payload: "move" | "copy" }
     | { type: "setIsDragging", payload: boolean }
+    | { type: "toggleTokenEnabled", payload: TokenUID }
 ) & {
     saveSettings?: boolean
 }
@@ -249,7 +256,7 @@ function reducer(state: AppState, action: Action): AppState
             }
             case "addTokenToHex":
             {
-                const { tokenState, controls } = buildToken(state, action.payload.tokenPath);
+                const { tokenState, controls } = buildToken(state, action.payload.tokenUid);
 
                 return {
                     ...state,
@@ -436,18 +443,19 @@ function reducer(state: AppState, action: Action): AppState
                     ...state,
                     tokenDefinitions: {
                         ...state.tokenDefinitions,
-                        [action.payload.path]: action.payload.definition
+                        [action.payload.definition.uid]: action.payload.definition
                     },
                     tokenCallbacks: {
                         ...state.tokenCallbacks,
-                        [action.payload.path]: action.payload.callbacks
+                        [action.payload.definition.uid]: action.payload.callbacks
                     },
-                    settings: Object.prototype.hasOwnProperty.call(state.settings.tokens, action.payload.path) ? state.settings : {
+                    settings: Object.prototype.hasOwnProperty.call(state.settings.tokens, action.payload.definition.uid) ? state.settings : {
                         ...state.settings,
                         tokens: {
                             ...state.settings.tokens,
-                            [action.payload.path]: {
-                                shortcut: ""
+                            [action.payload.definition.uid]: {
+                                shortcut: "",
+                                enabled: false
                             }
                         }
                     }
@@ -455,22 +463,13 @@ function reducer(state: AppState, action: Action): AppState
             }
             case "removeTokenDefinition":
             {
-                const newTokenDefs = { ...state.tokenDefinitions };
-                delete newTokenDefs[action.payload.path];
-
-                const newTokenCallbacks = { ...state.tokenCallbacks };
-                delete newTokenCallbacks[action.payload.path];
-
-                const newTokenSettings = { ...state.settings.tokens };
-                delete newTokenSettings[action.payload.path];
-
                 return {
                     ...state,
-                    tokenDefinitions: newTokenDefs,
-                    tokenCallbacks: newTokenCallbacks,
+                    tokenDefinitions: objectWithoutKeys(state.tokenDefinitions, [action.payload]),
+                    tokenCallbacks: objectWithoutKeys(state.tokenCallbacks, [action.payload]),
                     settings: {
                         ...state.settings,
-                        tokens: newTokenSettings
+                        tokens: objectWithoutKeys(state.settings.tokens, [action.payload])
                     }
                 };
             }
@@ -482,8 +481,8 @@ function reducer(state: AppState, action: Action): AppState
                         ...state.settings,
                         tokens: {
                             ...state.settings.tokens,
-                            [action.payload.path]: {
-                                ...state.settings.tokens[action.payload.path],
+                            [action.payload.uid]: {
+                                ...state.settings.tokens[action.payload.uid],
                                 shortcut: action.payload.shortcut
                             }
                         }
@@ -498,8 +497,8 @@ function reducer(state: AppState, action: Action): AppState
                         ...state.settings,
                         tokens: {
                             ...state.settings.tokens,
-                            [action.payload.path]: {
-                                ...state.settings.tokens[action.payload.path],
+                            [action.payload]: {
+                                ...state.settings.tokens[action.payload],
                                 shortcut: ""
                             }
                         }
@@ -601,6 +600,22 @@ function reducer(state: AppState, action: Action): AppState
                     ...state,
                     isDragging: action.payload
                 }
+            }
+            case "toggleTokenEnabled":
+            {                
+                return {
+                    ...state,
+                    settings: {
+                        ...state.settings,
+                        tokens: {
+                            ...state.settings.tokens,
+                            [action.payload]: {
+                                ...state.settings.tokens[action.payload],
+                                enabled: !state.settings.tokens[action.payload].enabled
+                            }
+                        }
+                    }
+                };
             }
             default:
                 throw new Error("bad action type: " + (action as any).type);

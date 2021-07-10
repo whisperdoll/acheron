@@ -1,8 +1,9 @@
 /// acheron.token v1
 
 {
-    "label": "Rebound",
-    "symbol": ">",
+    "label": "Skip",
+    "symbol": "K",
+    "uid": "whisperdoll.skip",
     "controls": {
         "probability": {
             "label": "Probability",
@@ -11,10 +12,12 @@
             "max": 100,
             "defaultValue": 100
         },
-        "direction": {
-            "label": "Direction",
-            "type": "direction",
-            "defaultValue": 0
+        "skipAmount": {
+            "label": "Skip Amount",
+            "type": "int",
+            "min": -16,
+            "max": 16,
+            "defaultValue": 2
         },
         "gateOffset": {
             "label": "Gate Offset",
@@ -56,17 +59,17 @@ function onTick(store, helpers, playheads)
 {
     const { 
         probability,
-        direction,
+        skipAmount,
         gateOffset,
         gateOn,
         gateOff
     } = helpers.getControlValues();
 
-    function tryPerformRebound(playheadIndex)
+    function tryPerformSkip(playheadIndex)
     {
         if (probability / 100 > Math.random())
         {
-            helpers.modifyPlayhead(playheadIndex, { direction });
+            helpers.skipPlayhead(playheadIndex, playheads[playheadIndex].direction, skipAmount);
         }
     }
     
@@ -76,13 +79,13 @@ function onTick(store, helpers, playheads)
         
         if (gateOn + gateOff === 0)
         {
-            tryPerformRebound(playheadIndex);
+            tryPerformSkip(playheadIndex);
         }
         else
         {
             if (store.gateCounter >= gateOffset + gateOff || store.gateCounter < gateOffset)
             {
-                tryPerformRebound(playheadIndex);
+                tryPerformSkip(playheadIndex);
             }
             store.gateCounter++;
             if (store.gateCounter >= gateOffset + gateOff + gateOn)

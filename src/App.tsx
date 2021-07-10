@@ -8,7 +8,7 @@ import PlayerSettings from './Components/PlayerSettings';
 import LayerSettings from './Components/LayerSettings';
 import { remote } from 'electron';
 import { performStartCallbacks, performStopCallbacks, progressLayer } from './utils/driver';
-import { loadToken } from './Tokens';
+import { loadTokensFromSearchPaths } from './Tokens';
 import { getControlValue } from './Types';
 import * as path from "path";
 import Midi from './utils/midi';
@@ -16,8 +16,9 @@ import { deserializeComposition, hexNotes, serializeComposition, transposeNote }
 import Settings from "./Components/Settings";
 import LfoEditor from "./Components/LfoEditor";
 import * as fs from "fs";
-import TokenSettings from './Components/TokenSettings';
+import TokenManager from './Components/TokenManager';
 import NumberInput from './Components/NumberInput';
+import open from "open";
 
 export default function App() {
     const { state, dispatch } = useContext(AppContext)!;
@@ -97,18 +98,20 @@ export default function App() {
         const settings = loadSettings();
         dispatch({ type: "setSettings", payload: settings });
 
-        Object.entries(settings.tokens).forEach(([path, tokenSettings]) =>
+        const { tokens, failed } = loadTokensFromSearchPaths(settings.tokenSearchPaths);
+
+        Object.entries(tokens).forEach(([tokenUid, res]) =>
         {
-            const res = loadToken(path);
-            if (res)
-            {
-                dispatch({ type: "setTokenDefinition", payload: {
-                    path: path,
-                    definition: res.tokenDef,
-                    callbacks: res.callbacks
-                }});
-            }
+            dispatch({ type: "setTokenDefinition", payload: {
+                definition: res.tokenDef,
+                callbacks: res.callbacks
+            }});
         });
+
+        if (failed.length > 0)
+        {
+            alert("Could not load the following tokens:\n\n" + failed.join("\n"));
+        }
 
         Midi.init();
     }, []);
@@ -238,6 +241,11 @@ export default function App() {
         _setMultiLayerSize(Math.max(Math.min(size, multiLayerSizeMax), multiLayerSizeMin));
     }
 
+    function reportABug()
+    {
+        open("https://github.com/SongSing/acheron/issues/new/choose");
+    }
+
     const elysiumControls = 
         <div className="elysiumControls">
             <button
@@ -268,6 +276,7 @@ export default function App() {
                     onChange={(v) => setMultiLayerSize(v)}
                 />
             </>}
+            <button onClick={reportABug}>🐞 Report a Bug</button>
         </div>;
 
     const inspector = isShowingInspector ? <Inspector layerIndex={state.selectedHex.layerIndex} /> : <></>;
@@ -275,14 +284,14 @@ export default function App() {
     return (
         <div className="app">
             {isShowingSettings && <Settings onHide={() => setIsShowingSettings(false)} />}
-            {isShowingTokenSettings && <TokenSettings onHide={() => setIsShowingTokenSettings(false)} />}
+            {isShowingTokenSettings && <TokenManager onHide={() => setIsShowingTokenSettings(false)} />}
             {state.editingLfo && <LfoEditor />}
             {isMultiLayerMode ? (
                 <div className="multilayer-view">
                     <div className="cols">
                         <div className="multilayer">
                             {state.layers.map((layer, layerIndex) => (
-                                <div className="layerContainer">
+                                <div className="layerContainer" key={layerIndex}>
                                     <div className="layerName">{layer.name}</div>
                                     <HexGrid layerIndex={layerIndex} key={layerIndex} size={multiLayerSize} />
                                 </div>

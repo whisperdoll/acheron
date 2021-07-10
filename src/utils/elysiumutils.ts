@@ -1,8 +1,10 @@
 import { AppState, LayerState } from "../AppContext";
-import { ControlState, Lfo, SerializedComposition, SerializedCompositionControl, SerializedCompositionLayer, SerializedCompositionToken, Token } from "../Types";
+import { ControlState, Lfo, SerializedComposition, SerializedCompositionControl, SerializedCompositionLayer, SerializedCompositionToken, SerializedCompositionTokenV1, SerializedCompositionV1, Token } from "../Types";
 import { buildFromDefs, DefaultLayerControls, DefaultPlayerControls } from "./DefaultDefinitions";
 import { mod } from "./utils";
 import * as npath from "path";
+import { buildLayer } from "../Layers";
+import { getTokenUIDFromPath } from "../Tokens";
 
 export const noteArray: string[] = [
     "C", // 0
@@ -19,11 +21,13 @@ export const noteArray: string[] = [
     "B", // 11
 ];
 
-
-export function buildTokenFromSerialized(appState: AppState, serialized: SerializedCompositionToken): { tokenState: Token, controls: Record<string, ControlState> } | null
+function buildTokenFromSerializedV1(appState: AppState, serialized: SerializedCompositionTokenV1): { tokenState: Token, controls: Record<string, ControlState> } | null
 {
     serialized = {...serialized, path: npath.normalize(serialized.path)};
-    const def = appState.tokenDefinitions[serialized.path];
+    const uid = getTokenUIDFromPath(serialized.path);
+    if (uid === null) return null;
+
+    const def = appState.tokenDefinitions[uid];
 
     if (!def) return null;
 
@@ -48,10 +52,50 @@ export function buildTokenFromSerialized(appState: AppState, serialized: Seriali
     const token: Token = {
         id: serialized.id,
         label: def.label,
-        path: serialized.path,
+        uid,
         store: {},
         symbol: def.symbol,
-        callbacks: {...appState.tokenCallbacks[serialized.path]},
+        callbacks: {...appState.tokenCallbacks[uid]},
+        controlIds: Object.keys(controls)
+    };
+
+    return {
+        tokenState: token,
+        controls
+    };
+}
+
+function buildTokenFromSerializedV2(appState: AppState, serialized: SerializedCompositionToken): { tokenState: Token, controls: Record<string, ControlState> } | null
+{
+    const def = appState.tokenDefinitions[serialized.uid];
+
+    if (!def) return null;
+
+    const controls = {...buildFromDefs(def.controls)};
+
+    for (const id in controls)
+    {
+        const serializedControl = serialized.controls.find(c => c.key === controls[id].key);
+        if (serializedControl)
+        {
+            controls[id] = {
+                ...controls[id],
+                id: serializedControl.id,
+                currentValueType: serializedControl.currentValueType,
+                inherit: serializedControl.inherit,
+                scalarValue: serializedControl.scalarValue,
+                lfo: {...serializedControl.lfo}
+            };
+        }
+    }
+
+    const token: Token = {
+        id: serialized.id,
+        label: def.label,
+        uid: serialized.uid,
+        store: {},
+        symbol: def.symbol,
+        callbacks: {...appState.tokenCallbacks[serialized.uid]},
         controlIds: Object.keys(controls)
     };
 
@@ -75,19 +119,19 @@ function serializeControl(control: ControlState): SerializedCompositionControl
 
 export function serializeComposition(appState: AppState): SerializedComposition
 {
-    const tokenMap = Object.entries(appState.tokens).map((e) =>
+    const tokenMap: SerializedCompositionToken[] = Object.entries(appState.tokens).map((e) =>
     {
         const [ tokenId, token ] = e;
 
        return {
             id: tokenId,
             controls: token.controlIds.map(cid => serializeControl(appState.controls[cid])),
-            path: token.path
+            uid: token.uid
         };
     });
 
     return {
-        version: 1,
+        version: 2,
         tokens: tokenMap,
         global: {
             transpose: serializeControl(appState.controls[appState.transpose]),
@@ -121,14 +165,144 @@ export function serializeComposition(appState: AppState): SerializedComposition
     };
 };
 
-export function deserializeComposition(appState: AppState, c: SerializedComposition): AppState
+function deserializeV1(appState: AppState, c: SerializedCompositionV1): AppState
 {
     const appTokens: Record<string, Token> = {};
     let appControls: Record<string, ControlState> = {};
 
     c.tokens.forEach((token) => 
     {
-        const res = buildTokenFromSerialized(appState, token);
+        const res = buildTokenFromSerializedV1(appState, token);
+        if (res)
+        {
+            const { tokenState, controls } = res;
+            appTokens[tokenState.id] = tokenState;
+            appControls = { ...appControls, ...controls };
+        }
+        else
+        {
+            console.log(res);
+        }
+    });
+    
+    for (const id in DefaultPlayerControls)
+    {
+        let control = {...DefaultPlayerControls[id]};
+        if (Object.prototype.hasOwnProperty.call(c.global, control.key))
+        {
+            const serializedControl = c.global[control.key as keyof SerializedComposition["global"]];
+            control = {
+                ...control,
+                id: serializedControl.id,
+                currentValueType: serializedControl.currentValueType,
+                inherit: serializedControl.inherit,
+                scalarValue: serializedControl.scalarValue,
+                lfo: {...serializedControl.lfo}
+            };
+            appControls[control.id] = control;
+        }
+    }
+
+    const layers: LayerState[] = [];
+
+    c.layers.forEach((layer) =>
+    {
+        const defaultControls = DefaultLayerControls();
+        for (const id in defaultControls)
+        {
+            let control = {...defaultControls[id]};
+            if (Object.prototype.hasOwnProperty.call(layer, control.key))
+            {
+                const serializedControl = layer[control.key as keyof SerializedCompositionLayer] as SerializedCompositionControl;
+                control = {
+                    ...control,
+                    id: serializedControl.id,
+                    currentValueType: serializedControl.currentValueType,
+                    inherit: serializedControl.inherit,
+                    scalarValue: serializedControl.scalarValue,
+                    lfo: {...serializedControl.lfo}
+                };
+                appControls[control.id] = control;
+            }
+        }
+
+        const newLayer: LayerState = {
+            name: layer.name,
+            enabled: layer.enabled,
+            midiChannel: layer.midiChannel,
+            key: layer.key,
+            transpose: layer.transpose.id,
+            tempo: layer.tempo.id,
+            barLength: layer.barLength.id,
+            velocity: layer.velocity.id,
+            emphasis: layer.emphasis.id,
+            tempoSync: layer.tempoSync,
+            noteLength: layer.noteLength.id,
+            timeToLive: layer.timeToLive.id,
+            pulseEvery: layer.pulseEvery.id,
+            tokenIds: layer.tokenIds,
+            playheads: [],
+            currentBeat: 0
+        };
+
+        layers.push(newLayer);
+    });
+
+    if (layers.length === 0)
+    {
+        const built = buildLayer(appState);
+        appControls = { ...appControls, ...built.controls };
+        layers.push(built.layerState);
+    }
+
+    console.log({
+        ...appState,
+        transpose: c.global.transpose.id,
+        tempo: c.global.tempo.id,
+        barLength: c.global.barLength.id,
+        velocity: c.global.velocity.id,
+        emphasis: c.global.emphasis.id,
+        noteLength: c.global.noteLength.id,
+        timeToLive: c.global.timeToLive.id,
+        pulseEvery: c.global.pulseEvery.id,
+        controls: appControls,
+        tokens: appTokens,
+        isPlaying: false,
+        selectedHex: { hexIndex: -1, layerIndex: 0 },
+        layers
+    });
+
+    return {
+        ...appState,
+        transpose: c.global.transpose.id,
+        tempo: c.global.tempo.id,
+        barLength: c.global.barLength.id,
+        velocity: c.global.velocity.id,
+        emphasis: c.global.emphasis.id,
+        noteLength: c.global.noteLength.id,
+        timeToLive: c.global.timeToLive.id,
+        pulseEvery: c.global.pulseEvery.id,
+        controls: appControls,
+        tokens: appTokens,
+        isPlaying: false,
+        selectedHex: { hexIndex: -1, layerIndex: 0 },
+        layers
+    }
+}
+
+export function deserializeComposition(appState: AppState, c: SerializedComposition): AppState
+{
+    if (c.version === 1)
+    {
+        return deserializeV1(appState, c as unknown as SerializedCompositionV1);
+    }
+
+    const appTokens: Record<string, Token> = {};
+    let appControls: Record<string, ControlState> = {};
+
+    c.tokens.forEach((token) => 
+    {
+        const res = buildTokenFromSerializedV2(appState, token);
         if (res)
         {
             const { tokenState, controls } = res;
@@ -193,11 +367,19 @@ export function deserializeComposition(appState: AppState, c: SerializedComposit
             timeToLive: layer.timeToLive.id,
             pulseEvery: layer.pulseEvery.id,
             tokenIds: layer.tokenIds,
-            playheads: []
+            playheads: [],
+            currentBeat: 0
         };
 
         layers.push(newLayer);
     });
+
+    if (layers.length === 0)
+    {
+        const built = buildLayer(appState);
+        appControls = { ...appControls, ...built.controls };
+        layers.push(built.layerState);
+    }
 
     return {
         ...appState,
@@ -212,8 +394,7 @@ export function deserializeComposition(appState: AppState, c: SerializedComposit
         controls: appControls,
         tokens: appTokens,
         isPlaying: false,
-        currentLayerIndex: 0,
-        selectedHex: -1,
+        selectedHex: { hexIndex: -1, layerIndex: 0 },
         layers
     }
 }
