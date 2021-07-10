@@ -33,6 +33,7 @@ Following that will be the JSON definition of the control. You can get more deta
 {
     "label": <string>,
     "symbol": <string>,
+    "uid": <string>,
     "controls": {
         <controlKey:string>: {
             "label": <string>,
@@ -53,6 +54,7 @@ Following that will be the JSON definition of the control. You can get more deta
 
 * `label`: The label for the token. This is the name that will show up in the app.
 * `symbol`: The symbol for the token. This will show up on any hex that the token is on.
+* `uid`: The unique ID of this token. Follow the format of `creator.tokenName`, as this will reduce intersections with other tokens.
 * `controls`: These are controls that will be provided to the user to interact with when they are configuring an instance of your token. Their values can be modified by the user or an LFO and accessed in the token's code to modify its behavior accordingly.
     * `controlKey`: This will be the key used to access the control's value in your code.
     * `type`: The type of value the control represents.
