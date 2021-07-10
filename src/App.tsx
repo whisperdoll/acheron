@@ -6,7 +6,7 @@ import HexGrid from "./Components/HexGrid";
 import Inspector from './Components/Inspector';
 import PlayerSettings from './Components/PlayerSettings';
 import LayerSettings from './Components/LayerSettings';
-import { remote } from 'electron';
+import { ipcRenderer, remote } from 'electron';
 import { performStartCallbacks, performStopCallbacks, progressLayer } from './utils/driver';
 import { loadTokensFromSearchPaths as _loadTokensFromSearchPaths } from './Tokens';
 import { getControlValue, TokenUID } from './Types';
@@ -68,6 +68,15 @@ export default function App() {
             if (state.isPlaying)
             {
             }
+        };
+
+        ipcRenderer.addListener("open", loadComposition);
+        ipcRenderer.addListener("saveAs", saveComposition);
+
+        return () =>
+        {
+            ipcRenderer.removeListener("open", loadComposition);
+            ipcRenderer.removeListener("saveAs", saveComposition);
         };
     });
 
@@ -279,8 +288,8 @@ export default function App() {
             {/* <button onClick={reloadScripts}>↻ Refresh Tokens</button> */}
             <button onClick={showSettings}>⚙ Settings</button>
             <button onClick={() => setIsShowingTokenSettings(true)}>Manage Tokens</button>
-            <button onClick={loadComposition}>📂 Open Composition</button>
-            <button onClick={saveComposition}>💾 Save Composition</button>
+            {/* <button onClick={loadComposition}>📂 Open Composition</button>
+            <button onClick={saveComposition}>💾 Save Composition</button> */}
             <button onClick={() => setIsShowingInspector(!isShowingInspector)}>{isShowingInspector ? "Hide" : "Show"} Inspector</button>
             <button onClick={() => setIsMultiLayerMode(!isMultiLayerMode)}>Toggle MultiLayer Mode</button>
             {isMultiLayerMode && <>
