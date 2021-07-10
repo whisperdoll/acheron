@@ -60,13 +60,56 @@ export default function TokenManager(props: Props)
 
     function toggleEnabled(tokenUid: TokenUID)
     {
-        dispatch({ type: "toggleTokenEnabled", payload: tokenUid });
+        dispatch({ type: "toggleTokenEnabled", payload: tokenUid, saveSettings: true });
+    }
+
+    function handlePathTextChanged(index: number, e: React.ChangeEvent<HTMLInputElement>)
+    {
+        dispatch({ type: "setTokenSearchPath", payload: { index, value: e.currentTarget.value, normalize: false } });
+    }
+
+    function browsePath(index: number)
+    {
+        const paths = remote.dialog.showOpenDialogSync(remote.getCurrentWindow(), {
+            title: "Pick token search path...",
+            properties: [ "openDirectory" ]
+        });
+
+        if (paths && paths[0])
+        {
+            dispatch({ type: "setTokenSearchPath", payload: { index, value: paths[0], normalize: true } });
+        }
     }
     
+    function removePath(index: number)
+    {
+        dispatch({ type: "removeTokenSearchPath", payload: index });
+    }
+
+    function addPath()
+    {
+        dispatch({ type: "addTokenSearchPath", payload: "" });
+    }
+
     return (
         <div className="tokenSettings-backdrop">
             <div className="tokenSettings-content">
                 <h1>Manage Tokens</h1>
+                <div className="tokenSearchPaths-container">
+                    <div>Token Search Paths</div>
+                    {state.settings.tokenSearchPaths.map((path, i) => (
+                        <div key={i} className="row">
+                            <input
+                                type="text"
+                                value={path}
+                                onChange={e => handlePathTextChanged(i, e)}
+                            />
+                            <button onClick={() => browsePath(i)}>Browse...</button>
+                            <button onClick={() => removePath(i)}>❌ Remove</button>
+                        </div>
+                    ))}
+                    <button onClick={addPath}>+ Add Search Path</button>
+                </div>
                 <div className="tokenSettings">
                     {Object.entries(state.settings.tokens).map(([uid, settings]) => (
                         <div className="tokenSetting" key={uid}>

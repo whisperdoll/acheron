@@ -5,9 +5,9 @@ import { SafeWriter } from "./safewriter";
 let exec = require("child_process").exec;
 import { remote } from "electron";
 
-export function confirmPrompt(prompt: string, title: string): boolean
+export function confirmPrompt(prompt: string, title: string, callback: (confirmed: boolean) => any)
 {
-    const buttonIndex = remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
+    remote.dialog.showMessageBox(remote.getCurrentWindow(), {
         message: prompt,
         buttons: [ "Yes", "No" ],
         type: "question",
@@ -15,9 +15,10 @@ export function confirmPrompt(prompt: string, title: string): boolean
         title: title,
         cancelId: 1,
         noLink: true
+    }).then((value) =>
+    {
+        callback(value.response === 0);
     });
-
-    return buttonIndex === 0;
 }
 
 export function NsToS(ns: number)

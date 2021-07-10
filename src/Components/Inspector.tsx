@@ -22,10 +22,19 @@ export default function(props: Props)
 
     function handleRemove(tokenIndex: number)
     {
-        if (!state.settings.confirmDelete ||
-            confirmPrompt(`Are you sure you want to delete the ${state.tokens[tokenIds[tokenIndex]].label} token?`, "Confirm remove token"))
+        if (state.settings.confirmDelete)
         {
-            dispatch({ type: "removeTokenFromSelected", payload: { tokenIndex } });
+            confirmPrompt(
+                `Are you sure you want to delete the ${state.tokens[tokenIds[tokenIndex]].label} token?`,
+                "Confirm remove token",
+                (confirmed: boolean) =>
+                {
+                    if (confirmed)
+                    {
+                        dispatch({ type: "removeTokenFromSelected", payload: { tokenIndex } });
+                    }
+                }
+            );
         }
     }
 

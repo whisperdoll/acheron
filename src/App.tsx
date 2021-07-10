@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import './App.global.scss';
-import { AppContext, loadSettings } from './AppContext';
+import { AppContext, AppSettings, loadSettings } from './AppContext';
 import { confirmPrompt, filesFromDirectoryR, makeUserDataPath } from './utils/utils';
 import HexGrid from "./Components/HexGrid";
 import Inspector from './Components/Inspector';
@@ -8,8 +8,8 @@ import PlayerSettings from './Components/PlayerSettings';
 import LayerSettings from './Components/LayerSettings';
 import { remote } from 'electron';
 import { performStartCallbacks, performStopCallbacks, progressLayer } from './utils/driver';
-import { loadTokensFromSearchPaths } from './Tokens';
-import { getControlValue } from './Types';
+import { loadTokensFromSearchPaths as _loadTokensFromSearchPaths } from './Tokens';
+import { getControlValue, TokenUID } from './Types';
 import * as path from "path";
 import Midi from './utils/midi';
 import { deserializeComposition, hexNotes, serializeComposition, transposeNote } from './utils/elysiumutils';
@@ -28,8 +28,6 @@ export default function App() {
     const [ isShowingSettings, setIsShowingSettings ] = useState(false);
     const [ isShowingInspector, setIsShowingInspector ] = useState(true);
     const [ isShowingTokenSettings, setIsShowingTokenSettings ] = useState(false);
-    const pulseRef = useRef<HTMLDivElement | null>(null);
-    const layerProgress = useRef<number[]>([]);
     const tickCallback = useRef<(deltaNs: number) => any>(() => 0);
     const timerWorker = useRef<Worker | null>(null);
     const [ isMultiLayerMode, setIsMultiLayerMode ] = useState(false);
@@ -66,17 +64,10 @@ export default function App() {
                 });
                 dispatch({ type: "setAppState", payload: newState });
             }
-    
-            // if (pulseRef.current)
-            // {
-            //     pulseRef.current.classList.toggle("active");
-            // }
-    
+
             if (state.isPlaying)
             {
             }
-    
-            // dispatch({ type: "pulse" });
         };
     });
 
@@ -92,13 +83,12 @@ export default function App() {
         }
     }, [ state.isPlaying ]);
 
-    useEffect(() =>
+    function loadTokensFromSearchPaths(searchPaths: string[])
     {
-        makeUserDataPath();
-        const settings = loadSettings();
-        dispatch({ type: "setSettings", payload: settings });
+        const defs = { ...state.tokenDefinitions };
+        const addedUids: TokenUID[] = [];
 
-        const { tokens, failed } = loadTokensFromSearchPaths(settings.tokenSearchPaths);
+        const { tokens, failed } = _loadTokensFromSearchPaths(searchPaths);
 
         Object.entries(tokens).forEach(([tokenUid, res]) =>
         {
@@ -106,12 +96,30 @@ export default function App() {
                 definition: res.tokenDef,
                 callbacks: res.callbacks
             }});
+            addedUids.push(tokenUid);
         });
+        
+        for (const uid in defs)
+        {
+            if (!addedUids.includes(uid))
+            {
+                dispatch({ type: "removeTokenDefinition", payload: uid });
+            }
+        }
 
         if (failed.length > 0)
         {
             alert("Could not load the following tokens:\n\n" + failed.join("\n"));
         }
+    }
+
+    useEffect(() =>
+    {
+        makeUserDataPath();
+        const settings = loadSettings();
+        dispatch({ type: "setSettings", payload: settings });
+
+        loadTokensFromSearchPaths(settings.tokenSearchPaths);
 
         Midi.init();
     }, []);
@@ -161,7 +169,7 @@ export default function App() {
     {
         if (state.layers.length === 1)
         {
-            remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
+            remote.dialog.showMessageBox(remote.getCurrentWindow(), {
                 message: "You must have at least one layer.",
                 buttons: [ "Fine" ],
                 noLink: true,
@@ -171,10 +179,19 @@ export default function App() {
         }
         else
         {
-            if (!state.settings.confirmDelete ||
-                confirmPrompt(`Are you sure you want to delete the layer '${state.layers[state.selectedHex.layerIndex].name}'?`, "Confirm delete"))
+            if (state.settings.confirmDelete)
             {
-                dispatch({ type: "removeCurrentLayer" });
+                confirmPrompt(
+                    `Are you sure you want to delete the layer '${state.layers[state.selectedHex.layerIndex].name}'?`,
+                    "Confirm delete",
+                    (confirmed) =>
+                    {
+                        if (confirmed)
+                        {
+                            dispatch({ type: "removeCurrentLayer" });
+                        }
+                    }
+                );
             }
         }
     }
@@ -246,6 +263,12 @@ export default function App() {
         open("https://github.com/SongSing/acheron/issues/new/choose");
     }
 
+    function handleTokenManagerHide()
+    {
+        setIsShowingTokenSettings(false);
+        loadTokensFromSearchPaths(state.settings.tokenSearchPaths);
+    }
+
     const elysiumControls = 
         <div className="elysiumControls">
             <button
@@ -284,7 +307,7 @@ export default function App() {
     return (
         <div className="app">
             {isShowingSettings && <Settings onHide={() => setIsShowingSettings(false)} />}
-            {isShowingTokenSettings && <TokenManager onHide={() => setIsShowingTokenSettings(false)} />}
+            {isShowingTokenSettings && <TokenManager onHide={handleTokenManagerHide} />}
             {state.editingLfo && <LfoEditor />}
             {isMultiLayerMode ? (
                 <div className="multilayer-view">
@@ -371,7 +394,7 @@ export default function App() {
                     {inspector}
                 </div>
                 <div className="statusBar">
-                    <div className="pulse" ref={pulseRef}></div>
+                    <div className={"pulse " + (Math.floor(state.layers[state.selectedHex.layerIndex].currentBeat) % 2 === 1 ? "active" : "")}></div>
                 </div>
             </>)}
         </div>

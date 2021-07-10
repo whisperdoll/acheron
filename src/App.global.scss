@@ -180,38 +180,64 @@ button.nostyle
         {
             max-width: 50%;
             max-height: 80%;
-        }
 
-        .tokenSettings
-        {
-            display: flex;
-            flex-direction: row;
-            flex-wrap: wrap;
-            overflow: auto;
-            justify-content: stretch;
-
-            .tokenSetting
+            .tokenSearchPaths-container
             {
                 border: 1px solid #aaa;
                 padding: 8px;
+                margin: 4px;
                 display: flex;
                 flex-direction: column;
-                flex: 1 0 calc(50% - 12px);
-                margin: 4px;
-    
+
+                .row
+                {
+                    display: flex;
+                    flex-direction: row;
+                    align-items: stretch;
+                }
+                
                 & > *
                 {
                     margin-bottom: 8px;
-    
+
                     &:last-child
                     {
                         margin-bottom: 0;
                     }
                 }
+            }
+
+            .tokenSettings
+            {
+                display: flex;
+                flex-direction: row;
+                flex-wrap: wrap;
+                overflow: auto;
+                justify-content: stretch;
     
-                .tokenLabel
+                .tokenSetting
                 {
-                    font-size: 1.2em;
+                    border: 1px solid #aaa;
+                    padding: 8px;
+                    display: flex;
+                    flex-direction: column;
+                    flex: 1 0 calc(50% - 12px);
+                    margin: 4px;
+        
+                    & > *
+                    {
+                        margin-bottom: 8px;
+        
+                        &:last-child
+                        {
+                            margin-bottom: 0;
+                        }
+                    }
+        
+                    .tokenLabel
+                    {
+                        font-size: 1.2em;
+                    }
                 }
             }
         }

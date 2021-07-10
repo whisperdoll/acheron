@@ -193,6 +193,9 @@ type Action = (
     | { type: "setDraggingType", payload: "move" | "copy" }
     | { type: "setIsDragging", payload: boolean }
     | { type: "toggleTokenEnabled", payload: TokenUID }
+    | { type: "setTokenSearchPath", payload: { index: number, value: string, normalize: boolean }}
+    | { type: "removeTokenSearchPath", payload: number }
+    | { type: "addTokenSearchPath", payload: string }
 ) & {
     saveSettings?: boolean
 }
@@ -361,14 +364,16 @@ function reducer(state: AppState, action: Action): AppState
                 {
                     return state;
                 }
-
-                const newLayers = state.layers.slice(0);
-                newLayers.splice(state.selectedHex.layerIndex, 1);
-
+                
+                const tokensToRemove = state.layers[state.selectedHex.layerIndex].tokenIds.reduce((acc, tids) => acc.concat(tids), []);
+                const controlsToRemove = tokensToRemove.map(tid => state.tokens[tid].controlIds).reduce((acc, tids) => acc.concat(tids), []);
+                
                 return {
                     ...state,
-                    layers: newLayers,
-                    selectedHex: { hexIndex: state.selectedHex.hexIndex, layerIndex: Math.max(0, state.selectedHex.layerIndex - 1) }
+                    layers: state.layers.filter((_, li) => li !== state.selectedHex.layerIndex),
+                    tokens: objectWithoutKeys(state.tokens, tokensToRemove),
+                    controls: objectWithoutKeys(state.controls, controlsToRemove),
+                    selectedHex: {...state.selectedHex, layerIndex: Math.min(state.layers.length - 2, state.selectedHex.layerIndex)}
                 };
             }
             case "setLayers":
@@ -463,6 +468,22 @@ function reducer(state: AppState, action: Action): AppState
             }
             case "removeTokenDefinition":
             {
+                const tokensToRemove: string[] = [];
+                const controlsToRemove: string[] = [];
+
+                state.layers.forEach(layer =>
+                {
+                    layer.tokenIds.forEach(tokenIdArray =>
+                    {
+                        const toRemove = tokenIdArray.filter(id => state.tokens[id].uid === action.payload);
+                        tokensToRemove.push(...toRemove);
+                        toRemove.forEach(tid =>
+                        {
+                            controlsToRemove.push(...state.tokens[tid].controlIds);
+                        });
+                    });
+                });
+
                 return {
                     ...state,
                     tokenDefinitions: objectWithoutKeys(state.tokenDefinitions, [action.payload]),
@@ -470,7 +491,16 @@ function reducer(state: AppState, action: Action): AppState
                     settings: {
                         ...state.settings,
                         tokens: objectWithoutKeys(state.settings.tokens, [action.payload])
-                    }
+                    },
+                    layers: state.layers.map((layer) =>
+                    {
+                        return {
+                            ...layer,
+                            tokenIds: layer.tokenIds.map(tidArray => tidArray.filter(tid => !tokensToRemove.includes(tid)))
+                        };
+                    }),
+                    tokens: objectWithoutKeys(state.tokens, tokensToRemove),
+                    controls: objectWithoutKeys(state.controls, controlsToRemove)
                 };
             }
             case "setTokenShortcut":
@@ -614,6 +644,43 @@ function reducer(state: AppState, action: Action): AppState
                                 enabled: !state.settings.tokens[action.payload].enabled
                             }
                         }
+                    }
+                };
+            }
+            case "setTokenSearchPath":
+            {
+                let p = action.payload.value;
+
+                if (action.payload.normalize)
+                {
+                    p = path.normalize(p);
+                }
+
+                return {
+                    ...state,
+                    settings: {
+                        ...state.settings,
+                        tokenSearchPaths: state.settings.tokenSearchPaths.map((v, i) => i !== action.payload.index ? v : p)
+                    }
+                };
+            }
+            case "removeTokenSearchPath":
+            {
+                return {
+                    ...state,
+                    settings: {
+                        ...state.settings,
+                        tokenSearchPaths: state.settings.tokenSearchPaths.filter((_, i) => i !== action.payload)
+                    }
+                };
+            }
+            case "addTokenSearchPath":
+            {
+                return {
+                    ...state,
+                    settings: {
+                        ...state.settings,
+                        tokenSearchPaths: state.settings.tokenSearchPaths.concat([ action.payload ])
                     }
                 };
             }

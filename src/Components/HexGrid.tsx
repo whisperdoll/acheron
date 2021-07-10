@@ -69,10 +69,19 @@ export default function(props: Props)
 
             if (e.key === "Delete" && state.layers[props.layerIndex].tokenIds[state.selectedHex.hexIndex].length > 0)
             {
-                if (!state.settings.confirmDelete ||
-                    confirmPrompt("Are you sure you want to clear that hex?", "Confirm clear hex"))
+                if (state.settings.confirmDelete)
                 {
-                    dispatch({ type: "clearHex", payload: { layerIndex: props.layerIndex, hexIndex: state.selectedHex.hexIndex }});
+                    confirmPrompt(
+                        "Are you sure you want to clear that hex?",
+                        "Confirm clear hex",
+                        (confirmed) =>
+                        {
+                            if (confirmed)
+                            {
+                                dispatch({ type: "clearHex", payload: { layerIndex: props.layerIndex, hexIndex: state.selectedHex.hexIndex }});
+                            }
+                        }
+                    );
                 }
             }
             else if ([...e.key].length === 1)
