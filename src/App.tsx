@@ -1,16 +1,12 @@
 import React, { useContext, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { HashRouter as Router, Switch, Route, Link, NavLink } from 'react-router-dom';
-import icon from '../assets/icon.svg';
 import './App.global.scss';
 import { AppContext, loadSettings } from './AppContext';
-import { loadSongs } from './utils/metadata';
 import { confirmPrompt, filesFromDirectoryR, makeUserDataPath } from './utils/utils';
 import HexGrid from "./Components/HexGrid";
 import Inspector from './Components/Inspector';
 import PlayerSettings from './Components/PlayerSettings';
 import LayerSettings from './Components/LayerSettings';
 import { remote } from 'electron';
-import useInterval from './Hooks/useInterval';
 import { performStartCallbacks, performStopCallbacks, progressLayer } from './utils/driver';
 import { loadToken } from './Tokens';
 import { getControlValue } from './Types';
@@ -21,7 +17,6 @@ import Settings from "./Components/Settings";
 import LfoEditor from "./Components/LfoEditor";
 import * as fs from "fs";
 import TokenSettings from './Components/TokenSettings';
-import useImmediate from './Hooks/useImmediate';
 
 export default function App() {
     const { state, dispatch } = useContext(AppContext)!;
