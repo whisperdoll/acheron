@@ -1,6 +1,6 @@
 import * as fs from "fs";
 import * as vm from "vm";    
-import { ControlDataTypes, ControlState, SelectOption, TokenDefinition, Token, TokenCallbacks, SerializedCompositionToken, copyControl, TokenUID } from "./Types";
+import { ControlDataTypes, ControlState, SelectOption, TokenDefinition, Token, TokenCallbacks, copyControl, TokenUID } from "./Types";
 import { buildFromDefs } from "./utils/DefaultDefinitions";
 import * as npath from "path";
 import { AppState, LayerState } from "./AppContext";

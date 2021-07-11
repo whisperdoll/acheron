@@ -1,7 +1,6 @@
 import App from "./App";
 import React, { useReducer, FunctionComponent } from "react";
 import { array_remove, array_remove_at, boolToSort, capitalize, filesFromDirectoryR, getUserDataPath, objectWithoutKeys } from "./utils/utils";
-import { loadSongs } from "./utils/metadata";
 import { SafeWriter } from "./utils/safewriter";
 import * as path from "path";
 import * as fs from "fs";
@@ -11,7 +10,7 @@ import { buildFromDefs, DefaultPlayerControls, LayerControlKey, PlayerControlKey
 import { MidiOutput } from "./utils/midi";
 import { v4 as uuidv4 } from 'uuid';
 import { buildToken, copyToken } from "./Tokens";
-import migrateSettings from "./SettingsMigrator";
+import { migrateSettings } from "./migrators";
 
 export interface TokenSettings
 {

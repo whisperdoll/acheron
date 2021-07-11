@@ -243,7 +243,7 @@ function getLfoValue(appState: AppState, lfo: Lfo): any
     {
         case "random":
         {
-            return lfo.min + (seedRandom(Math.floor(now / period) * period)() * (lfo.max - lfo.min));
+            return lfo.min + (seedRandom((Math.floor(now / period) * period).toString())() * (lfo.max - lfo.min));
         }
         case "sawtooth":
         {
@@ -265,86 +265,4 @@ function getLfoValue(appState: AppState, lfo: Lfo): any
     }
 }
 
-export interface SerializedCompositionControl
-{
-    key: string;
-    id: string;
-    currentValueType: "scalar" | "lfo" | "inherit";
-    inherit?: string;
-    scalarValue: any;
-    lfo: Lfo;
-}
 
-export interface SerializedCompositionTokenV1
-{
-    id: string;
-    controls: SerializedCompositionControl[];
-    path: string;
-}
-
-export interface SerializedCompositionTokenV1
-{
-    id: string;
-    controls: SerializedCompositionControl[];
-    path: string;
-}
-
-export interface SerializedCompositionToken
-{
-    id: string;
-    controls: SerializedCompositionControl[];
-    uid: string;
-}
-
-export interface SerializedCompositionLayer
-{
-    name: string;
-    enabled: boolean;
-    midiChannel: number;
-    key: number;
-    transpose: SerializedCompositionControl;
-    tempo: SerializedCompositionControl;
-    barLength: SerializedCompositionControl;
-    velocity: SerializedCompositionControl;
-    emphasis: SerializedCompositionControl;
-    tempoSync: boolean;
-    noteLength: SerializedCompositionControl;
-    timeToLive: SerializedCompositionControl;
-    pulseEvery: SerializedCompositionControl;
-    tokenIds: string[][];
-}
-
-export interface SerializedComposition
-{
-    version: number;
-    tokens: SerializedCompositionToken[];
-    global: {
-        transpose: SerializedCompositionControl;
-        tempo: SerializedCompositionControl;
-        barLength: SerializedCompositionControl;
-        velocity: SerializedCompositionControl;
-        emphasis: SerializedCompositionControl;
-        noteLength: SerializedCompositionControl;
-        timeToLive: SerializedCompositionControl;
-        pulseEvery: SerializedCompositionControl;
-    };
-    layers: SerializedCompositionLayer[];
-}
-
-
-export interface SerializedCompositionV1
-{
-    version: number;
-    tokens: SerializedCompositionTokenV1[];
-    global: {
-        transpose: SerializedCompositionControl;
-        tempo: SerializedCompositionControl;
-        barLength: SerializedCompositionControl;
-        velocity: SerializedCompositionControl;
-        emphasis: SerializedCompositionControl;
-        noteLength: SerializedCompositionControl;
-        timeToLive: SerializedCompositionControl;
-        pulseEvery: SerializedCompositionControl;
-    };
-    layers: SerializedCompositionLayer[];
-}

@@ -12,13 +12,14 @@ import { loadTokensFromSearchPaths as _loadTokensFromSearchPaths } from './Token
 import { getControlValue, TokenUID } from './Types';
 import * as path from "path";
 import Midi from './utils/midi';
-import { deserializeComposition, hexNotes, serializeComposition, transposeNote } from './utils/elysiumutils';
+import { hexNotes, transposeNote } from './utils/elysiumutils';
 import Settings from "./Components/Settings";
 import LfoEditor from "./Components/LfoEditor";
 import * as fs from "fs";
 import TokenManager from './Components/TokenManager';
 import NumberInput from './Components/NumberInput';
 import open from "open";
+import { deserializeComposition, serializeComposition } from './Serialization';
 
 export default function App() {
     const { state, dispatch } = useContext(AppContext)!;
@@ -201,6 +202,10 @@ export default function App() {
                         }
                     }
                 );
+            }
+            else
+            {
+                dispatch({ type: "removeCurrentLayer" });
             }
         }
     }

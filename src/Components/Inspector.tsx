@@ -36,6 +36,10 @@ export default function(props: Props)
                 }
             );
         }
+        else
+        {
+            dispatch({ type: "removeTokenFromSelected", payload: { tokenIndex } });
+        }
     }
 
     useEffect(() =>

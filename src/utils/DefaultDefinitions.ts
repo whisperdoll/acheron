@@ -1,4 +1,4 @@
-import { ControlState, ControlDefinition, Lfo, SelectOption, ControlDataType, SerializedCompositionControl } from "../Types";
+import { ControlState, ControlDefinition, Lfo, SelectOption, ControlDataType } from "../Types";
 import { AppState } from "../AppContext";
 import { v4 as uuidv4 } from 'uuid';
 

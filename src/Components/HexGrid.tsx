@@ -83,6 +83,10 @@ export default function(props: Props)
                         }
                     );
                 }
+                else
+                {
+                    dispatch({ type: "clearHex", payload: { layerIndex: props.layerIndex, hexIndex: state.selectedHex.hexIndex }});
+                }
             }
             else if ([...e.key].length === 1)
             {
