@@ -86,6 +86,7 @@ export default function(props: Props)
                 newValue = Math.floor(value);
                 break;
             case "decimal":
+                newValue = value;
                 break;
             case "direction":
                 newValue = Math.min(Math.max(0, Math.floor(value)), 5);
