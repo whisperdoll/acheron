@@ -1,0 +1,203 @@
+<p>Acheron is an Electron-based recreation of Elysium, a probabilistic generative midi sequencer for Mac OS X (<a href="https://github.com/mmower/elysium">https://github.com/mmower/elysium</a>)</p>
+
+<p>Demo video by <a href="https://twitter.com/hvst_music" rel="nofollow">hellvalleyskytrees</a> here: <a href="https://www.youtube.com/watch?v=BkXd8Xn45_k" rel="nofollow">https://www.youtube.com/watch?v=BkXd8Xn45_k</a></p>
+
+<p>Download the latest Acheron release here: <a href="https://github.com/SongSing/acheron/releases">https://github.com/SongSing/acheron/releases</a><br />
+the current version as of this writing is <strong>Acheron-1.1.0-win.zip</strong><br />
+Extract the zip file and run <strong>Acheron.exe</strong>, then <strong>enable the built in tokens</strong> in the <strong>Manage Tokens </strong>window, as described below.</p>
+
+<p>Please note that Acheron is a <strong>MIDI sequencer</strong>, and as such produces no sound on its own.<br />
+You&#39;ll need a <strong>Digital Audio Workstation</strong> and <strong>MIDI loopback driver</strong>, or a <strong>MIDI interface</strong> and a physical <strong>MIDI device</strong>.</p>
+
+<p>The following is a list of terms used by Acheron and their definitions, including information on their properties when applicable:</p>
+
+<p><strong>Composition</strong>:<br />
+&nbsp;&nbsp; &nbsp;An Acheron document.<br />
+&nbsp;&nbsp; &nbsp;Options that apply to the whole composition (or all compositions) are located in the bar at the bottom center of the window.<br />
+&nbsp;&nbsp; &nbsp;These include:<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<strong>Play/Pause</strong> (or press enter)<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<strong>Settings</strong>, including:<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<strong>Play notes on click</strong><br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <strong>&nbsp;Wrap playheads</strong><br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;When wrap playheads is on,&nbsp; playheads that exit any side of the grid will apear on the opposite side.<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<strong>Show confirmation prompts when removing things</strong><br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<strong>MIDI outputs</strong><br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;Here you can select which output or outputs you want Acheron to send MIDI data to.<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;If you want to use Acheron with your DAW of choice rather than a hardware device, you&#39;ll need a <strong>midi loopback driver</strong> such as <strong>loopmidi</strong>:<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<a href="https://www.tobias-erichsen.de/software/loopmidi.html">https://www.tobias-erichsen.de/software/loopmidi.html</a><br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<strong>Manage Tokens</strong><br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;This is where you can add and enable/disable token types.<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp; &nbsp; Tokens <strong><span style="color:#e74c3c">must</span></strong> be <strong>enabled</strong> here to add them to a composition:<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; <strong><span style="color:#e74c3c">The first time you run Acheron</span>, </strong>click <strong>Manage Tokens,</strong> then<strong><span style="color:#e74c3c"> enable all of the tokens</span>.</strong><br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <span style="color:#e74c3c"><strong>&nbsp; &nbsp;&nbsp; IMPORTANT</strong></span>: If you don&#39;t see any tokens in the Manage Tokens window, please make sure the <strong>token search paths</strong> include <strong>/tokens/</strong> in the root of the Acheron Folder.<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;Optionally you may choose a <strong>keyboard shortcut</strong> for each token type.<br />
+<strong>&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;Open Composition<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;Save Composition<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;Show/Hide inspector</strong><br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;Toggles visibility of the righthand panel<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<strong>Toggle MultiLayer Mode</strong><br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;Allows you to view all layers at once. Note that you can still add and remove tokens in this mode.</p>
+
+<p><strong>Tick</strong>:<br />
+&nbsp;&nbsp; &nbsp;Time between beats, defined by the player or layer tempo.</p>
+
+<p><strong>Hex</strong>:<br />
+&nbsp;&nbsp; &nbsp;One of the 204 hexagonal cells in the grid at the center of the window, each corresponding to a musical note on the harmonic table:<br />
+&nbsp;&nbsp;&nbsp; <a href="https://en.wikipedia.org/wiki/Harmonic_table_note_layout">https://en.wikipedia.org/wiki/Harmonic_table_note_layout</a></p>
+
+<p><strong>LFO</strong>:<br />
+&nbsp;&nbsp; &nbsp;Low frequency oscillator. Can be used to control most properties, by selecting &#39;lfo&#39; in the <strong>control mode</strong> menu next to the propery name.<br />
+&nbsp;&nbsp;&nbsp; When a property&#39;s<strong> control mode</strong> is set to lfo, a button apears under the property, allowing you to edit the properties of the lfo. These include:<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <strong>LFO Type</strong><br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Can be set to <strong>Sin</strong>, <strong>Square</strong>, <strong>Random</strong>, <strong>Sequence</strong>, or <strong>Sawtooth</strong><br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <strong>Minimum Value</strong><br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <strong>Maximum Value<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Period</strong><br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; The time it takes the lfo to complete a cycle.<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <strong>Low Period</strong> (square only)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; the time spent every cycle at the minimum value<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <strong>High Period</strong> (square only)<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; the time spent every cycle at the maximum value</p>
+
+<p><strong>Properties</strong>:<br />
+&nbsp;&nbsp; &nbsp;Properties are located in the panels on the left and right sides of the window.<br />
+&nbsp;&nbsp; &nbsp;The left hand panel contains <strong>global (player tab)</strong> and<strong> layer specific (layer tab)</strong> properties.<br />
+&nbsp;&nbsp; &nbsp;The righthand panel contains properties relating to individual <strong>tokens</strong>.<br />
+&nbsp;&nbsp; &nbsp;To change the <strong>control mode</strong> of a property, use the menu immediately to the right of the property name.<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;Properties followed by a * in this document can be controlled by<strong> lfos</strong>.<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;Properties followed by a ^ in this document can be<strong> inherited</strong> from the <strong>player</strong> or <strong>layer</strong> settings, and usually are by default.</p>
+
+<p><br />
+<strong>Player</strong>:<br />
+&nbsp;&nbsp; &nbsp;The player tab in the lefthand panel defines global settings for the composition.<br />
+&nbsp;&nbsp; &nbsp;It has the following user editable properties:</p>
+
+<p>&nbsp;&nbsp; &nbsp;<strong>Note settings</strong>:<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<strong>Transpose</strong>*<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<strong>Tempo</strong>* (in beats per minute)<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<strong>Bar Length</strong>*<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;Controls when volume is determined by the <strong>emphasis</strong> property (first beat of each bar) or the <strong>velocity</strong> property (all other beats.)<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<strong>Velocity</strong>*<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;MIDI note velocity. Usually controls the volume of notes.<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<strong>Emphasis</strong>*<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;Overrides velocity on the first beat of each bar.<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<strong>Note Length</strong>* (in seconds)<br />
+&nbsp;&nbsp; &nbsp;<strong>Generator settings</strong>:<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<strong>Time to Live</strong>*<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;Number of ticks to wait before automatically deleting playheads.<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<strong>Pulse Every</strong>*<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;Number of ticks to wait between emitting playheads from <strong>generator tokens</strong>.</p>
+
+<p><strong>Layer</strong>:<br />
+&nbsp;&nbsp; &nbsp;Each layer is it&#39;s own separate hex grid.<br />
+&nbsp;&nbsp; &nbsp;Layers can be used to play multiple instruments, at multiple tempos, or simply to create melodies that don&#39;t interact with eachother.<br />
+&nbsp;&nbsp; &nbsp;The layer controls are located at the top center of the window, from here you can create, delete, and rename layers.<br />
+&nbsp;&nbsp; &nbsp;The layer tab in the lefthand panel controls the settings of the currently selected layer.<br />
+&nbsp;&nbsp; &nbsp;It contains all of the same properties as the player tab (inherited from the player tab by default) as well as the following:<br />
+&nbsp;&nbsp; &nbsp;<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<strong>Enabled</strong><br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;enable or disable the layer<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<strong>MIDI channel </strong>(1-16)<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<strong>Key</strong><br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;When a key is selected, the notes in that key are highlighted, and note tokens not in the selected key won&#39;t play</p>
+
+<p><strong>Playhead</strong>:<br />
+&nbsp;&nbsp; &nbsp;A <span style="color:#e74c3c">red</span> hex that moves across the grid, one hex at a time, each tick.<br />
+&nbsp;&nbsp; &nbsp;Playheads are emited by <strong>generator tokens</strong>. &nbsp;<br />
+&nbsp;&nbsp; &nbsp;A midi note plays when a playhead enters a hex containing a <strong>note token</strong>.<br />
+&nbsp;&nbsp; &nbsp;Playheads have the properties <strong>direction</strong> and <strong>lifespan</strong> (number of ticks before deletion)<br />
+&nbsp;&nbsp; &nbsp;These properties are not directly editable by the user. instead, they are manipulated by placing <strong>tokens</strong>.</p>
+
+<p><strong>Tokens</strong>:<br />
+&nbsp;&nbsp; &nbsp;Tokens create and manipulate playheads.<br />
+&nbsp;&nbsp; &nbsp;You can place tokens on the selected hex using the <strong>add token</strong> button near the top of the righthand panel, or by <strong>right clicking</strong> on a hex, or with user definable <strong>keyboard shortcuts</strong>.<br />
+&nbsp;&nbsp; &nbsp;You can remove tokens by clicking the <span style="color:#e74c3c">red x</span> at the top right of the panel of the desired token, or by <strong>right clicking</strong> on a hex, or by combining your user defined <strong>keyboard shortcuts</strong> with the <strong>Alt</strong> key.<br />
+&nbsp;&nbsp; &nbsp;Pressing <strong>delete</strong> will remove all tokens from the selected hex.<br />
+&nbsp;&nbsp; &nbsp;One way that Acheron differs from Elysium is that Acheron allows <strong>multiple tokens of the same type on a single hex</strong>.<br />
+&nbsp;&nbsp;&nbsp; You may also <strong>drag and drop</strong> tokens from one location on the grid to another (hold shift while dragging to copy)<br />
+&nbsp;&nbsp;&nbsp; Users can create their own tokens with json and javascript, for more information see the custom token documentation here:<br />
+&nbsp;&nbsp; &nbsp;<a href="https://github.com/SongSing/acheron/blob/main/Token_Documentation.md">https://github.com/SongSing/acheron/blob/main/Token_Documentation.md</a><br />
+&nbsp;&nbsp; &nbsp;<br />
+&nbsp;&nbsp; &nbsp;Acheron currently comes with the following tokens:</p>
+
+<p>&nbsp;&nbsp; &nbsp;<strong>Note token</strong>:<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;Plays the midi note of the hex it is located on when entered by a playhead.<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;It has the following properties, editable in the righthand panel:<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<strong>Probability</strong>*<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;Controls whether a token runs or is ignored in a probabilisticmanner. It&#39;s value is the percent chance the token will run.<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<strong>Triad</strong>*<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;Plays the selected three note chord (relative to the token&#39;s hex) insted of a single note.<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;One of the advantages of the harmonic table layout is that these simple clusters form common chords, the shapes of which are the same in any key.<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<strong>Transpose</strong>*<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<strong>Gate</strong>:<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;Controls whether a token runs or is ignored in a deterministic manner.<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;Each time a token is entered by a playhead, the token&#39;s internal gate sequence is advanced by one. When the gate sequence reaches the end, it loops.<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<strong>Gate Off</strong>*<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;Number of times to ignore token. Runs first by default.<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<strong>Gate On</strong>*<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;Number of times to run token. Runs after gate off by default.<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<strong>Gate Offset</strong>*<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;Offsets the gate sequence.<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;For example, if you set gate off to four, gate on to four, and gate offset to two, you get the sequence (on, on, off, off, off, off, on, on)<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<strong>Velocity</strong>*^<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;MIDI note velocity. Usually controls the volume of notes.<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<strong>Emphasis</strong>*^<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;Overrides velocity on the first beat of each bar.<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<strong>Note Length</strong>*^ (in seconds)<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<strong>Ghost Beats</strong>*<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<span style="color:#e74c3c">Not implemented yet</span></p>
+
+<p>&nbsp;&nbsp; &nbsp;<strong>Generate token</strong>:<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;Emits playheads in the chosen direction.<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;It has the following properties, editable in the righthand panel:<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<strong>Trigger Mode</strong>*<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;When set to <strong>beat</strong>,&nbsp; playheads are emitted at the beginning of each period defined by the pulse every property. This is the default.<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;When set to <strong>impact</strong>, playheads are emitted when a playhead enters the hex containing the token.<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;When set to <strong>MIDI</strong>, playheads are emitted when the user plays the midi note corresponding to the hex ccontaining the token. <span style="color:#e74c3c">This is not implemented yet.</span><br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<strong>Probability</strong>*<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;see the <strong>probability </strong>section of the note token documentation.<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<strong>Direction</strong>*<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<strong>Pulse every</strong>*^<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;Number of ticks to wait between emitting playheads.<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<strong>Offset</strong>*<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; Position in the cycle defined by <strong>pulse every </strong>at which playheads are emitted.<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;For example, if <strong>pulse every </strong>is set to four, and <strong>offset </strong>is set to one, the following pattern will result, with 0 representing the emission of a playhead: x0xxx0xxx0xxx0xx...<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<br />
+&nbsp;&nbsp; &nbsp;<strong>Rebound token</strong>:<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;Changes the direction of any playhead that enters the hex it is located on.<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;It has the following properties, editable in the righthand panel:<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<strong>Probability</strong>*<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;see the probability section of the note token documentation.<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<strong>Direction</strong>*<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<strong>Gate*</strong><br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;See the gate section of the note token documentation.</p>
+
+<p><br />
+&nbsp;&nbsp; &nbsp;<strong>Skip token</strong>:<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;Moves any playhead that enters it in the direction it&#39;s currently going (or the direction of a rebound token on the same hex) by the specified amount.<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;Supports negative numbers, allowing a playhead to &quot;skip backwards&quot; in the opposite of it&#39;s current direction.<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;It has the following properties, editable in the righthand panel:<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<strong>Probability</strong>*<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;see the probability section of the note token documentation.<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<strong>Skip Amount</strong>*<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<strong>Gate*</strong><br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;See the gate section of the note token documentation.</p>
+
+<p>&nbsp;&nbsp; &nbsp;<strong>Split token</strong>:<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;When a playhead enters a hex with a split token, a playhead is generated in <strong>every direction except the one the initial playhead came from</strong>.<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;Unless <strong>bounceback</strong> is turned on, in which case it <strong>generates one that way too</strong>.<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;It has the following properties, editable in the righthand panel:<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<strong>Probability</strong>*<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;see the probability section of the note token documentation.<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<strong>Gate*</strong><br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;See the gate section of the note token documentation.<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<strong>Bounceback</strong>*<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;</p>
+
+<p>&nbsp;&nbsp; &nbsp;<strong>Absorb token</strong>:<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; Deletes any playhead that enters it&#39;s hex.<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;It has the following properties, editable in the righthand panel:<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<strong>Probability</strong>*<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;see the probability section of the note token documentation.<br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;<strong>Gate*</strong><br />
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;See the gate section of the note token documentation.</p>

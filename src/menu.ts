@@ -8,6 +8,8 @@ import {
     ipcRenderer,
 } from 'electron';
 
+import * as path from "path";
+
 interface DarwinMenuItemConstructorOptions extends MenuItemConstructorOptions {
     selector?: string;
     submenu?: DarwinMenuItemConstructorOptions[] | Menu;
@@ -271,6 +273,13 @@ export default class MenuBuilder
             {
                 label: 'Help',
                 submenu: [
+                    {
+                        label: "Documentation",
+                        click()
+                        {
+                            shell.openExternal(path.join(process.cwd(), "documentation.html"));
+                        }
+                    },
                     {
                         label: 'Troubleshooting',
                         click() {
