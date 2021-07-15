@@ -6,7 +6,7 @@ import HexGrid from "./Components/HexGrid";
 import Inspector from './Components/Inspector';
 import PlayerSettings from './Components/PlayerSettings';
 import LayerSettings from './Components/LayerSettings';
-import { ipcRenderer, remote } from 'electron';
+import { ipcRenderer, remote, webFrame } from 'electron';
 import { performStartCallbacks, performStopCallbacks, progressLayer } from './utils/driver';
 import { loadTokensFromSearchPaths as _loadTokensFromSearchPaths } from './Tokens';
 import { getControlValue, TokenUID } from './Types';
@@ -71,13 +71,28 @@ export default function App() {
             }
         };
 
+        function keyDown(e: KeyboardEvent)
+        {
+            if ((e.key === "+" || e.key === "=") && e.ctrlKey)
+            {
+                webFrame.setZoomLevel(webFrame.getZoomLevel() + 0.5);
+            }
+            if (e.key === "-" && e.ctrlKey)
+            {
+                webFrame.setZoomLevel(webFrame.getZoomLevel() - 0.5);
+            }
+        }
+
         ipcRenderer.addListener("open", loadComposition);
         ipcRenderer.addListener("saveAs", saveComposition);
+
+        window.addEventListener("keydown", keyDown);
 
         return () =>
         {
             ipcRenderer.removeListener("open", loadComposition);
             ipcRenderer.removeListener("saveAs", saveComposition);
+            window.removeEventListener("keydown", keyDown);
         };
     });
 
