@@ -11,3 +11,4 @@ It's the first version.
     * You can easily make the app look broken with these, use them wisely...
 * More direct bug report link
 * Added documentation by [hellvalleyskytrees](https://twitter.com/hvst_music) viewable in help menu
+* Updated icon by her too!
