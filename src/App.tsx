@@ -292,7 +292,7 @@ export default function App() {
 
     function reportABug()
     {
-        open("https://github.com/SongSing/acheron/issues/new/choose");
+        open("https://github.com/SongSing/acheron/issues/new?assignees=&labels=bug&template=1-Bug_report.md");
     }
 
     function handleTokenManagerHide()

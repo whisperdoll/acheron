@@ -281,7 +281,7 @@ export default class MenuBuilder
                         label: "Report a Bug",
                         click()
                         {
-                            shell.openExternal("https://github.com/SongSing/acheron/issues/new/choose");
+                            shell.openExternal("https://github.com/SongSing/acheron/issues/new?assignees=&labels=bug&template=1-Bug_report.md");
                         }
                     },
                     {
