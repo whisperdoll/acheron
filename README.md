@@ -20,7 +20,7 @@ Did you follow the setup...?
 
 >My composition won't load after moving folders around.
 
-Right now, tokens are saved by path in a composition file. I'll figure out a better way to do this eventually. You need to modify your composition file in a text editor and remedy the token paths.
+You will need to ensure your search paths are correct in the Token Manager.
 
 >I have another issue!
 
