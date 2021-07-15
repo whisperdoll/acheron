@@ -1,3 +1,13 @@
 # 1.0.0 (2021/07/08)
 
 It's the first version.
+
+# 1.1.1 (2021/07/14)
+
+* Fixed Note Length controls (and other decimal controls)
+* Improved QOL for number inputs
+    * Can now hold step buttons to repeatedly increment/decrement
+* Add zoom feature via Ctrl+ and Ctrl-.
+    * You can easily make the app look broken with these, use them wisely...
+* More direct bug report link
+* Added documentation by [hellvalleyskytrees](https://twitter.com/hvst_music) viewable in help menu
