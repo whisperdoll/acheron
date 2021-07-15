@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useRef, useState } from "react"
 
 interface Props
 {
@@ -7,19 +7,48 @@ interface Props
     step?: number;
     onChange: (value: number) => any;
     coerce?: (value: number) => number;
+    roundPlaces?: number;
     value: number;
 }
 
 export default function NumberInput(props: Props)
 {
     const [ savedValue, setSavedValue ] = useState<string | number>(props.value);
+    const mouseIsDown = useRef<boolean>(false);
+    const mouseDownTime = useRef<number>(0);
+    const initialHoldTimeout = useRef<NodeJS.Timeout | null>(null);
+    const holdInterval = useRef<NodeJS.Timeout | null>(null);
+    const savedIncrement = useRef<Function>(() => 0);
+    const savedDecrement = useRef<Function>(() => 0);
 
-    function emitChange(value: number)
+    function emitChange(value: number, autoPerformTransformations=true)
     {
+        if (autoPerformTransformations)
+        {
+            value = performTransformations(value);
+        }
+
         if (value !== props.value)
         {
             props.onChange(value);
         }
+    }
+
+    function performTransformations(value: number)
+    {
+        if (props.roundPlaces !== undefined && props.roundPlaces >= 0)
+        {
+            value = parseFloat(value.toFixed(props.roundPlaces));
+            // const pow = Math.pow(10, Math.floor(props.roundPlaces));
+            // return Math.round((value + Number.EPSILON) * pow) / pow;
+        }
+
+        if (props.coerce)
+        {
+            value = props.coerce(value);
+        }
+
+        return value;
     }
 
     function handleChange(e: React.ChangeEvent<HTMLInputElement>)
@@ -27,13 +56,14 @@ export default function NumberInput(props: Props)
         let value = parseFloat(e.currentTarget.value);
         if (!isNaN(value))
         {
-            if (props.coerce)
-            {
-                value = props.coerce(value);
-            }
-            emitChange(value);
+            value = performTransformations(value);
+            emitChange(value, false);
+            setSavedValue(value);
         }
-        setSavedValue(e.currentTarget.value);
+        else
+        {
+            setSavedValue(e.currentTarget.value);
+        }
     }
 
     useEffect(() =>
@@ -61,36 +91,93 @@ export default function NumberInput(props: Props)
     function increment()
     {
         const step = props.step ?? 1;
-        let value = props.value + step;
+        let value = props.value;
+
+        value = props.value + step;
+        
+        if (props.step)
+        {
+            value = Math.round(value / props.step) * props.step;
+        }
+
         if (props.max !== undefined && value > props.max)
         {
             value = props.max;
         }
-        if (props.coerce)
-        {
-            value = props.coerce(value);
-        }
-        if (!isNaN(value))
-        {
-            emitChange(value);
-        }
+        emitChange(value);
     }
 
     function decrement()
     {
         const step = props.step ?? 1;
-        let value = props.value - step;
+        let value = props.value;
+
+        value = props.value - step;
+        
+        if (props.step)
+        {
+            value = Math.round(value / props.step) * props.step;
+        }
+
         if (props.min !== undefined && value < props.min)
         {
             value = props.min;
         }
-        if (props.coerce)
+        emitChange(value);
+    }
+
+    useEffect(() =>
+    {
+        savedIncrement.current = increment;
+        savedDecrement.current = decrement;
+    });
+
+    function handleMouseDown(sign: 1 | -1)
+    {
+        const fn = sign === 1 ? savedIncrement : savedDecrement;
+        mouseIsDown.current = true;
+        fn.current();
+        initialHoldTimeout.current = setTimeout(() =>
         {
-            value = props.coerce(value);
+            if (!mouseIsDown.current) return;
+
+            holdInterval.current = setInterval(() =>
+            {
+                if (mouseIsDown.current)
+                {
+                    fn.current();
+                }
+            }, 40);
+        }, 360);
+    }
+
+    function handleMouseUp()
+    {
+        mouseIsDown.current = false;
+        if (initialHoldTimeout.current !== null)
+        {
+            clearTimeout(initialHoldTimeout.current);
+            initialHoldTimeout.current = null;
         }
-        if (!isNaN(value))
+        if (holdInterval.current !== null)
         {
-            emitChange(value);
+            clearInterval(holdInterval.current);
+            holdInterval.current = null;
+        }
+    }
+
+    function handleMouseLeave()
+    {
+        mouseIsDown.current = false;
+        if (initialHoldTimeout.current !== null)
+        {
+            clearTimeout(initialHoldTimeout.current);
+            initialHoldTimeout.current = null;
+        }
+        if (holdInterval.current !== null)
+        {
+            clearInterval(holdInterval.current);
+            holdInterval.current = null;
         }
     }
 
@@ -106,8 +193,24 @@ export default function NumberInput(props: Props)
                 value={savedValue}
             />
             <div className="numberInput-buttons">
-                <button className="numberInput-up" onClick={increment}>▲</button>
-                <button className="numberInput-down" onClick={decrement}>▼</button>
+                <button
+                    className="numberInput-up"
+                    // onClick={increment}
+                    onMouseDown={() => handleMouseDown(1)}
+                    onMouseUp={handleMouseUp}
+                    onMouseLeave={handleMouseLeave}
+                >
+                    ▲
+                </button>
+                <button
+                    className="numberInput-down"
+                    // onClick={decrement}
+                    onMouseDown={() => handleMouseDown(-1)}
+                    onMouseUp={handleMouseUp}
+                    onMouseLeave={handleMouseLeave}
+                >
+                    ▼
+                </button>
             </div>
         </div>
     );

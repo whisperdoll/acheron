@@ -139,6 +139,7 @@ export default function(props: Props)
                     max={controlState.max}
                     min={controlState.min}
                     step={controlState.step}
+                    roundPlaces={controlState.type === "int" ? 0 : 9}
                 />;
                 break;
             case "direction":
