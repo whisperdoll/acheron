@@ -159,8 +159,11 @@ export default function App() {
 
         function keyDown(e: KeyboardEvent)
         {
-            if (e.key === "Enter")
+            if (e.key === "Enter" &&
+                (!document.activeElement ||
+                    !["input","button","select","textarea"].includes(document.activeElement?.tagName.toLowerCase())))
             {
+                console.log(document.activeElement);
                 dispatch({ type: "toggleIsPlaying" });
             }
         }
