@@ -1,4 +1,4 @@
-import { ControlState, ControlDefinition, Lfo, SelectOption, ControlDataType } from "../Types";
+import { ControlState, ControlDefinition, Lfo, SelectOption, ControlDataType, NumMIDIChannels, KeyMap } from "../Types";
 import { AppState } from "../AppContext";
 import { v4 as uuidv4 } from 'uuid';
 
@@ -86,6 +86,9 @@ export const DefaultPlayerControls = buildFromDefs(playerControlDefs);
 // ----------------------------------------------------------------
 
 export const LayerControlTypes = [
+    "enabled",
+    "midiChannel",
+    "key",
     "barLength",
     "emphasis",
     "tempo",
@@ -99,6 +102,27 @@ export const LayerControlTypes = [
 export type LayerControlKey = typeof LayerControlTypes[number];
 
 const layerControlDefs: Record<LayerControlKey, ControlDefinition> = {
+    enabled: {
+        label: "Enabled",
+        type: "bool",
+        defaultValue: true
+    },
+    midiChannel: {
+        label: "MIDI Channel",
+        type: "int",
+        min: 1,
+        max: NumMIDIChannels,
+        step: 1,
+        defaultValue: 1
+    },
+    key: {
+        label: "Key",
+        type: "select",
+        options: Object.keys(KeyMap).map((key) => ({
+            label: key,
+            value: key
+        }))
+    },
     barLength: {
         inherit: "global.barLength"
     },
@@ -188,7 +212,7 @@ export function buildFromDefs(defs: Record<string, ControlDefinition>): Record<s
             }
             else
             {
-                let inheritKey: PlayerControlKey | LayerControlKey = inheritParts[1] as PlayerControlKey | LayerControlKey;
+                let inheritKey: PlayerControlKey & LayerControlKey = inheritParts[1] as PlayerControlKey & LayerControlKey;
                 if ((inheritParts[0] === "global" ? LayerControlTypes : PlayerControlKeys).includes(inheritKey))
                 {
                     let defaultControl = Object.entries(inheritParts[0] === "global" ? DefaultPlayerControls : DefaultLayerControls).find(e => e[1].key === inheritKey)![1];

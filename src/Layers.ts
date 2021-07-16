@@ -14,9 +14,9 @@ export function buildLayer(appState: AppState): { layerState: LayerState, contro
 
     return {
         layerState: {
-            enabled: true,
-            key: 0,
-            midiChannel: 1,
+            enabled: Object.entries(controls).find(e => e[1].key === "enabled")![0],
+            key: Object.entries(controls).find(e => e[1].key === "key")![0],
+            midiChannel: Object.entries(controls).find(e => e[1].key === "midiChannel")![0],
             tempoSync: false,
             tokenIds: createEmpty2dArray(NumHexes),
             playheads: createEmpty2dArray(NumHexes),

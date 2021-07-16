@@ -395,7 +395,7 @@ $statusBarHeight: 32px;
         flex-direction: row;
         justify-content: stretch;
 
-        input, .numberInput-container
+        input, .numberInput-container, select
         {
             flex-grow: 1;
         }

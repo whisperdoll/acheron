@@ -95,7 +95,8 @@ function buildHelpers(appState: AppState, layerIndex: number, currentBeat: numbe
                 notes.push(hexNotes[getAdjacentHex(hexIndex, triad)]);
             }
 
-            const permittedNotes = Object.values(KeyMap)[appState.layers[layerIndex].key].map(ni => noteArray[ni]);
+            const key = getControlValue(appState, appState.controls[appState.layers[layerIndex].key]) as keyof typeof KeyMap;
+            const permittedNotes = KeyMap[key].map(ni => noteArray[ni]);
             
             notes = notes.filter((note) =>
             {
@@ -108,7 +109,7 @@ function buildHelpers(appState: AppState, layerIndex: number, currentBeat: numbe
                 return transposeNote(note, finalTranspose);
             });
 
-            Midi.playNotes(transposed, appState.selectedOutputs, appState.layers[layerIndex].midiChannel, {
+            Midi.playNotes(transposed, appState.selectedOutputs, getControlValue(appState, appState.controls[appState.layers[layerIndex].midiChannel]), {
                 durationMs,
                 velocity
             });

@@ -182,7 +182,7 @@ export default function(props: Props)
                 </div>
         }
     }
-    else
+    else // LFO
     {
         switch (controlState.type)
         {
@@ -193,7 +193,7 @@ export default function(props: Props)
                 controlPart = <div>{controlValue}</div>;
                 break;
             case "select":
-                controlPart = <div>{controlValue.label}</div>
+                controlPart = <div>{controlState.options!.find(({ value }) => value === controlValue)!.label}</div>
                 break;
             case "direction":
                 controlPart = <div className="directionRow disabled">

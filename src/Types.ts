@@ -169,7 +169,7 @@ export function getControlValue(appState: AppState, controlState: ControlState):
             case "int":
                 return Math.round(value);
             case "select":
-                return controlState.options![Math.round(value) % controlState.options!.length];
+                return controlState.options![Math.round(value) % controlState.options!.length].value;
             case "triad":
                 return Math.round(value) % 7;
             default:
