@@ -5,7 +5,7 @@ import { mod } from "./utils";
 import * as npath from "path";
 import { buildLayer } from "../Layers";
 import { getTokenUIDFromPath } from "../Tokens";
-import { migrateSerializedComposition, migrateSerializedToken } from "../migrators";
+import { migrateSerializedComposition } from "../migrators";
 
 export const noteArray: string[] = [
     "C", // 0

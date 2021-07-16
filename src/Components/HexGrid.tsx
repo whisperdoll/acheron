@@ -365,9 +365,11 @@ export default function(props: Props)
         // }
 
         // draw key //
-        if (state.layers[props.layerIndex].key !== 0)
+        // console.log(state);
+        const key: keyof typeof KeyMap = getControlValue(state, state.controls[state.layers[props.layerIndex].key]);
+        if (key !== "None")
         {
-            const notes = Object.values(KeyMap)[state.layers[props.layerIndex].key].map(ni => noteArray[ni]);
+            const notes = KeyMap[key].map(ni => noteArray[ni]);
             for (let i = 0; i < NumHexes; i++)
             {
                 const hexNote = getNoteParts(hexNotes[i]).name;

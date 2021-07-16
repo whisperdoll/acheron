@@ -23,10 +23,11 @@ export interface SerializedCompositionToken
 
 export interface SerializedCompositionLayer
 {
+    version: 2;
     name: string;
-    enabled: boolean;
-    midiChannel: number;
-    key: number;
+    enabled: SerializedCompositionControl;
+    midiChannel: SerializedCompositionControl;
+    key: SerializedCompositionControl;
     transpose: SerializedCompositionControl;
     tempo: SerializedCompositionControl;
     barLength: SerializedCompositionControl;
@@ -137,10 +138,11 @@ export function serializeComposition(appState: AppState): SerializedComposition
         layers: appState.layers.map((layer) =>
         {
             return {
+                version: 2,
                 name: layer.name,
-                enabled: layer.enabled,
-                midiChannel: layer.midiChannel,
-                key: layer.key,
+                enabled: serializeControl(appState.controls[layer.enabled]),
+                midiChannel: serializeControl(appState.controls[layer.midiChannel]),
+                key: serializeControl(appState.controls[layer.key]),
                 transpose: serializeControl(appState.controls[layer.transpose]),
                 tempo: serializeControl(appState.controls[layer.tempo]),
                 barLength: serializeControl(appState.controls[layer.barLength]),
@@ -158,16 +160,13 @@ export function serializeComposition(appState: AppState): SerializedComposition
 
 export function deserializeComposition(appState: AppState, c: SerializedComposition): AppState
 {
-    if (c.version !== 2)
+    const migrated = migrateSerializedComposition(c);
+    if (!migrated)
     {
-        const migrated = migrateSerializedComposition(c);
-        if (!migrated)
-        {
-            alert("Error migrating old composition version");
-            return appState;
-        }
-        c = migrated;
+        alert("Error migrating old composition version");
+        return appState;
     }
+    c = migrated;
 
     const appTokens: Record<string, Token> = {};
     let appControls: Record<string, ControlState> = {};
@@ -203,6 +202,10 @@ export function deserializeComposition(appState: AppState, c: SerializedComposit
             };
             appControls[control.id] = control;
         }
+        else
+        {
+            appControls[control.id] = control;
+        }
     }
 
     const layers: LayerState[] = [];
@@ -218,21 +221,26 @@ export function deserializeComposition(appState: AppState, c: SerializedComposit
                 const serializedControl = layer[control.key as keyof SerializedCompositionLayer] as SerializedCompositionControl;
                 control = {
                     ...control,
-                    id: serializedControl.id,
+                    id: serializedControl.id || control.id, // empty id means it was created from a migration and needs to be assigned an id
                     currentValueType: serializedControl.currentValueType,
                     inherit: serializedControl.inherit,
                     scalarValue: serializedControl.scalarValue,
                     lfo: {...serializedControl.lfo}
                 };
+                (layer[control.key as keyof SerializedCompositionLayer] as SerializedCompositionControl).id = control.id; // see above id comment
+                appControls[control.id] = control;
+            }
+            else
+            {
                 appControls[control.id] = control;
             }
         }
 
         const newLayer: LayerState = {
             name: layer.name,
-            enabled: layer.enabled,
-            midiChannel: layer.midiChannel,
-            key: layer.key,
+            enabled: layer.enabled.id,
+            midiChannel: layer.midiChannel.id,
+            key: layer.key.id,
             transpose: layer.transpose.id,
             tempo: layer.tempo.id,
             barLength: layer.barLength.id,

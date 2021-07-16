@@ -12,3 +12,11 @@ It's the first version.
 * More direct bug report link
 * Added documentation by [hellvalleyskytrees](https://twitter.com/hvst_music) viewable in help menu
 * Updated icon by her too!
+
+# x.x.x
+
+* Fixed LFOs on select controls
+* Added LFOs to Layer properties
+    * Enabled
+    * MIDI Channel
+    * Key

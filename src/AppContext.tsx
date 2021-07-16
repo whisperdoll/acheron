@@ -31,9 +31,9 @@ export interface AppSettings
 export interface LayerState
 {
     name: string;
-    enabled: boolean;
-    midiChannel: number;
-    key: number;
+    enabled: string;
+    midiChannel: string;
+    key: string;
     transpose: string;
     tempo: string;
     barLength: string;

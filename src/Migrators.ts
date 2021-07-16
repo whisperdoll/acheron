@@ -1,7 +1,8 @@
 import { AppSettings, initialSettings, TokenSettings } from "./AppContext";
-import { SerializedComposition, SerializedCompositionToken } from "./Serialization";
+import { SerializedComposition, SerializedCompositionLayer, SerializedCompositionToken } from "./Serialization";
 import { getTokenUIDFromPath } from "./Tokens";
-import { TokenUID } from "./Types";
+import { KeyMap, NumMIDIChannels, TokenUID } from "./Types";
+import { buildLfo } from "./utils/DefaultDefinitions";
 
 interface LfoV1
 {
@@ -105,7 +106,7 @@ export function migrateSettings(settings: Record<string, any>): AppSettings
     return settings as AppSettings;
 }
 
-export function migrateSerializedToken(serialized: SerializedCompositionTokenV1 | SerializedCompositionToken): SerializedCompositionToken | null
+function migrateSerializedToken(serialized: SerializedCompositionTokenV1 | SerializedCompositionToken): SerializedCompositionToken | null
 {
     if (Object.prototype.hasOwnProperty.call(serialized, "path"))
     {
@@ -122,12 +123,50 @@ export function migrateSerializedToken(serialized: SerializedCompositionTokenV1 
     return serialized as SerializedCompositionToken;
 }
 
+function migrateSerializedLayer(serialized: SerializedCompositionLayerV1 | SerializedCompositionLayer): SerializedCompositionLayer
+{
+    if (!(serialized as any).version || (serialized as any).version === 1)
+    {
+        serialized = serialized as SerializedCompositionLayerV1;
+        // v1 //
+        return {
+            ...serialized,
+            version: 2,
+            enabled: {
+                id: "",
+                currentValueType: "scalar",
+                key: "enabled",
+                lfo: buildLfo("bool"),
+                scalarValue: serialized.enabled
+            },
+            midiChannel: {
+                id: "",
+                currentValueType: "scalar",
+                key: "midiChannel",
+                lfo: buildLfo("int", 1, NumMIDIChannels),
+                scalarValue: serialized.midiChannel
+            },
+            key: {
+                id: "",
+                currentValueType: "scalar",
+                key: "key",
+                lfo: buildLfo("select", undefined, undefined, Object.keys(KeyMap).map((key) => ({ label: key, value: key }))),
+                scalarValue: Object.keys(KeyMap)[serialized.key]
+            }
+        };
+    }
+    else
+    {
+        return serialized as SerializedCompositionLayer;
+    }
+}
+
 export function migrateSerializedComposition(serialized: SerializedCompositionV1 | SerializedComposition): SerializedComposition | null
 {
     return {
         version: 2,
         global: serialized.global,
-        layers: serialized.layers,
+        layers: serialized.layers.map(migrateSerializedLayer),
         tokens: serialized.tokens.map(migrateSerializedToken).filter(t => t) as SerializedCompositionToken[]
     };
 }

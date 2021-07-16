@@ -16,6 +16,12 @@ export default function(props: Props)
     const { state, dispatch } = useContext(AppContext)!;
     const layer = state.layers[props.layerIndex];
 
+    const layerControls: LayerControlKey[] = [
+        "enabled",
+        "midiChannel",
+        "key"
+    ];
+
     const noteControls: LayerControlKey[] = [
         "transpose",
         "tempo",
@@ -24,26 +30,6 @@ export default function(props: Props)
         "emphasis",
         "noteLength"
     ];
-
-    function onChange(newState: LayerState)
-    {
-        dispatch({ type: "setLayer", payload: { layerIndex: props.layerIndex, layerState: newState }});
-    }
-
-    function handleMIDIChanged(value: number)
-    {
-        if (value < 1 || value > NumMIDIChannels) return;
-
-        onChange({ ...layer, midiChannel: value });
-    }
-
-    function handleKeyChanged(e: React.ChangeEvent<HTMLSelectElement>)
-    {
-        const val = parseInt(e.currentTarget.value);
-        if (isNaN(val)) return;
-
-        onChange({ ...layer, key: val });
-    }
 
     const generatorControls: LayerControlKey[] = [
         "timeToLive",
@@ -61,41 +47,7 @@ export default function(props: Props)
     return (
         <div className="layerSettings">
             <div className="header">Layer</div>
-            <div className="control">
-                <label className="clicky">
-                    <input
-                        type="checkbox"
-                        checked={layer.enabled}
-                        onChange={(e) => onChange({ ...layer, enabled: e.currentTarget.checked })}
-                    /> Enabled
-                </label>
-                
-            </div>
-            <div className="control">
-                <div className="labelRow">
-                    <div className="label">MIDI Channel</div>
-                </div>
-                <NumberInput
-                    min={1}
-                    max={NumMIDIChannels}
-                    step={1}
-                    onChange={handleMIDIChanged}
-                    value={layer.midiChannel}
-                />
-            </div>
-            <div className="control">
-                <div className="labelRow">
-                    <div className="label">Key</div>
-                </div>
-                <select
-                    onChange={handleKeyChanged}
-                    value={layer.key}
-                >
-                    {Object.keys(KeyMap).map((key, i) => (
-                        <option value={i} key={key}>{key}</option>
-                    ))}
-                </select>
-            </div>
+            {layerControls.map(buildControl)}
             <div className="header">Notes</div>
             {noteControls.map(buildControl)}
             <div className="header">Generators</div>

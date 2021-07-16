@@ -181,7 +181,9 @@ The following inherit keys are valid, with `global` keys referring to the contro
 * `"player.timeToLive"`
 * `"player.pulseEvery"`
 
-* `"layer.barLength"`
+* `"layer.enabled"`
+* `"layer.midiChannel"`
+* `"layer.key"`
 * `"layer.emphasis"`
 * `"layer.tempo"`
 * `"layer.transpose"`
