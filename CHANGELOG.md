@@ -24,3 +24,7 @@ It's the first version.
 * Bugfixes relating to inheritance
 * Auto-enable builtin tokens
 * Fix beat signal staying on when paused
+
+# 1.1.3
+
+* Fixed bug with saving token search paths

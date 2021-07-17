@@ -199,6 +199,7 @@ type Action = (
     | { type: "addTokenSearchPath", payload: string }
     | { type: "enableAllTokens" }
     | { type: "setFirstRunFalse" }
+    | { type: "saveSettings" }
 ) & {
     saveSettings?: boolean
 }
@@ -215,6 +216,11 @@ function reducer(state: AppState, action: Action): AppState
             case "setAppState":
             {
                 return action.payload;
+            }
+            case "saveSettings":
+            {
+                action = { ...action, saveSettings: true };
+                return state;
             }
             case "setSettings":
                 return {

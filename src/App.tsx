@@ -137,6 +137,8 @@ export default function App() {
         {
             alert("Could not load the following tokens:\n\n" + failed.join("\n"));
         }
+
+        dispatch({ type: "saveSettings" });
     }
 
     useEffect(() =>
