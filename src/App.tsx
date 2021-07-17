@@ -166,6 +166,10 @@ export default function App() {
         {
             dispatch({ type: "setAllowedInputs", payload: inputs });
         };
+        Midi.onNotesChanged = (notes) =>
+        {
+            dispatch({ type: "setMidiNotesOn", payload: notes });
+        };
 
         function keyDown(e: KeyboardEvent)
         {
@@ -182,6 +186,8 @@ export default function App() {
         return () =>
         {
             Midi.onOutputsChanged = null;
+            Midi.onInputsChanged = null;
+            Midi.onNotesChanged = null;
             document.body.removeEventListener("keydown", keyDown);
         };
     });

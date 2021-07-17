@@ -386,6 +386,32 @@ export default function(props: Props)
             backCanvas.current?.fillHexagonCell(startPosition, new Point(~~(state.selectedHex.hexIndex / rows), state.selectedHex.hexIndex % rows), hexRadius, false, "#550");
         }
 
+
+        // draw midi notes //
+        state.midiNotesOn.forEach((note) =>
+        {
+            const hexIndexes = [];
+
+            for (let i = 0; i < hexNotes.length; i++)
+            {
+                if (hexNotes[i] === note)
+                {
+                    hexIndexes.push(i);
+                }
+            }
+
+            hexIndexes.forEach((hexIndex) =>
+            {
+                backCanvas.current?.fillHexagonCell(
+                    startPosition, 
+                    new Point(~~(hexIndex / rows), hexIndex % rows),
+                    hexRadius,
+                    false,
+                    "#252"
+                );
+            });
+        });
+
         // draw dragging //
         if (state.isDragging && state.draggingDestHex.hexIndex !== -1 && state.draggingDestHex.layerIndex === props.layerIndex)
         {
@@ -408,7 +434,7 @@ export default function(props: Props)
                 }
             }
         });
-    }, [ state.selectedHex, state.layers, props.layerIndex, state.draggingDestHex, state.isDragging ]);
+    }, [ state.selectedHex, state.layers, props.layerIndex, state.draggingDestHex, state.isDragging, state.midiNotesOn ]);
 
     // useEffect(() =>
     // {

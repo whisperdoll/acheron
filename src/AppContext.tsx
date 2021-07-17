@@ -74,6 +74,7 @@ export interface AppState
     allowedInputs: MidiDevice[];
     currentBeat: number;
     pulseSwitch: boolean;
+    midiNotesOn: string[];
     editingLfo: { controlId: string } | null;
     draggingType: "move" | "copy";
     isDragging: boolean;
@@ -113,6 +114,7 @@ const initialState : AppState = {
     allowedInputs: [],
     currentBeat: 0,
     pulseSwitch: false,
+    midiNotesOn: [],
     editingLfo: null,
     tokenCallbacks: {},
     tokenDefinitions: {},
@@ -206,6 +208,7 @@ type Action = (
     | { type: "enableAllTokens" }
     | { type: "setFirstRunFalse" }
     | { type: "saveSettings" }
+    | { type: "setMidiNotesOn", payload: string[] }
 ) & {
     saveSettings?: boolean
 }
@@ -764,6 +767,13 @@ function reducer(state: AppState, action: Action): AppState
                         ...state.settings,
                         isFirstRun: false
                     }
+                };
+            }
+            case "setMidiNotesOn":
+            {
+                return {
+                    ...state,
+                    midiNotesOn: action.payload
                 };
             }
             default:
