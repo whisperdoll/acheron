@@ -26,6 +26,7 @@ export default function()
         return <Control
             controlId={state[controlKey]}
             key={controlKey}
+            layerIndex={-1}
         />;
     }
 

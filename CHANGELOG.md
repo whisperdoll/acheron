@@ -13,7 +13,7 @@ It's the first version.
 * Added documentation by [hellvalleyskytrees](https://twitter.com/hvst_music) viewable in help menu
 * Updated icon by her too!
 
-# 1.1.2 (2021/07/16)
+# 1.1.2 (2021/07/17)
 
 * Fixed LFOs on select controls
 * Added LFOs to Layer properties
@@ -21,3 +21,4 @@ It's the first version.
     * MIDI Channel
     * Key
 * Fixed documentation link
+* Bugfixes relating to inheritance

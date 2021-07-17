@@ -2,7 +2,7 @@ import { ActionType, AppState } from "./AppContext";
 import { LayerControlKey, LayerControlTypes, PlayerControlKey, PlayerControlKeys } from "./utils/DefaultDefinitions";
 import seedRandom from "seedRandom";
 import { v4 as uuidv4 } from 'uuid';
-import { noteArray } from "./utils/elysiumutils";
+import { getControlFromInheritParts, getInheritParts, noteArray } from "./utils/elysiumutils";
 import { NsToMs, NsToS } from "./utils/utils";
 
 export type ControlValueType = "scalar" | "lfo" | "inherit";
@@ -140,24 +140,26 @@ export function copyControl(control: ControlState): ControlState
     return ret;
 }
 
-export function getControlValue(appState: AppState, controlState: ControlState): any
+export function getControlValue(appState: AppState, layerIndex: number, controlState: ControlState): any
 {
     if (controlState.currentValueType === "inherit" && controlState.inherit)
     {
-        const inheritedControl = appState.controls[controlState.inherit];
-        if (inheritedControl)
+        const inheritParts = getInheritParts(controlState.inherit);
+        if (inheritParts)
         {
-            return getControlValue(appState, inheritedControl);
+            const inheritedControl = getControlFromInheritParts(appState, layerIndex, inheritParts);
+            return getControlValue(appState, layerIndex, inheritedControl);
         }
         else
         {
+            console.log(controlState.inherit, appState.controls);
             console.log("null1");
             return null;
         }
     }
     else if (controlState.currentValueType === "lfo")
     {
-        const value = getLfoValue(appState, controlState.lfo) ?? 0;
+        const value = getLfoValue(appState, layerIndex, controlState.lfo) ?? 0;
         switch (controlState.type)
         {
             case "bool":
@@ -229,10 +231,10 @@ export interface Lfo
     sequence: any[];
 }
 
-function getLfoValue(appState: AppState, lfo: Lfo): any
+function getLfoValue(appState: AppState, layerIndex: number, lfo: Lfo): any
 {
     const tempoControl = appState.controls[appState.tempo];
-    const bpms = lfo === tempoControl.lfo ? 1 : 60 / getControlValue(appState, tempoControl) * 1000;
+    const bpms = lfo === tempoControl.lfo ? 1 : 60 / getControlValue(appState, layerIndex, tempoControl) * 1000;
     const now = Math.floor(Date.now() / bpms) * bpms;
     const lowPeriod = lfo.lowPeriod * 1000;
     const hiPeriod = lfo.hiPeriod * 1000;

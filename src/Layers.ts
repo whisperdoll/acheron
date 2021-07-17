@@ -8,7 +8,7 @@ export function buildLayer(appState: AppState): { layerState: LayerState, contro
 {
     const controls = DefaultLayerControls();
     const bpmId = Object.entries(controls).find(e => e[1].key === "tempo")![0];
-    const bpm = getControlValue(appState, controls[bpmId]);
+    const bpm = getControlValue(appState, -1, controls[bpmId]);
     const barLengthId = Object.entries(controls).find(e => e[1].key === "barLength")![0];
     // const barLength = getControlValue(appState, controls[barLengthId]);
 

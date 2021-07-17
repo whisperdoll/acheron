@@ -205,7 +205,7 @@ export default function(props: Props)
                 tokens.forEach((token) =>
                 {
                     const controls = token.controlIds.map(cid => state.controls[cid]);
-                    controls.filter(c => c.type === "direction").forEach(c => ret.push(getControlValue(state, c)));
+                    controls.filter(c => c.type === "direction").forEach(c => ret.push(getControlValue(state, props.layerIndex, c)));
                 });
 
                 return ret;
@@ -366,7 +366,7 @@ export default function(props: Props)
 
         // draw key //
         // console.log(state);
-        const key: keyof typeof KeyMap = getControlValue(state, state.controls[state.layers[props.layerIndex].key]);
+        const key: keyof typeof KeyMap = getControlValue(state, props.layerIndex, state.controls[state.layers[props.layerIndex].key]);
         if (key !== "None")
         {
             const notes = KeyMap[key].map(ni => noteArray[ni]);

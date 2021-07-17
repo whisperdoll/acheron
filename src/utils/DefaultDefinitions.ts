@@ -1,6 +1,7 @@
 import { ControlState, ControlDefinition, Lfo, SelectOption, ControlDataType, NumMIDIChannels, KeyMap } from "../Types";
 import { AppState } from "../AppContext";
 import { v4 as uuidv4 } from 'uuid';
+import { getInheritParts } from "./elysiumutils";
 
 // ----------------------------------------------------------------
 // PLAYER
@@ -101,57 +102,60 @@ export const LayerControlTypes = [
 
 export type LayerControlKey = typeof LayerControlTypes[number];
 
-const layerControlDefs: Record<LayerControlKey, ControlDefinition> = {
-    enabled: {
-        label: "Enabled",
-        type: "bool",
-        defaultValue: true
-    },
-    midiChannel: {
-        label: "MIDI Channel",
-        type: "int",
-        min: 1,
-        max: NumMIDIChannels,
-        step: 1,
-        defaultValue: 1
-    },
-    key: {
-        label: "Key",
-        type: "select",
-        options: Object.keys(KeyMap).map((key) => ({
-            label: key,
-            value: key
-        }))
-    },
-    barLength: {
-        inherit: "global.barLength"
-    },
-    emphasis: {
-        inherit: "global.emphasis"
-    },
-    tempo: {
-        inherit: "global.tempo"
-    },
-    transpose: {
-        inherit: "global.transpose"
-    },
-    velocity: {
-        inherit: "global.velocity"
-    },
-    noteLength: {
-        inherit: "global.noteLength"
-    },
-    pulseEvery: {
-        inherit: "global.pulseEvery"
-    },
-    timeToLive: {
-        inherit: "global.timeToLive"
-    }
+function layerControlDefs(): Record<LayerControlKey, ControlDefinition>
+{
+    return {
+        enabled: {
+            label: "Enabled",
+            type: "bool",
+            defaultValue: true
+        },
+        midiChannel: {
+            label: "MIDI Channel",
+            type: "int",
+            min: 1,
+            max: NumMIDIChannels,
+            step: 1,
+            defaultValue: 1
+        },
+        key: {
+            label: "Key",
+            type: "select",
+            options: Object.keys(KeyMap).map((key) => ({
+                label: key,
+                value: key
+            }))
+        },
+        barLength: {
+            inherit: "global.barLength"
+        },
+        emphasis: {
+            inherit: "global.emphasis"
+        },
+        tempo: {
+            inherit: "global.tempo"
+        },
+        transpose: {
+            inherit: "global.transpose"
+        },
+        velocity: {
+            inherit: "global.velocity"
+        },
+        noteLength: {
+            inherit: "global.noteLength"
+        },
+        pulseEvery: {
+            inherit: "global.pulseEvery"
+        },
+        timeToLive: {
+            inherit: "global.timeToLive"
+        }
+    };
 };
 
 export function DefaultLayerControls(): Record<string, ControlState>
 {
-    return buildFromDefs(layerControlDefs)
+    return buildFromDefs(layerControlDefs())
 }
 
 // ------------------------------
@@ -195,53 +199,48 @@ export function buildFromDefs(defs: Record<string, ControlDefinition>): Record<s
     {
         console.error("Error building token control:\n" + msg);
     }
+
+    let _defaultLayerControls: Record<string, ControlState> | null = null;
+
+    const defaultControls = {
+        global: () => DefaultPlayerControls,
+        layer: () => _defaultLayerControls || (_defaultLayerControls = DefaultLayerControls())
+    };
     
     for (const key in defs)
     {
         if (defs[key].inherit)
         {
-            const inheritParts = defs[key].inherit!.split(".");
-            if (inheritParts.length !== 2)
+            const inheritParts = getInheritParts(defs[key].inherit!);
+            if (!inheritParts)
             {
-                reportError("bad");
-            }
-            
-            if (!["global","layer"].includes(inheritParts[0]))
-            {
-                reportError("bad");
+                reportError("bad inherit key");
             }
             else
             {
-                let inheritKey: PlayerControlKey & LayerControlKey = inheritParts[1] as PlayerControlKey & LayerControlKey;
-                if ((inheritParts[0] === "global" ? LayerControlTypes : PlayerControlKeys).includes(inheritKey))
+                let inheritKey = inheritParts[1];
+                let defaultControl = Object.entries(defaultControls[inheritParts[0]]()).find(e => e[1].key === inheritKey)![1];
+                if (defaultControl === null)
                 {
-                    let defaultControl = Object.entries(inheritParts[0] === "global" ? DefaultPlayerControls : DefaultLayerControls).find(e => e[1].key === inheritKey)![1];
-                    if (defaultControl === null)
-                    {
-                        reportError("bad");
-                    }
-                    else
-                    {
-                        const id = uuidv4()
-                        parts[id] = {
-                            label: defaultControl.label,
-                            type: defaultControl.type,
-                            min: defaultControl.min,
-                            max: defaultControl.max,
-                            step: defaultControl.step,
-                            options: defaultControl.options?.slice(0),
-                            inherit: defaultControl.id,
-                            scalarValue: defaultControl.scalarValue,
-                            currentValueType: "inherit",
-                            lfo: buildLfo(defaultControl.type, defaultControl.min, defaultControl.max, defaultControl.options),
-                            id,
-                            key
-                        };
-                    }
+                    reportError("bad");
                 }
                 else
                 {
-                    reportError("bad");
+                    const id = uuidv4()
+                    parts[id] = {
+                        label: defaultControl.label,
+                        type: defaultControl.type,
+                        min: defaultControl.min,
+                        max: defaultControl.max,
+                        step: defaultControl.step,
+                        options: defaultControl.options?.slice(0),
+                        inherit: defs[key].inherit,
+                        scalarValue: defaultControl.scalarValue,
+                        currentValueType: "inherit",
+                        lfo: buildLfo(defaultControl.type, defaultControl.min, defaultControl.max, defaultControl.options),
+                        id,
+                        key
+                    };
                 }
             }
         }

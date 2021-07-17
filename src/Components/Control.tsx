@@ -21,6 +21,7 @@ import NumberInput from './NumberInput';
 interface Props
 {
     controlId: string;
+    layerIndex: number;
 }
 
 export default function(props: Props)
@@ -63,7 +64,7 @@ export default function(props: Props)
     // const now = Math.floor(Date.now() / bpms) * bpms;
 
     const controlValueDeps = [ state.controls[props.controlId], Math.floor(state.layers[layerIndex].currentBeat) ];
-    const controlValue = useMemo(() => getControlValue(state, controlState) ?? 0, controlValueDeps);
+    const controlValue = useMemo(() => getControlValue(state, props.layerIndex, controlState) ?? 0, controlValueDeps);
 
     function handleChange(partial: Partial<ControlState>)
     {
