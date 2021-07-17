@@ -20,6 +20,7 @@ export interface TokenSettings
 
 export interface AppSettings
 {
+    isFirstRun: boolean;
     version: number;
     playNoteOnClick: boolean;
     wrapPlayheads: boolean;
@@ -79,6 +80,7 @@ export interface AppState
 }
 
 export const initialSettings : AppSettings = {
+    isFirstRun: true,
     version: 1,
     playNoteOnClick: true,
     wrapPlayheads: true,
@@ -180,7 +182,7 @@ type Action = (
     | { type: "editLfo", payload: { controlId: string } }
     | { type: "stopEditingLfo" }
     | { type: "setLfo", payload: { controlId: string, lfo: Lfo }}
-    | { type: "setTokenDefinition", payload: { definition: TokenDefinition, callbacks: TokenCallbacks } }
+    | { type: "setTokenDefinition", payload: { definition: TokenDefinition, callbacks: TokenCallbacks, enabled?: boolean } }
     | { type: "removeTokenDefinition", payload: TokenUID }
     | { type: "setTokenShortcut", payload: { uid: TokenUID, shortcut: string }}
     | { type: "clearTokenShortcut", payload: TokenUID }
@@ -195,6 +197,8 @@ type Action = (
     | { type: "setTokenSearchPath", payload: { index: number, value: string, normalize: boolean }}
     | { type: "removeTokenSearchPath", payload: number }
     | { type: "addTokenSearchPath", payload: string }
+    | { type: "enableAllTokens" }
+    | { type: "setFirstRunFalse" }
 ) & {
     saveSettings?: boolean
 }
@@ -227,7 +231,7 @@ function reducer(state: AppState, action: Action): AppState
                 };
             }
             case "setSelectedHex":
-                console.log(state);
+                // console.log(state);
                 return {
                     ...state,
                     selectedHex: action.payload
@@ -453,13 +457,22 @@ function reducer(state: AppState, action: Action): AppState
                         ...state.tokenCallbacks,
                         [action.payload.definition.uid]: action.payload.callbacks
                     },
-                    settings: Object.prototype.hasOwnProperty.call(state.settings.tokens, action.payload.definition.uid) ? state.settings : {
+                    settings: Object.prototype.hasOwnProperty.call(state.settings.tokens, action.payload.definition.uid) ? {
+                        ...state.settings,
+                        tokens: {
+                            ...state.settings.tokens,
+                            [action.payload.definition.uid]: {
+                                ...state.settings.tokens[action.payload.definition.uid],
+                                enabled: action.payload.enabled ?? state.settings.tokens[action.payload.definition.uid].enabled
+                            }
+                        }
+                     } : {
                         ...state.settings,
                         tokens: {
                             ...state.settings.tokens,
                             [action.payload.definition.uid]: {
                                 shortcut: "",
-                                enabled: false
+                                enabled: action.payload.enabled ?? false
                             }
                         }
                     }
@@ -680,6 +693,33 @@ function reducer(state: AppState, action: Action): AppState
                     settings: {
                         ...state.settings,
                         tokenSearchPaths: state.settings.tokenSearchPaths.concat([ action.payload ])
+                    }
+                };
+            }
+            case "enableAllTokens":
+            {
+                const newTokens = {...state.settings.tokens};
+
+                for (const key in newTokens)
+                {
+                    newTokens[key].enabled = true;
+                }
+
+                return {
+                    ...state,
+                    settings: {
+                        ...state.settings,
+                        tokens: newTokens
+                    }
+                };
+            }
+            case "setFirstRunFalse":
+            {
+                return {
+                    ...state,
+                    settings: {
+                        ...state.settings,
+                        isFirstRun: false
                     }
                 };
             }
