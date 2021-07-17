@@ -431,7 +431,7 @@ export default function App() {
                     {inspector}
                 </div>
                 <div className="statusBar">
-                    <div className={"pulse " + (Math.floor(state.layers[state.selectedHex.layerIndex].currentBeat) % 2 === 1 ? "active" : "")}></div>
+                    <div className={"pulse " + (state.isPlaying && Math.floor(state.layers[state.selectedHex.layerIndex].currentBeat) % 2 === 1 ? "active" : "")}></div>
                 </div>
             </>)}
         </div>
