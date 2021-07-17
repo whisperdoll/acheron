@@ -277,7 +277,7 @@ export default class MenuBuilder
                         label: "Documentation",
                         click()
                         {
-                            shell.openExternal("https://github.com/SongSing/acheron/blob/main/Acheron_Documentation.md");
+                            shell.openExternal("https://github.com/SongSing/acheron/wiki/Acheron-Documentation");
                         }
                     },
                     {
