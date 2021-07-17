@@ -22,3 +22,4 @@ It's the first version.
     * Key
 * Fixed documentation link
 * Bugfixes relating to inheritance
+* Auto-enable builtin tokens
