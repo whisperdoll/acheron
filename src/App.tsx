@@ -108,7 +108,7 @@ export default function App() {
         }
     }, [ state.isPlaying ]);
 
-    function loadTokensFromSearchPaths(searchPaths: string[])
+    function loadTokensFromSearchPaths(searchPaths: string[], autoEnable: boolean = false)
     {
         const defs = { ...state.tokenDefinitions };
         const addedUids: TokenUID[] = [];
@@ -119,7 +119,8 @@ export default function App() {
         {
             dispatch({ type: "setTokenDefinition", payload: {
                 definition: res.tokenDef,
-                callbacks: res.callbacks
+                callbacks: res.callbacks,
+                enabled: autoEnable || undefined
             }});
             addedUids.push(tokenUid);
         });
@@ -144,7 +145,11 @@ export default function App() {
         const settings = loadSettings();
         dispatch({ type: "setSettings", payload: settings });
 
-        loadTokensFromSearchPaths(settings.tokenSearchPaths);
+        loadTokensFromSearchPaths(settings.tokenSearchPaths, settings.isFirstRun);
+        if (settings.isFirstRun)
+        {
+            dispatch({ type: "setFirstRunFalse" });
+        }
 
         Midi.init();
     }, []);
