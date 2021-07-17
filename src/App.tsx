@@ -161,7 +161,10 @@ export default function App() {
         Midi.onOutputsChanged = (outputs) =>
         {
             dispatch({ type: "setAllowedOutputs", payload: outputs });
-            dispatch({ type: "setSelectedOutputs", payload: outputs.map(o => o.id) });
+        };
+        Midi.onInputsChanged = (inputs) =>
+        {
+            dispatch({ type: "setAllowedInputs", payload: inputs });
         };
 
         function keyDown(e: KeyboardEvent)
@@ -170,7 +173,6 @@ export default function App() {
                 (!document.activeElement ||
                     !["input","button","select","textarea"].includes(document.activeElement?.tagName.toLowerCase())))
             {
-                console.log(document.activeElement);
                 dispatch({ type: "toggleIsPlaying" });
             }
         }
@@ -186,6 +188,16 @@ export default function App() {
 
     useEffect(() =>
     {
+        Midi.setEnabledInputs(state.settings.midiInputs);
+    }, [state.settings.midiInputs]);
+
+    useEffect(() =>
+    {
+        Midi.setEnabledOutputs(state.settings.midiOutputs);
+    }, [state.settings.midiOutputs]);
+
+    useEffect(() =>
+    {
         if (state.selectedHex.hexIndex !== -1 && state.settings.playNoteOnClick)
         {
             Midi.playNotes(
@@ -193,7 +205,7 @@ export default function App() {
                     hexNotes[state.selectedHex.hexIndex],
                     getControlValue(state, state.selectedHex.layerIndex, state.controls[state.layers[state.selectedHex.layerIndex].transpose])
                 )],
-                state.selectedOutputs, getControlValue(state, state.selectedHex.layerIndex, state.controls[state.layers[state.selectedHex.layerIndex].midiChannel]), {
+                state.settings.midiOutputs, getControlValue(state, state.selectedHex.layerIndex, state.controls[state.layers[state.selectedHex.layerIndex].midiChannel]), {
                 velocity: getControlValue(state, state.selectedHex.layerIndex, state.controls[state.velocity])!,
                 durationMs: getControlValue(state, state.selectedHex.layerIndex, state.controls[state.noteLength])! * 1000
             });

@@ -16,17 +16,43 @@ export default function Settings(props: Props)
         dispatch({ type: "setSettings", payload: { ...state.settings, [property]: e.currentTarget.checked }, saveSettings: true });
     }
 
-    function handleOutputToggled(e: React.ChangeEvent<HTMLInputElement>, outputId: string)
+    function handleOutputToggled(e: React.ChangeEvent<HTMLInputElement>, outputName: string)
     {
-        if (state.selectedOutputs.includes(outputId))
+        if (state.settings.midiOutputs.includes(outputName))
         {
-            const newOutputs = array_copy(state.selectedOutputs);
-            array_remove(newOutputs, outputId);
-            dispatch({ type: "setSelectedOutputs", payload: newOutputs });
+            dispatch({
+                type: "setSelectedOutputs",
+                payload: { names: state.settings.midiOutputs.filter(name => name !== outputName) },
+                saveSettings: true
+            });
         }
-        else if (!state.selectedOutputs.includes(outputId))
+        else if (!state.settings.midiOutputs.includes(outputName))
         {
-            dispatch({ type: "setSelectedOutputs", payload: state.selectedOutputs.concat([ outputId ])});
+            dispatch({
+                type: "setSelectedOutputs",
+                payload: { names: state.settings.midiOutputs.concat([ outputName ]) },
+                saveSettings: true
+            });
+        }
+    }
+
+    function handleInputToggled(e: React.ChangeEvent<HTMLInputElement>, inputName: string)
+    {
+        if (state.settings.midiInputs.includes(inputName))
+        {
+            dispatch({
+                type: "setSelectedInputs",
+                payload: { names: state.settings.midiInputs.filter(name => name !== inputName) },
+                saveSettings: true
+            });
+        }
+        else if (!state.settings.midiInputs.includes(inputName))
+        {
+            dispatch({
+                type: "setSelectedInputs",
+                payload: { names: state.settings.midiInputs.concat([ inputName ]) },
+                saveSettings: true
+            });
         }
     }
     
@@ -59,14 +85,28 @@ export default function Settings(props: Props)
                     <span>Show confirmation prompts when removing things</span>
                 </label>
                 <div className="midiSelect">
-                <div>MIDI Outputs:</div>
+                    <div>MIDI Inputs:</div>
+                    {state.allowedInputs.map((input) => (
+                        <label className="clicky">
+                            <input
+                                type="checkbox"
+                                checked={state.settings.midiInputs.includes(input.name)}
+                                onChange={(e) => handleInputToggled(e, input.name)}
+                                key={input.name}
+                            />
+                            <span>{input.name}</span>
+                        </label>
+                    ))}
+                </div>
+                <div className="midiSelect">
+                    <div>MIDI Outputs:</div>
                     {state.allowedOutputs.map((output) => (
                         <label className="clicky">
                             <input
                                 type="checkbox"
-                                checked={state.selectedOutputs.includes(output.id)}
-                                onChange={(e) => handleOutputToggled(e, output.id)}
-                                key={output.id}
+                                checked={state.settings.midiOutputs.includes(output.name)}
+                                onChange={(e) => handleOutputToggled(e, output.name)}
+                                key={output.name}
                             />
                             <span>{output.name}</span>
                         </label>
