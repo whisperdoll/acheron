@@ -20,6 +20,7 @@ import TokenManager from './Components/TokenManager';
 import NumberInput from './Components/NumberInput';
 import open from "open";
 import { deserializeComposition, serializeComposition } from './Serialization';
+import usePrevious from './Hooks/usePrevious';
 
 export default function App() {
     const { state, dispatch } = useContext(AppContext)!;
@@ -35,6 +36,7 @@ export default function App() {
     const [ multiLayerSize, _setMultiLayerSize ] = useState(600);
     const multiLayerSizeMin = 100;
     const multiLayerSizeMax = 1000;
+    const previousNotes = usePrevious(state.midiNotes, []);
 
     useEffect(() =>
     {
@@ -49,6 +51,45 @@ export default function App() {
             timerWorker.current = null;
         };
     }, []);
+
+    useEffect(() =>
+    {
+        state.midiNotes.forEach((note) =>
+        {
+            const index = previousNotes.findIndex(n => n.number === note.number);
+
+            // check to see if we should play //
+            if (note.isOn && (index === -1 || !previousNotes[index].isOn))
+            {
+                Midi.noteOn(
+                    [transposeNote(
+                        note.name,
+                        getControlValue(state, state.selectedHex.layerIndex, state.controls[state.layers[state.selectedHex.layerIndex].transpose])
+                    )],
+                    state.settings.midiOutputs,
+                    getControlValue(state, state.selectedHex.layerIndex, state.controls[state.layers[state.selectedHex.layerIndex].midiChannel]),
+                    {
+                        velocity: note.velocity
+                    }
+                );
+            }
+            // check to see if we should stop //
+            else if (!note.isOn && (index !== -1 && previousNotes[index].isOn))
+            {
+                Midi.noteOff(
+                    [transposeNote(
+                        note.name,
+                        getControlValue(state, state.selectedHex.layerIndex, state.controls[state.layers[state.selectedHex.layerIndex].transpose])
+                    )],
+                    state.settings.midiOutputs,
+                    getControlValue(state, state.selectedHex.layerIndex, state.controls[state.layers[state.selectedHex.layerIndex].midiChannel]),
+                    {
+                        release: note.release
+                    }
+                );
+            }
+        });
+    }, [ state.midiNotes ]);
 
     useEffect(() =>
     {
@@ -168,7 +209,7 @@ export default function App() {
         };
         Midi.onNotesChanged = (notes) =>
         {
-            dispatch({ type: "setMidiNotesOn", payload: notes });
+            dispatch({ type: "setMidiNotes", payload: notes });
         };
 
         function keyDown(e: KeyboardEvent)

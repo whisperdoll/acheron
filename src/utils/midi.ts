@@ -15,6 +15,25 @@ export interface NoteOptions
     durationMs: number;
 }
 
+export interface NoteOnOptions
+{
+    velocity: number;
+}
+
+export interface NoteOffOptions
+{
+    release: number;
+}
+
+export interface MidiNote
+{
+    name: string;
+    number: number;
+    velocity: number;
+    release: number;
+    isOn: boolean;
+}
+
 let noteOnListener: (e: any) => any;
 let noteOffListener: (e: any) => any;
 
@@ -22,17 +41,34 @@ export default class Midi
 {
     private static enabledOutputNames: string[] = [];
     private static enabledInputNames: string[] = [];
-    private static notes: string[] = [];
+    private static notes: MidiNote[] = [];
     public static onOutputsChanged: null | ((outputs: MidiDevice[]) => any) = null;
     public static onInputsChanged: null | ((outputs: MidiDevice[]) => any) = null;
-    public static onNotesChanged: null | ((notes: string[]) => any) = null;
+    public static onNotesChanged: null | ((notes: MidiNote[]) => any) = null;
     private static isEnabled = false;
 
     private static _noteOnListener(e: any)
     {
-        if (!this.notes.includes(e.note.name))
+        const index = this.notes.findIndex(n => n.name === e.note.name);
+        if (index === -1)
         {
-            this.notes.push(e.note.name);
+            this.notes.push({
+                name: e.note.name,
+                number: e.note.number,
+                velocity: e.note.rawAttack,
+                isOn: true,
+                release: 0
+            });
+        }
+        else
+        {
+            this.notes[index] = {
+                name: e.note.name,
+                number: e.note.number,
+                velocity: e.rawAttack,
+                isOn: true,
+                release: 0
+            };
         }
 
         this.onNotesChanged && this.onNotesChanged(this.notes.slice(0));
@@ -40,8 +76,15 @@ export default class Midi
 
     private static _noteOffListener(e: any)
     {
-        if (array_remove(this.notes, e.note.name).existed)
+        const index = this.notes.findIndex(n => n.name === e.note.name);
+        
+        if (index !== -1)
         {
+            this.notes[index] = {
+                ...this.notes[index],
+                isOn: false,
+                release: e.rawRelease
+            };
             this.onNotesChanged && this.onNotesChanged(this.notes.slice(0));
         }
     }
@@ -171,6 +214,36 @@ export default class Midi
                 midiOutput.channels[channel].playNote(notes, {
                     duration: options.durationMs,
                     attack: options.velocity / 127
+                });
+            }
+        });
+    }
+
+    public static noteOn(notes: string[], outputNames: string[], channel: number, options: NoteOnOptions)
+    {
+        outputNames.forEach((outputName) =>
+        {
+            const midiOutput = WebMidi.getOutputByName(outputName);
+
+            if (midiOutput)
+            {
+                midiOutput.channels[channel].sendNoteOn(notes, {
+                    attack: options.velocity / 127
+                });
+            }
+        });
+    }
+
+    public static noteOff(notes: string[], outputNames: string[], channel: number, options: NoteOffOptions)
+    {
+        outputNames.forEach((outputName) =>
+        {
+            const midiOutput = WebMidi.getOutputByName(outputName);
+
+            if (midiOutput)
+            {
+                midiOutput.channels[channel].sendNoteOff(notes, {
+                    release: options.release / 127
                 });
             }
         });

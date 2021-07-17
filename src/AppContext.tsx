@@ -7,7 +7,7 @@ import * as fs from "fs";
 import { buildLayer } from "./Layers";
 import { ControlState, Token, ControlDefinition, Playhead, getControlValue, Lfo, TokenDefinition, TokenCallbacks, TokenUID, TokenInstanceId, ControlInstanceId } from "./Types";
 import { buildFromDefs, DefaultPlayerControls, LayerControlKey, PlayerControlKey } from "./utils/DefaultDefinitions";
-import { MidiDevice } from "./utils/midi";
+import { MidiDevice, MidiNote } from "./utils/midi";
 import { v4 as uuidv4 } from 'uuid';
 import { buildToken, copyToken } from "./Tokens";
 import { migrateSettings } from "./migrators";
@@ -74,7 +74,7 @@ export interface AppState
     allowedInputs: MidiDevice[];
     currentBeat: number;
     pulseSwitch: boolean;
-    midiNotesOn: string[];
+    midiNotes: MidiNote[];
     editingLfo: { controlId: string } | null;
     draggingType: "move" | "copy";
     isDragging: boolean;
@@ -114,7 +114,7 @@ const initialState : AppState = {
     allowedInputs: [],
     currentBeat: 0,
     pulseSwitch: false,
-    midiNotesOn: [],
+    midiNotes: [],
     editingLfo: null,
     tokenCallbacks: {},
     tokenDefinitions: {},
@@ -208,7 +208,7 @@ type Action = (
     | { type: "enableAllTokens" }
     | { type: "setFirstRunFalse" }
     | { type: "saveSettings" }
-    | { type: "setMidiNotesOn", payload: string[] }
+    | { type: "setMidiNotes", payload: MidiNote[] }
 ) & {
     saveSettings?: boolean
 }
@@ -769,11 +769,11 @@ function reducer(state: AppState, action: Action): AppState
                     }
                 };
             }
-            case "setMidiNotesOn":
+            case "setMidiNotes":
             {
                 return {
                     ...state,
-                    midiNotesOn: action.payload
+                    midiNotes: action.payload
                 };
             }
             default:

@@ -388,26 +388,26 @@ export default function(props: Props)
 
 
         // draw midi notes //
-        state.midiNotesOn.forEach((note) =>
+        state.midiNotes.forEach((note) =>
         {
-            const hexIndexes = [];
+            const toPlay: { hexIndex: number, velocity: number }[] = [];
 
             for (let i = 0; i < hexNotes.length; i++)
             {
-                if (hexNotes[i] === note)
+                if (note.isOn && hexNotes[i] === note.name)
                 {
-                    hexIndexes.push(i);
+                    toPlay.push({ hexIndex: i, velocity: note.velocity });
                 }
             }
 
-            hexIndexes.forEach((hexIndex) =>
+            toPlay.forEach((data) =>
             {
                 backCanvas.current?.fillHexagonCell(
                     startPosition, 
-                    new Point(~~(hexIndex / rows), hexIndex % rows),
+                    new Point(~~(data.hexIndex / rows), data.hexIndex % rows),
                     hexRadius,
                     false,
-                    "#252"
+                    `rgba(40,${90 + (data.velocity / 127 * 20)},${30 + (data.velocity / 127 * 60)},${(data.velocity / 127) * 0.8 + 0.2})`
                 );
             });
         });
@@ -434,7 +434,7 @@ export default function(props: Props)
                 }
             }
         });
-    }, [ state.selectedHex, state.layers, props.layerIndex, state.draggingDestHex, state.isDragging, state.midiNotesOn ]);
+    }, [ state.selectedHex, state.layers, props.layerIndex, state.draggingDestHex, state.isDragging, state.midiNotes ]);
 
     // useEffect(() =>
     // {
