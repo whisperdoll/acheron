@@ -41,6 +41,7 @@ export default function(props: Props)
         return <Control
             controlId={state.layers[props.layerIndex][controlKey]}
             key={controlKey}
+            layerIndex={props.layerIndex}
         />;
     }
 

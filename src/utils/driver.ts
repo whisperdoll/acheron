@@ -18,7 +18,7 @@ function buildHelpers(appState: AppState, layerIndex: number, currentBeat: numbe
 
             if (controls.some(c => c.key === key))
             {
-                return getControlValue(appState, controls.find(c => c.key === key)!);
+                return getControlValue(appState, layerIndex, controls.find(c => c.key === key)!);
             }
             else
             {
@@ -28,7 +28,7 @@ function buildHelpers(appState: AppState, layerIndex: number, currentBeat: numbe
         getControlValues()
         {
             const ret: Record<string, any> = {};
-            token.controlIds.forEach(id => ret[appState.controls[id].key] = getControlValue(appState, appState.controls[id]));
+            token.controlIds.forEach(id => ret[appState.controls[id].key] = getControlValue(appState, layerIndex, appState.controls[id]));
 
             return ret;
         },
@@ -95,7 +95,7 @@ function buildHelpers(appState: AppState, layerIndex: number, currentBeat: numbe
                 notes.push(hexNotes[getAdjacentHex(hexIndex, triad)]);
             }
 
-            const key = getControlValue(appState, appState.controls[appState.layers[layerIndex].key]) as keyof typeof KeyMap;
+            const key = getControlValue(appState, layerIndex, appState.controls[appState.layers[layerIndex].key]) as keyof typeof KeyMap;
             const permittedNotes = KeyMap[key].map(ni => noteArray[ni]);
             
             notes = notes.filter((note) =>
@@ -105,11 +105,11 @@ function buildHelpers(appState: AppState, layerIndex: number, currentBeat: numbe
 
             const transposed = notes.map((note) =>
             {
-                const finalTranspose = (getControlValue(appState, appState.controls[appState.layers[layerIndex].transpose]) as number) + transpose;
+                const finalTranspose = (getControlValue(appState, layerIndex, appState.controls[appState.layers[layerIndex].transpose]) as number) + transpose;
                 return transposeNote(note, finalTranspose);
             });
 
-            Midi.playNotes(transposed, appState.selectedOutputs, getControlValue(appState, appState.controls[appState.layers[layerIndex].midiChannel]), {
+            Midi.playNotes(transposed, appState.selectedOutputs, getControlValue(appState, layerIndex, appState.controls[appState.layers[layerIndex].midiChannel]), {
                 durationMs,
                 velocity
             });
@@ -117,12 +117,12 @@ function buildHelpers(appState: AppState, layerIndex: number, currentBeat: numbe
         getCurrentBeat(withinBar: boolean = true): number
         {
             return withinBar ?
-                Math.floor(currentBeat) % getControlValue(appState, appState.controls[appState.layers[layerIndex].barLength]) :
+                Math.floor(currentBeat) % getControlValue(appState, layerIndex, appState.controls[appState.layers[layerIndex].barLength]) :
                 Math.floor(currentBeat);
         },
         getBarLength(): number
         {
-            return getControlValue(appState, appState.controls[appState.layers[layerIndex].barLength]);
+            return getControlValue(appState, layerIndex, appState.controls[appState.layers[layerIndex].barLength]);
         }
     };
 
@@ -238,7 +238,7 @@ export function progressLayer(appState: AppState, deltaNs: number, layerIndex: n
     let newTokens = {...appState.tokens};
     let newPlayheads: Playhead[][] = createEmpty2dArray(NumHexes);
     const layer = appState.layers[layerIndex];
-    const beatDelta = NsToS(deltaNs) / (60 / getControlValue(appState, appState.controls[layer.tempo]));
+    const beatDelta = NsToS(deltaNs) / (60 / getControlValue(appState, layerIndex, appState.controls[layer.tempo]));
     // console.log(layer.currentBeat, layer.currentBeat === 0, Math.floor(layer.currentBeat + beatDelta) > layer.currentBeat);
 
     if (appState.isPlaying)

@@ -76,6 +76,7 @@ export default function(props: Props)
                             tokenId={tokenId}
                             onRemove={() => handleRemove(i)}
                             key={tokenId}
+                            layerIndex={props.layerIndex}
                             isCollapsed={tokenId !== toggledToken}
                             onToggleCollapse={() => toggledToken === tokenId ? setToggledToken("") : setToggledToken(tokenId)}
                         />

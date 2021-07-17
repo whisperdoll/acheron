@@ -1,6 +1,6 @@
 import { AppState, LayerState } from "../AppContext";
 import { ControlState, Lfo, Token } from "../Types";
-import { buildFromDefs, DefaultLayerControls, DefaultPlayerControls } from "./DefaultDefinitions";
+import { buildFromDefs, DefaultLayerControls, DefaultPlayerControls, LayerControlKey, LayerControlTypes, PlayerControlKey, PlayerControlKeys } from "./DefaultDefinitions";
 import { mod } from "./utils";
 import * as npath from "path";
 import { buildLayer } from "../Layers";
@@ -50,6 +50,36 @@ export function transposeNote(note: string, transpose: number)
 
     // console.log(note, transpose, noteArray[newNoteIndex] + (octave + octaveDelta).toString());
     return noteArray[newNoteIndex] + (octave + octaveDelta).toString();
+}
+
+export function getInheritParts(str: string): [p1: "global", p2: PlayerControlKey] | [p1: "layer", p2: LayerControlKey] | false
+{
+    const parts = str.split(".");
+    if (parts.length === 2)
+    {
+        if (parts[0] === "global")
+        {
+            return PlayerControlKeys.includes(parts[1] as any) && parts as [p1: "global", p2: PlayerControlKey];
+        }
+        else if (parts[0] === "layer")
+        {
+            return LayerControlTypes.includes(parts[1] as any) && parts as [p1: "layer", p2: LayerControlKey];
+        }
+    }
+
+    return false;
+}
+
+export function getControlFromInheritParts(appState: AppState, layerIndex: number, inheritParts: [p1: "global", p2: PlayerControlKey] | [p1: "layer", p2: LayerControlKey]): ControlState
+{
+    if (inheritParts[0] === "global")
+    {
+        return appState.controls[appState[inheritParts[1]]];
+    }
+    else
+    {
+        return appState.controls[appState.layers[layerIndex][inheritParts[1]]];
+    }
 }
 
 export const NumHexes = 12 * 17;

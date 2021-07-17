@@ -2,7 +2,8 @@ import { AppSettings, initialSettings, TokenSettings } from "./AppContext";
 import { SerializedComposition, SerializedCompositionLayer, SerializedCompositionToken } from "./Serialization";
 import { getTokenUIDFromPath } from "./Tokens";
 import { KeyMap, NumMIDIChannels, TokenUID } from "./Types";
-import { buildLfo } from "./utils/DefaultDefinitions";
+import { buildLfo, LayerControlTypes, PlayerControlKeys } from "./utils/DefaultDefinitions";
+import { getInheritParts } from "./utils/elysiumutils";
 
 interface LfoV1
 {
@@ -123,13 +124,13 @@ function migrateSerializedToken(serialized: SerializedCompositionTokenV1 | Seria
     return serialized as SerializedCompositionToken;
 }
 
-function migrateSerializedLayer(serialized: SerializedCompositionLayerV1 | SerializedCompositionLayer): SerializedCompositionLayer
+function migrateSerializedLayer(global: SerializedComposition["global"], serialized: SerializedCompositionLayerV1 | SerializedCompositionLayer): SerializedCompositionLayer
 {
     if (!(serialized as any).version || (serialized as any).version === 1)
     {
         serialized = serialized as SerializedCompositionLayerV1;
         // v1 //
-        return {
+        let ret: SerializedCompositionLayer = {
             ...serialized,
             version: 2,
             enabled: {
@@ -154,6 +155,17 @@ function migrateSerializedLayer(serialized: SerializedCompositionLayerV1 | Seria
                 scalarValue: Object.keys(KeyMap)[serialized.key]
             }
         };
+
+        // ensure inherits are correct
+        PlayerControlKeys.forEach((key) =>
+        {
+            if (Object.prototype.hasOwnProperty.call(ret, key))
+            {
+                ret[key].inherit = "global." + key;
+            }
+        });
+
+        return ret;
     }
     else
     {
@@ -163,10 +175,45 @@ function migrateSerializedLayer(serialized: SerializedCompositionLayerV1 | Seria
 
 export function migrateSerializedComposition(serialized: SerializedCompositionV1 | SerializedComposition): SerializedComposition | null
 {
-    return {
+    function inheritFor(ret: SerializedComposition, id: string): string
+    {
+        // check global //
+        let candidate = PlayerControlKeys.findIndex(key => ret.global[key].id === id);
+        if (candidate !== -1)
+        {
+            return "global." + ret.global[PlayerControlKeys[candidate]].key;
+        }
+
+        // check layers //
+        for (let i = 0; i < ret.layers.length; i++)
+        {
+            candidate = LayerControlTypes.findIndex(key => ret.layers[i][key].id === id);
+            if (candidate !== -1)
+            {
+                return "layer." + ret.layers[i][LayerControlTypes[candidate]].key;
+            }
+        }
+        
+        return id; // TODO: error
+    }
+
+    let ret = {
         version: 2,
         global: serialized.global,
-        layers: serialized.layers.map(migrateSerializedLayer),
-        tokens: serialized.tokens.map(migrateSerializedToken).filter(t => t) as SerializedCompositionToken[]
+        layers: serialized.layers.map(l => migrateSerializedLayer(serialized.global, l)),
+        tokens: (serialized.tokens.map(migrateSerializedToken).filter(t => t) as SerializedCompositionToken[])
     };
+
+    ret = {
+        ...ret,
+        tokens: ret.tokens.map(t => ({
+            ...t,
+            controls: t.controls.map(c => ({
+                ...c,
+                inherit: c.inherit ? (c.inherit.includes(".") ? c.inherit : inheritFor(ret, c.inherit)) : undefined
+            }))
+        }))
+    };
+
+    return ret;
 }

@@ -9,6 +9,7 @@ interface Props
     onRemove: () => any;
     isCollapsed: boolean;
     onToggleCollapse: () => any;
+    layerIndex: number;
 }
 
 export default function(props: Props)
@@ -28,6 +29,7 @@ export default function(props: Props)
                 <Control
                     controlId={controlId}
                     key={controlId}
+                    layerIndex={props.layerIndex}
                 />
             ))}
         </div>
