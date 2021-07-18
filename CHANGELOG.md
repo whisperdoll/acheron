@@ -28,3 +28,9 @@ It's the first version.
 # 1.1.3
 
 * Fixed bug with saving token search paths
+* Added MIDI input support
+    * Generate token's "MIDI" trigger works now
+* Added Patreon button
+* QOL changes relating to layout
+* New icons
+* Fixed bug relating to dragging tokens in MultiLayer Mode

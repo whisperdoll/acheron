@@ -197,9 +197,9 @@ export default class MenuBuilder
         return [subMenuAbout, subMenuEdit, subMenuView, subMenuWindow, subMenuHelp];
     }
             
-    buildDefaultTemplate()
+    buildDefaultTemplate(): MenuItemConstructorOptions[]
     {
-        const templateDefault = [
+        const templateDefault: MenuItemConstructorOptions[] = [
             {
                 label: '&File',
                 submenu: [
@@ -229,25 +229,29 @@ export default class MenuBuilder
                 ],
             },
             {
+                label: "&Layer",
+                submenu: [
+                    {
+                        label: "Add Layer",
+                        accelerator: "Ctrl+Shift+N",
+                        click: () =>
+                        {
+                            this.mainWindow.webContents.send("addLayer");
+                        }
+                    }
+                ]
+            },
+            {
                 label: '&View',
-                submenu:
-                process.env.NODE_ENV === 'development' ||
-                process.env.DEBUG_PROD === 'true'
-                ? [
-                    {
-                        label: '&Reload',
-                        accelerator: 'Ctrl+R',
-                        click: () => {
-                            this.mainWindow.webContents.reload();
-                        },
-                    },
-                    {
-                        label: 'Toggle &Full Screen',
-                        accelerator: 'F11',
-                        click: () => {
-                            this.mainWindow.setFullScreen(
-                                !this.mainWindow.isFullScreen()
-                                );
+                submenu: (
+                    (process.env.NODE_ENV === 'development' ||
+                    process.env.DEBUG_PROD === 'true' ?
+                    [
+                        {
+                            label: '&Reload',
+                            accelerator: 'Ctrl+R',
+                            click: () => {
+                                this.mainWindow.webContents.reload();
                             },
                         },
                         {
@@ -257,18 +261,44 @@ export default class MenuBuilder
                                 this.mainWindow.webContents.toggleDevTools();
                             },
                         },
-                    ]
-                    : [
+                        { type: 'separator' },
+                    ] : []).concat([
                         {
                             label: 'Toggle &Full Screen',
                             accelerator: 'F11',
-                            click: () => {
-                                this.mainWindow.setFullScreen(
-                                    !this.mainWindow.isFullScreen()
-                                    );
-                                },
+                            click: () =>
+                            {
+                            this.mainWindow.setFullScreen(
+                                !this.mainWindow.isFullScreen()
+                                );
                             },
-                        ],
+                        },
+                        {
+                            label: 'Toggle &Left Column',
+                            accelerator: 'Ctrl+L',
+                            click: () =>
+                            {
+                                this.mainWindow.webContents.send("toggleLeftColumn");
+                            },
+                        },
+                        {
+                            label: 'Toggle &Inspector',
+                            accelerator: 'Ctrl+I',
+                            click: () =>
+                            {
+                                this.mainWindow.webContents.send("toggleInspector");
+                            },
+                        },
+                        {
+                            label: "Toggle &Multilayer Mode",
+                            accelerator: 'Ctrl+M',
+                            click: () =>
+                            {
+                                this.mainWindow.webContents.send("toggleMultilayer")
+                            }
+                        },
+                    ])
+                ) as MenuItemConstructorOptions[]
             },
             {
                 label: 'Help',

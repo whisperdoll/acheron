@@ -22,7 +22,7 @@ import open from "open";
 import { deserializeComposition, serializeComposition } from './Serialization';
 import usePrevious from './Hooks/usePrevious';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPlay, faPause, faCog, faBug, faLayerGroup, faDonate, faToolbox, faEyeSlash, faEye, faEdit, faTrash, faTrashAlt, faMinus, faPlus } from "@fortawesome/free-solid-svg-icons";
+import { faPlay, faPause, faCog, faBug, faLayerGroup, faDonate, faToolbox, faEyeSlash, faEye, faEdit, faTrash, faTrashAlt, faMinus, faPlus, faSave, faCheck } from "@fortawesome/free-solid-svg-icons";
 import IconButton from './Components/IconButton';
 
 export default function App() {
@@ -32,6 +32,7 @@ export default function App() {
     const [ isEditingLayerName, setIsEditingLayerName ] = useState(false);
     const [ isShowingSettings, setIsShowingSettings ] = useState(false);
     const [ isShowingInspector, setIsShowingInspector ] = useState(true);
+    const [ isShowingLeftColumn, setIsShowingLeftColumn ] = useState(true);
     const [ isShowingTokenSettings, setIsShowingTokenSettings ] = useState(false);
     const tickCallback = useRef<(deltaNs: number) => any>(() => 0);
     const timerWorker = useRef<Worker | null>(null);
@@ -140,8 +141,32 @@ export default function App() {
             }
         }
 
+        function toggleLeftColumn()
+        {
+            setIsShowingLeftColumn(!isShowingLeftColumn);
+        }
+
+        function toggleInspector()
+        {
+            setIsShowingInspector(!isShowingInspector);
+        }
+
+        function toggleMultilayer()
+        {
+            setIsMultiLayerMode(!isMultiLayerMode);
+        }
+
+        function addLayer()
+        {
+            dispatch({ type: "addLayer", payload: { select: !isMultiLayerMode } });
+        }
+
         ipcRenderer.addListener("open", loadComposition);
         ipcRenderer.addListener("saveAs", saveComposition);
+        ipcRenderer.addListener("toggleLeftColumn", toggleLeftColumn);
+        ipcRenderer.addListener("toggleInspector", toggleInspector);
+        ipcRenderer.addListener("toggleMultilayer", toggleMultilayer);
+        ipcRenderer.addListener("addLayer", addLayer);
 
         window.addEventListener("keydown", keyDown);
 
@@ -149,6 +174,10 @@ export default function App() {
         {
             ipcRenderer.removeListener("open", loadComposition);
             ipcRenderer.removeListener("saveAs", saveComposition);
+            ipcRenderer.removeListener("toggleLeftColumn", toggleLeftColumn);
+            ipcRenderer.removeListener("toggleInspector", toggleInspector);
+            ipcRenderer.removeListener("toggleMultilayer", toggleMultilayer);
+            ipcRenderer.removeListener("addLayer", addLayer);
             window.removeEventListener("keydown", keyDown);
         };
     });
@@ -275,8 +304,13 @@ export default function App() {
         }
     }, [ state.selectedHex.hexIndex ]);
 
-    function confirmRemoveLayer()
+    function confirmRemoveLayer(layerIndex?: number)
     {
+        if (layerIndex === undefined)
+        {
+            layerIndex = state.selectedHex.layerIndex;
+        }
+
         if (state.layers.length === 1)
         {
             remote.dialog.showMessageBox(remote.getCurrentWindow(), {
@@ -292,20 +326,20 @@ export default function App() {
             if (state.settings.confirmDelete)
             {
                 confirmPrompt(
-                    `Are you sure you want to delete the layer '${state.layers[state.selectedHex.layerIndex].name}'?`,
+                    `Are you sure you want to delete the layer '${state.layers[layerIndex].name}'?`,
                     "Confirm delete",
                     (confirmed) =>
                     {
                         if (confirmed)
                         {
-                            dispatch({ type: "removeCurrentLayer" });
+                            dispatch({ type: "removeLayer", payload: layerIndex! });
                         }
                     }
                 );
             }
             else
             {
-                dispatch({ type: "removeCurrentLayer" });
+                dispatch({ type: "removeLayer", payload: layerIndex });
             }
         }
     }
@@ -401,12 +435,12 @@ export default function App() {
             <IconButton onClick={() => setIsShowingTokenSettings(true)} icon={faToolbox}>Manage Tokens</IconButton>
             {/* <button onClick={loadComposition}>📂 Open Composition</button>
             <button onClick={saveComposition}>💾 Save Composition</button> */}
-            <IconButton
+            {/* <IconButton
                 onClick={() => setIsShowingInspector(!isShowingInspector)}
                 icon={isShowingInspector ? faEyeSlash : faEye}
             >
                 {isShowingInspector ? "Hide" : "Show"} Inspector
-            </IconButton>
+            </IconButton> */}
             <IconButton
                 onClick={() => setIsMultiLayerMode(!isMultiLayerMode)}
                 icon={faLayerGroup}
@@ -434,6 +468,17 @@ export default function App() {
         </div>;
 
     const inspector = isShowingInspector ? <Inspector layerIndex={state.selectedHex.layerIndex} /> : <></>;
+    const leftColumn = isShowingLeftColumn ?
+        <div className="leftColumn">
+            <div className="tabs">
+                <button onClick={() => setIsShowingPlayerSettings(true)} className={isShowingPlayerSettings ? "active" : ""}>Player</button>
+                <button onClick={() => setIsShowingPlayerSettings(false)} className={!isShowingPlayerSettings ? "active" : ""}>Layer</button>
+            </div>
+            {isShowingPlayerSettings ?
+                <PlayerSettings /> :
+                <LayerSettings layerIndex={state.selectedHex.layerIndex}></LayerSettings>
+            }
+        </div> : <></>;
 
     return (
         <div className="app">
@@ -443,10 +488,19 @@ export default function App() {
             {isMultiLayerMode ? (
                 <div className="multilayer-view">
                     <div className="cols">
+                        {leftColumn}
                         <div className="multilayer">
                             {state.layers.map((layer, layerIndex) => (
                                 <div className="layerContainer" key={layerIndex}>
-                                    <div className="layerName">{layer.name}</div>
+                                    <div className="layerName">
+                                        <span>{layer.name}</span>
+                                        <button
+                                            className="nostyle remove"
+                                            onClick={() => confirmRemoveLayer(layerIndex)}
+                                        >
+                                            ❌
+                                        </button>
+                                    </div>
                                     <HexGrid layerIndex={layerIndex} key={layerIndex} size={multiLayerSize} />
                                 </div>
                             ))}
@@ -457,16 +511,7 @@ export default function App() {
                 </div>
             ) : (<>
                 <div className="columns">
-                    <div className="leftColumn">
-                        <div className="tabs">
-                            <button onClick={() => setIsShowingPlayerSettings(true)} className={isShowingPlayerSettings ? "active" : ""}>Player</button>
-                            <button onClick={() => setIsShowingPlayerSettings(false)} className={!isShowingPlayerSettings ? "active" : ""}>Layer</button>
-                        </div>
-                        {isShowingPlayerSettings ?
-                            <PlayerSettings /> :
-                            <LayerSettings layerIndex={state.selectedHex.layerIndex}></LayerSettings>
-                        }
-                    </div>
+                    {leftColumn}
                     <div className="middleColumn">
                         <div className="layerSelectRow">
                             <label>
@@ -494,11 +539,12 @@ export default function App() {
                                     }
                             </label>
                             {isEditingLayerName ?
-                                <button
+                                <IconButton
                                     onClick={(e) => setIsEditingLayerName(false)}
+                                    icon={faCheck}
                                 >
-                                    ✓ Save Name
-                                </button> :
+                                    Save Name
+                                </IconButton> :
                                 <IconButton
                                     onClick={(e) => setIsEditingLayerName(true)}
                                     icon={faEdit}

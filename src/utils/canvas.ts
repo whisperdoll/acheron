@@ -259,7 +259,7 @@ export class Canvas
     {
         let z = this.canvas as HTMLElement, x = 0, y = 0, c; 
 
-        while(z && !isNaN(z.offsetLeft) && !isNaN(z.offsetTop)) {        
+        while(z && !isNaN(z.offsetLeft) && !isNaN(z.offsetTop)) {  
             c =  window.getComputedStyle(z, null); 
             x += z.offsetLeft - z.scrollLeft + (c ? parseInt(c.getPropertyValue('border-left-width') , 10) : 0);
             y += z.offsetTop - z.scrollTop + (c ? parseInt(c.getPropertyValue('border-top-width') , 10) : 0);

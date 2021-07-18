@@ -181,6 +181,7 @@ type Action = (
     | { type: "addLayer", payload?: { select: boolean }}
     | { type: "setCurrentLayerName", payload: string }
     | { type: "removeCurrentLayer" }
+    | { type: "removeLayer", payload: number }
     | { type: "setLayers", payload: LayerState[] }
     | { type: "setPlayheads", payload: { layerIndex: number, playheads: Playhead[][] } }
     | { type: "setAllowedInputs", payload: MidiDevice[] }
@@ -399,6 +400,26 @@ function reducer(state: AppState, action: Action): AppState
                     tokens: objectWithoutKeys(state.tokens, tokensToRemove),
                     controls: objectWithoutKeys(state.controls, controlsToRemove),
                     selectedHex: {...state.selectedHex, layerIndex: Math.min(state.layers.length - 2, state.selectedHex.layerIndex)}
+                };
+            }
+            case "removeLayer":
+            {
+                if (state.layers.length === 1)
+                {
+                    return state;
+                }
+
+                const payload = action.payload;
+                
+                const tokensToRemove = state.layers[payload].tokenIds.reduce((acc, tids) => acc.concat(tids), []);
+                const controlsToRemove = tokensToRemove.map(tid => state.tokens[tid].controlIds).reduce((acc, tids) => acc.concat(tids), []);
+                
+                return {
+                    ...state,
+                    layers: state.layers.filter((_, li) => li !== payload),
+                    tokens: objectWithoutKeys(state.tokens, tokensToRemove),
+                    controls: objectWithoutKeys(state.controls, controlsToRemove),
+                    selectedHex: {...state.selectedHex, layerIndex: Math.min(state.layers.length - 1, state.selectedHex.layerIndex)}
                 };
             }
             case "setLayers":

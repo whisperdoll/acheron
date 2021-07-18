@@ -47,12 +47,15 @@ export default function(props: Props)
 
     return (
         <div className="layerSettings">
-            <div className="header">Layer</div>
-            {layerControls.map(buildControl)}
-            <div className="header">Notes</div>
-            {noteControls.map(buildControl)}
-            <div className="header">Generators</div>
-            {generatorControls.map(buildControl)}
+            <div className="layerHeader">{state.layers[props.layerIndex].name}</div>
+            <div className="scrolly">
+                <div className="header">Layer</div>
+                {layerControls.map(buildControl)}
+                <div className="header">Notes</div>
+                {noteControls.map(buildControl)}
+                <div className="header">Generators</div>
+                {generatorControls.map(buildControl)}
+            </div>
         </div>
     );
 };

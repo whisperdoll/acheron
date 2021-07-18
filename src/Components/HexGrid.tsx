@@ -87,7 +87,7 @@ export default function(props: Props)
                     dispatch({ type: "clearHex", payload: { layerIndex: props.layerIndex, hexIndex: state.selectedHex.hexIndex }});
                 }
             }
-            else if ([...e.key].length === 1)
+            else if ([...e.key].length === 1 && !e.ctrlKey && !e.shiftKey)
             {
                 for (const uid in state.settings.tokens)
                 {
@@ -119,6 +119,7 @@ export default function(props: Props)
     useEffect(() =>
     {
         canvas.current = new Canvas({
+            align: { horizontal: true, vertical: true },
             canvasElement: canvasEl.current!,
             deepCalc: true,
             opaque: false,
