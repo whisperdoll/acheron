@@ -124,6 +124,20 @@ button:not(.nostyle)
     {
         background-color: #222;
     }
+
+    &.iconButton
+    {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.4em;
+    
+        & > svg
+        {
+        }
+    }
 }
 
 button.nostyle
@@ -139,16 +153,31 @@ button.nostyle
 
 button.patreon
 {
-    background-color: #e85b46;
+    background-color: darken(#e85b46, 5);
 
     &:hover
     {
-        background-color: lighten(#e85b46, 5);
+        background-color: lighten(#e85b46, 2);
     }
 
     &:active
     {
-        background-color: darken(#e85b46, 5);
+        background-color: darken(#e85b46, 12);
+    }
+}
+
+button.delete
+{
+    background-color: #9c2020;
+
+    &:hover
+    {
+        background-color: lighten(#9c2020, 7);
+    }
+
+    &:active
+    {
+        background-color: darken(#9c2020, 7);
     }
 }
 

@@ -21,6 +21,9 @@ import NumberInput from './Components/NumberInput';
 import open from "open";
 import { deserializeComposition, serializeComposition } from './Serialization';
 import usePrevious from './Hooks/usePrevious';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faPlay, faPause, faCog, faBug, faLayerGroup, faDonate, faToolbox, faEyeSlash, faEye, faEdit, faTrash, faTrashAlt, faMinus, faPlus } from "@fortawesome/free-solid-svg-icons";
+import IconButton from './Components/IconButton';
 
 export default function App() {
     const { state, dispatch } = useContext(AppContext)!;
@@ -387,18 +390,29 @@ export default function App() {
 
     const elysiumControls = 
         <div className="elysiumControls">
-            <button
+            <IconButton
+                icon={state.isPlaying ? faPause : faPlay}
                 onClick={() => dispatch({ type: "toggleIsPlaying" })}
             >
-                {state.isPlaying ? "❚❚ Pause" : "▶ Play"}
-            </button>
+                {state.isPlaying ? "Pause" : "Play"}
+            </IconButton>
             {/* <button onClick={reloadScripts}>↻ Refresh Tokens</button> */}
-            <button onClick={showSettings}>⚙ Settings</button>
-            <button onClick={() => setIsShowingTokenSettings(true)}>Manage Tokens</button>
+            <IconButton onClick={showSettings} icon={faCog}>Settings</IconButton>
+            <IconButton onClick={() => setIsShowingTokenSettings(true)} icon={faToolbox}>Manage Tokens</IconButton>
             {/* <button onClick={loadComposition}>📂 Open Composition</button>
             <button onClick={saveComposition}>💾 Save Composition</button> */}
-            <button onClick={() => setIsShowingInspector(!isShowingInspector)}>{isShowingInspector ? "Hide" : "Show"} Inspector</button>
-            <button onClick={() => setIsMultiLayerMode(!isMultiLayerMode)}>Toggle MultiLayer Mode</button>
+            <IconButton
+                onClick={() => setIsShowingInspector(!isShowingInspector)}
+                icon={isShowingInspector ? faEyeSlash : faEye}
+            >
+                {isShowingInspector ? "Hide" : "Show"} Inspector
+            </IconButton>
+            <IconButton
+                onClick={() => setIsMultiLayerMode(!isMultiLayerMode)}
+                icon={faLayerGroup}
+            >
+                Toggle MultiLayer Mode
+            </IconButton>
             {isMultiLayerMode && <>
                 <span>Layer Size:</span>
                 <input
@@ -415,8 +429,8 @@ export default function App() {
                     onChange={(v) => setMultiLayerSize(v)}
                 />
             </>}
-            <button onClick={reportABug}>🐞 Report a Bug</button>
-            <button className="patreon" onClick={openPatreon}>Support on Patreon</button>
+            <IconButton onClick={reportABug} icon={faBug}>Report a Bug</IconButton>
+            <IconButton className="patreon" icon={faDonate} onClick={openPatreon}>Support on Patreon</IconButton>
         </div>;
 
     const inspector = isShowingInspector ? <Inspector layerIndex={state.selectedHex.layerIndex} /> : <></>;
@@ -485,22 +499,26 @@ export default function App() {
                                 >
                                     ✓ Save Name
                                 </button> :
-                                <button
+                                <IconButton
                                     onClick={(e) => setIsEditingLayerName(true)}
+                                    icon={faEdit}
                                 >
-                                    ✎ Edit Name
-                                </button>
+                                    Edit Name
+                                </IconButton>
                             }
-                            <button
+                            <IconButton
                                 onClick={confirmRemoveLayer}
+                                className="delete"
+                                icon={faMinus}
                             >
-                                ✖ Delete Layer
-                            </button>
-                            <button
+                                Delete Layer
+                            </IconButton>
+                            <IconButton
                                 onClick={(e) => dispatch({ type: "addLayer", payload: { select: true } })}
+                                icon={faPlus}
                             >
-                                + Add New Layer
-                            </button>
+                                Add New Layer
+                            </IconButton>
                         </div>
                         <HexGrid
                             layerIndex={state.selectedHex.layerIndex}
