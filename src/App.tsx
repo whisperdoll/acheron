@@ -129,18 +129,6 @@ export default function App() {
             }
         };
 
-        function keyDown(e: KeyboardEvent)
-        {
-            if ((e.key === "+" || e.key === "=") && e.ctrlKey)
-            {
-                webFrame.setZoomLevel(webFrame.getZoomLevel() + 0.5);
-            }
-            if (e.key === "-" && e.ctrlKey)
-            {
-                webFrame.setZoomLevel(webFrame.getZoomLevel() - 0.5);
-            }
-        }
-
         function toggleLeftColumn()
         {
             setIsShowingLeftColumn(!isShowingLeftColumn);
@@ -168,8 +156,6 @@ export default function App() {
         ipcRenderer.addListener("toggleMultilayer", toggleMultilayer);
         ipcRenderer.addListener("addLayer", addLayer);
 
-        window.addEventListener("keydown", keyDown);
-
         return () =>
         {
             ipcRenderer.removeListener("open", loadComposition);
@@ -178,7 +164,6 @@ export default function App() {
             ipcRenderer.removeListener("toggleInspector", toggleInspector);
             ipcRenderer.removeListener("toggleMultilayer", toggleMultilayer);
             ipcRenderer.removeListener("addLayer", addLayer);
-            window.removeEventListener("keydown", keyDown);
         };
     });
 
@@ -264,6 +249,30 @@ export default function App() {
                     !["input","button","select","textarea"].includes(document.activeElement?.tagName.toLowerCase())))
             {
                 dispatch({ type: "toggleIsPlaying" });
+            }
+            
+            if ((e.key === "+" || e.key === "=") && e.ctrlKey)
+            {
+                webFrame.setZoomLevel(webFrame.getZoomLevel() + 0.5);
+            }
+            if (e.key === "-" && e.ctrlKey)
+            {
+                webFrame.setZoomLevel(webFrame.getZoomLevel() - 0.5);
+            }
+
+            if ("1234567890".includes(e.key) && e.ctrlKey)
+            {
+                let layerIndex = parseInt(e.key) - 1;
+
+                if (layerIndex === -1)
+                {
+                    layerIndex = 9;
+                }
+
+                if (layerIndex < state.layers.length)
+                {
+                    dispatch({ type: "setSelectedHex", payload: { ...state.selectedHex, layerIndex }});
+                }
             }
         }
 
@@ -532,7 +541,7 @@ export default function App() {
                                                 key={i}
                                                 value={i}
                                             >
-                                                {layer.name}
+                                                {layer.name}{i === state.selectedHex.layerIndex || i > 9 ? "" : ` (Ctrl+${(i + 1) % 10})`}
                                             </option>
                                         ))}
                                     </select>
@@ -553,7 +562,7 @@ export default function App() {
                                 </IconButton>
                             }
                             <IconButton
-                                onClick={confirmRemoveLayer}
+                                onClick={() => confirmRemoveLayer()}
                                 className="delete"
                                 icon={faMinus}
                             >

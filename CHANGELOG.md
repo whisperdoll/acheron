@@ -32,5 +32,6 @@ It's the first version.
     * Generate token's "MIDI" trigger works now
 * Added Patreon button
 * QOL changes relating to layout
+* Lots of keyboard shortcuts!
 * New icons
-* Fixed bug relating to dragging tokens in MultiLayer Mode
+* Fixed bug relating to dragging tokens in Multilayer Mode
