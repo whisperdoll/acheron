@@ -49,6 +49,7 @@ export interface LayerState
     pulseEvery: string;
     tokenIds: string[][]; // each hex has an array of tokens
     playheads: Playhead[][]; // each hex has an array of playheads
+    midiBuffer: MidiNote[]
 }
 
 export interface AppState
@@ -209,6 +210,8 @@ type Action = (
     | { type: "setFirstRunFalse" }
     | { type: "saveSettings" }
     | { type: "setMidiNotes", payload: MidiNote[] }
+    | { type: "bufferMidi", payload: { layerIndex: number, note: MidiNote }}
+    | { type: "debufferOffNotes", payload: { layerIndex: number }}
 ) & {
     saveSettings?: boolean
 }
@@ -774,6 +777,41 @@ function reducer(state: AppState, action: Action): AppState
                 return {
                     ...state,
                     midiNotes: action.payload
+                };
+            }
+            case "bufferMidi":
+            {
+                const payload = action.payload;
+
+                const buffer = state.layers[payload.layerIndex].midiBuffer.slice(0);
+                const index = buffer.findIndex(n => n.number === payload.note.number);
+                if (index === -1)
+                {
+                    buffer.push(payload.note);
+                }
+                else
+                {
+                    buffer[index] = payload.note;
+                }
+
+                return {
+                    ...state,
+                    layers: state.layers.map((l, li) => li !== payload.layerIndex ? l : {
+                        ...l,
+                        midiBuffer: buffer
+                    })
+                };
+            }
+            case "debufferOffNotes":
+            {
+                const payload = action.payload;
+
+                return {
+                    ...state,
+                    layers: state.layers.map((l, li) => li !== payload.layerIndex ? l : {
+                        ...l,
+                        midiBuffer: l.midiBuffer.filter(n => n.isOn)
+                    })
                 };
             }
             default:

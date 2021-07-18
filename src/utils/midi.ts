@@ -32,6 +32,7 @@ export interface MidiNote
     velocity: number;
     release: number;
     isOn: boolean;
+    playedAs: string;
 }
 
 let noteOnListener: (e: any) => any;
@@ -57,7 +58,8 @@ export default class Midi
                 number: e.note.number,
                 velocity: e.note.rawAttack,
                 isOn: true,
-                release: 0
+                release: 0,
+                playedAs: ""
             });
         }
         else
@@ -67,7 +69,8 @@ export default class Midi
                 number: e.note.number,
                 velocity: e.rawAttack,
                 isOn: true,
-                release: 0
+                release: 0,
+                playedAs: ""
             };
         }
 

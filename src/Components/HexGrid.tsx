@@ -29,7 +29,6 @@ export default function(props: Props)
     const hexCanvas = useRef<Canvas | null>(null);
     const hexPoints = useRef<Point[]>([]);
     const mouseLocation = useRef<Point | null>(null);
-    const prevSelectedHex = usePrevious(state.selectedHex);
 
     const rows = 12;
     const cols = 17;
@@ -388,29 +387,32 @@ export default function(props: Props)
 
 
         // draw midi notes //
-        state.midiNotes.forEach((note) =>
+        if (props.layerIndex === state.selectedHex.layerIndex)
         {
-            const toPlay: { hexIndex: number, velocity: number }[] = [];
-
-            for (let i = 0; i < hexNotes.length; i++)
+            state.midiNotes.forEach((note) =>
             {
-                if (note.isOn && hexNotes[i] === note.name)
+                const toPlay: { hexIndex: number, velocity: number }[] = [];
+    
+                for (let i = 0; i < hexNotes.length; i++)
                 {
-                    toPlay.push({ hexIndex: i, velocity: note.velocity });
+                    if (note.isOn && hexNotes[i] === note.name)
+                    {
+                        toPlay.push({ hexIndex: i, velocity: note.velocity });
+                    }
                 }
-            }
-
-            toPlay.forEach((data) =>
-            {
-                backCanvas.current?.fillHexagonCell(
-                    startPosition, 
-                    new Point(~~(data.hexIndex / rows), data.hexIndex % rows),
-                    hexRadius,
-                    false,
-                    `rgba(40,${90 + (data.velocity / 127 * 20)},${30 + (data.velocity / 127 * 60)},${(data.velocity / 127) * 0.8 + 0.2})`
-                );
+    
+                toPlay.forEach((data) =>
+                {
+                    backCanvas.current?.fillHexagonCell(
+                        startPosition, 
+                        new Point(~~(data.hexIndex / rows), data.hexIndex % rows),
+                        hexRadius,
+                        false,
+                        `rgba(40,${90 + (data.velocity / 127 * 20)},${30 + (data.velocity / 127 * 60)},${(data.velocity / 127) * 0.8 + 0.2})`
+                    );
+                });
             });
-        });
+        }
 
         // draw dragging //
         if (state.isDragging && state.draggingDestHex.hexIndex !== -1 && state.draggingDestHex.layerIndex === props.layerIndex)

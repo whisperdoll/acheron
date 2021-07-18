@@ -1,8 +1,8 @@
 import { AppState, LayerState } from "../AppContext";
 import { getControlValue, KeyMap, Playhead, Token } from "../Types";
-import { getAdjacentHex, getNoteParts, hexNotes, noteArray, NumHexes, transposeNote } from "./elysiumutils";
+import { getAdjacentHex, getNoteParts, hexIndexesFromNote, hexNotes, noteArray, NumHexes, transposeNote } from "./elysiumutils";
 import { array_copy, createEmpty2dArray, mod, NsToS } from "./utils";
-import Midi from "./midi";
+import Midi, { MidiNote } from "./midi";
 
 const rows = 12;
 const cols = 17;
@@ -43,6 +43,10 @@ function buildHelpers(appState: AppState, layerIndex: number, currentBeat: numbe
         getHexIndex()
         {
             return hexIndex;
+        },
+        isMidiPlaying()
+        {
+            return appState.layers[layerIndex].midiBuffer.some(n => hexIndexesFromNote(n.name).includes(hexIndex));
         },
         modifyPlayhead(playheadIndex: number, newPlayheadDef: Partial<Playhead>)
         {
@@ -109,7 +113,7 @@ function buildHelpers(appState: AppState, layerIndex: number, currentBeat: numbe
                 return transposeNote(note, finalTranspose);
             });
 
-            Midi.playNotes(transposed, appState.selectedOutputs, getControlValue(appState, layerIndex, appState.controls[appState.layers[layerIndex].midiChannel]), {
+            Midi.playNotes(transposed, appState.settings.midiOutputs, getControlValue(appState, layerIndex, appState.controls[appState.layers[layerIndex].midiChannel]), {
                 durationMs,
                 velocity
             });
@@ -243,6 +247,8 @@ export function progressLayer(appState: AppState, deltaNs: number, layerIndex: n
 
     if (appState.isPlaying)
     {
+        let shouldClearMidiBuffer = false;
+
         if (layer.enabled && (layer.currentBeat === 0 || Math.floor(layer.currentBeat + beatDelta) > layer.currentBeat))
         {
             // move any playheads //
@@ -341,17 +347,31 @@ export function progressLayer(appState: AppState, deltaNs: number, layerIndex: n
                     }
                 });
             });
+
+            shouldClearMidiBuffer = true;
         }
         else
         {
             newPlayheads = layer.playheads;
         }
 
-        newLayers[layerIndex] = {
-            ...layer,
-            playheads: newPlayheads,
-            currentBeat: layer.currentBeat + beatDelta
-        };
+        if (!shouldClearMidiBuffer)
+        {
+            newLayers[layerIndex] = {
+                ...layer,
+                playheads: newPlayheads,
+                currentBeat: layer.currentBeat + beatDelta
+            };
+        }
+        else
+        {
+            newLayers[layerIndex] = {
+                ...layer,
+                playheads: newPlayheads,
+                currentBeat: layer.currentBeat + beatDelta,
+                midiBuffer: []
+            };
+        }
     }
 
     return {

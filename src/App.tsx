@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import './App.global.scss';
 import { AppContext, AppSettings, loadSettings } from './AppContext';
-import { confirmPrompt, filesFromDirectoryR, makeUserDataPath } from './utils/utils';
+import { array_copy, confirmPrompt, filesFromDirectoryR, makeUserDataPath } from './utils/utils';
 import HexGrid from "./Components/HexGrid";
 import Inspector from './Components/Inspector';
 import PlayerSettings from './Components/PlayerSettings';
@@ -12,7 +12,7 @@ import { loadTokensFromSearchPaths as _loadTokensFromSearchPaths } from './Token
 import { getControlValue, TokenUID } from './Types';
 import * as path from "path";
 import Midi from './utils/midi';
-import { hexNotes, transposeNote } from './utils/elysiumutils';
+import { hexIndexesFromNote, hexNotes, transposeNote } from './utils/elysiumutils';
 import Settings from "./Components/Settings";
 import LfoEditor from "./Components/LfoEditor";
 import * as fs from "fs";
@@ -37,6 +37,7 @@ export default function App() {
     const multiLayerSizeMin = 100;
     const multiLayerSizeMax = 1000;
     const previousNotes = usePrevious(state.midiNotes, []);
+    const notePlayedAsCache = useRef<Record<string, { note: string, channel: number }>>({});
 
     useEffect(() =>
     {
@@ -54,35 +55,51 @@ export default function App() {
 
     useEffect(() =>
     {
-        state.midiNotes.forEach((note) =>
+        state.midiNotes.forEach((note, i) =>
         {
             const index = previousNotes.findIndex(n => n.number === note.number);
 
             // check to see if we should play //
             if (note.isOn && (index === -1 || !previousNotes[index].isOn))
             {
+                const playedAs = transposeNote(
+                    note.name,
+                    getControlValue(
+                        state,
+                        state.selectedHex.layerIndex,
+                        state.controls[state.layers[state.selectedHex.layerIndex].transpose]
+                    )
+                );
+
+                const channel = getControlValue(
+                    state,
+                    state.selectedHex.layerIndex,
+                    state.controls[state.layers[state.selectedHex.layerIndex].midiChannel]
+                );
+
                 Midi.noteOn(
-                    [transposeNote(
-                        note.name,
-                        getControlValue(state, state.selectedHex.layerIndex, state.controls[state.layers[state.selectedHex.layerIndex].transpose])
-                    )],
+                    [ playedAs ],
                     state.settings.midiOutputs,
-                    getControlValue(state, state.selectedHex.layerIndex, state.controls[state.layers[state.selectedHex.layerIndex].midiChannel]),
+                    channel,
                     {
                         velocity: note.velocity
                     }
                 );
+
+                notePlayedAsCache.current[note.name] = { note: playedAs, channel };
+
+                if (state.isPlaying)
+                {
+                    dispatch({ type: "bufferMidi", payload: { layerIndex: state.selectedHex.layerIndex, note }});
+                }
             }
             // check to see if we should stop //
             else if (!note.isOn && (index !== -1 && previousNotes[index].isOn))
             {
                 Midi.noteOff(
-                    [transposeNote(
-                        note.name,
-                        getControlValue(state, state.selectedHex.layerIndex, state.controls[state.layers[state.selectedHex.layerIndex].transpose])
-                    )],
+                    [ notePlayedAsCache.current[note.name].note ],
                     state.settings.midiOutputs,
-                    getControlValue(state, state.selectedHex.layerIndex, state.controls[state.layers[state.selectedHex.layerIndex].midiChannel]),
+                    notePlayedAsCache.current[note.name].channel,
                     {
                         release: note.release
                     }
@@ -105,10 +122,6 @@ export default function App() {
                     // console.log(newState);
                 });
                 dispatch({ type: "setAppState", payload: newState });
-            }
-
-            if (state.isPlaying)
-            {
             }
         };
 

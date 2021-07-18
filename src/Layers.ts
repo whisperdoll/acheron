@@ -30,6 +30,7 @@ export function buildLayer(appState: AppState): { layerState: LayerState, contro
             timeToLive: Object.entries(controls).find(e => e[1].key === "timeToLive")![0],
             transpose: Object.entries(controls).find(e => e[1].key === "transpose")![0],
             velocity: Object.entries(controls).find(e => e[1].key === "velocity")![0],
+            midiBuffer: []
         },
         controls
     };
