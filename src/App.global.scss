@@ -19,7 +19,6 @@
     user-select: none;
 }
 
-
 .numberInput-container
 {
     overflow: hidden;
@@ -136,6 +135,21 @@ button.nostyle
     cursor: pointer;
     padding: 0;
     margin: 0;
+}
+
+button.patreon
+{
+    background-color: #e85b46;
+
+    &:hover
+    {
+        background-color: lighten(#e85b46, 5);
+    }
+
+    &:active
+    {
+        background-color: darken(#e85b46, 5);
+    }
 }
 
 .app

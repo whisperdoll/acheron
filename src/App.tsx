@@ -374,6 +374,11 @@ export default function App() {
         open("https://github.com/SongSing/acheron/issues/new?assignees=&labels=bug&template=1-Bug_report.md");
     }
 
+    function openPatreon()
+    {
+        open("https://www.patreon.com/whisperdoll");
+    }
+
     function handleTokenManagerHide()
     {
         setIsShowingTokenSettings(false);
@@ -411,6 +416,7 @@ export default function App() {
                 />
             </>}
             <button onClick={reportABug}>🐞 Report a Bug</button>
+            <button className="patreon" onClick={openPatreon}>Support on Patreon</button>
         </div>;
 
     const inspector = isShowingInspector ? <Inspector layerIndex={state.selectedHex.layerIndex} /> : <></>;
