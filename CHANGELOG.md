@@ -35,3 +35,4 @@ It's the first version.
 * Lots of keyboard shortcuts!
 * New icons
 * Fixed bug relating to dragging tokens in Multilayer Mode
+* Added Wormhole Token
