@@ -278,7 +278,8 @@ export function getFileIdSync(filename : string) : string
     return bigintStatSync(filename).ino.toString();
 }
 
-export function objectWithoutKeys<T>(o: Record<string, T>, keys: string[]): Record<string, T>
+export function objectWithoutKeys<K extends string | number | symbol, T extends Record<K, any>>(o: T, keys: K[]):
+    Omit<typeof o, typeof keys[number]>
 {
     const ret = {...o};
     keys.forEach(key => delete ret[key]);

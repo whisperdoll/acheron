@@ -266,7 +266,8 @@ export function buildFromDefs(defs: Record<string, ControlDefinition>): Record<s
                     lfo: buildLfo(def.type, def.min, def.max, def.options),
                     id,
                     key,
-                    ...getMinMaxForType(def.type, def.min, def.max, def.options)
+                    ...getMinMaxForType(def.type, def.min, def.max, def.options),
+                    showIf: def.showIf
                 };
             }
         }

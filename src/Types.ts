@@ -79,7 +79,7 @@ export type Direction = 0 | 1 | 2 | 3 | 4 | 5;
 
 export type StartCallback = (store: object, helpers: Record<string, Function>) => any;
 export type StopCallback = (store: object, helpers: Record<string, Function>) => any;
-export type TickCallback = (store: object, helpers: Record<string, Function>, playheads: Playhead[]) => any;
+export type TickCallback = (store: object, helpers: Record<string, Function>, playheads: Omit<Playhead, "store">[]) => any;
 export const ControlDataTypes = [ "int", "decimal", "direction", "bool", "select", "triad" ] as const;
 export type ControlDataType = typeof ControlDataTypes[number];
 
@@ -94,6 +94,7 @@ export interface Playhead
     age: number;
     lifespan: number;
     direction: Direction;
+    store: Record<TokenUID, Record<string, any>>;
 }
 
 export interface ControlDefinition
@@ -105,6 +106,7 @@ export interface ControlDefinition
     step?: number;
     options?: SelectOption[];
     inherit?: string;
+    showIf?: string;
     defaultValue?: any;
 }
 
@@ -119,6 +121,7 @@ export interface ControlState
     step?: number;
     options?: SelectOption[];
     inherit?: string;
+    showIf?: string;
     scalarValue: any;
     currentValueType: "scalar" | "lfo" | "inherit";
     lfo: Lfo;

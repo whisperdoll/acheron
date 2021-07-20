@@ -10,6 +10,7 @@ export interface SerializedCompositionControl
     id: string;
     currentValueType: "scalar" | "lfo" | "inherit";
     inherit?: string;
+    showIf?: string;
     scalarValue: any;
     lfo: Lfo;
 }
@@ -106,6 +107,7 @@ function serializeControl(control: ControlState): SerializedCompositionControl
         inherit: control.inherit,
         scalarValue: control.scalarValue,
         lfo: control.lfo,
+        showIf: control.showIf,
     };
 }
 
@@ -252,6 +254,7 @@ export function deserializeComposition(appState: AppState, c: SerializedComposit
             pulseEvery: layer.pulseEvery.id,
             tokenIds: layer.tokenIds,
             playheads: [],
+            midiBuffer: [],
             currentBeat: 0
         };
 

@@ -7,7 +7,7 @@ import Inspector from './Components/Inspector';
 import PlayerSettings from './Components/PlayerSettings';
 import LayerSettings from './Components/LayerSettings';
 import { ipcRenderer, remote, webFrame } from 'electron';
-import { performStartCallbacks, performStopCallbacks, progressLayer } from './utils/driver';
+import { performStartCallbacks, performStopCallbacks, performTransfers, progressLayer } from './utils/driver';
 import { loadTokensFromSearchPaths as _loadTokensFromSearchPaths } from './Tokens';
 import { getControlValue, TokenUID } from './Types';
 import * as path from "path";
@@ -124,6 +124,10 @@ export default function App() {
                     // console.log(deltaNs);
                     newState = progressLayer(newState, deltaNs, layerIndex);
                     // console.log(newState);
+                });
+                state.layers.forEach((layer, layerIndex) =>
+                {
+                    newState = performTransfers(newState, layerIndex);
                 });
                 dispatch({ type: "setAppState", payload: newState });
             }

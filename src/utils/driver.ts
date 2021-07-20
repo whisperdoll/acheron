@@ -1,13 +1,14 @@
 import { AppState, LayerState } from "../AppContext";
 import { getControlValue, KeyMap, Playhead, Token } from "../Types";
 import { getAdjacentHex, getNoteParts, hexIndexesFromNote, hexNotes, noteArray, NumHexes, transposeNote } from "./elysiumutils";
-import { array_copy, createEmpty2dArray, mod, NsToS } from "./utils";
+import { array_copy, createEmpty2dArray, mod, NsToS, objectWithoutKeys } from "./utils";
 import Midi, { MidiNote } from "./midi";
 
 const rows = 12;
 const cols = 17;
 let scheduledForRemoval: [] = [];
-let scheduledForMove: { srcHex: number, destHex: number, playheadIndex: number }[] = [];
+let scheduledForMove: { src: { hexIndex: number, layerIndex: number }, dest: { hexIndex: number, layerIndex: number }, playheadIndex: number }[] = [];
+let awaitingLayerTransfer: { dest: { hexIndex: number, layerIndex: number }, playhead: Playhead }[] = [];
 
 function buildHelpers(appState: AppState, layerIndex: number, currentBeat: number, newPlayheads: Playhead[][], hexIndex: number, token: Token): Record<string, Function>
 {
@@ -32,12 +33,44 @@ function buildHelpers(appState: AppState, layerIndex: number, currentBeat: numbe
 
             return ret;
         },
+        getOtherTokenInstances()
+        {
+            const ret: Record<string, any>[] = [];
+            appState.layers.forEach((layer, li) =>
+            {
+                layer.tokenIds.forEach((tidArray, hi) =>
+                {
+                    tidArray.forEach((tid) =>
+                    {
+                        const t = appState.tokens[tid];
+                        if (t.uid === token.uid && t.id !== token.id)
+                        {
+                            const toAdd: Record<string, any> = {};
+                            toAdd.hexIndex = hi;
+                            toAdd.layerIndex = li;
+                            t.controlIds.forEach((cid) =>
+                            {
+                                toAdd[appState.controls[cid].key] = getControlValue(
+                                    appState,
+                                    layerIndex,
+                                    appState.controls[cid]
+                                );
+                            });
+                            ret.push(toAdd);
+                        }
+                    });
+                });
+            });
+            console.log(ret);
+            return ret;
+        },
         spawnPlayhead(hexIndex: number, timeToLive: number, direction: 0 | 1 | 2 | 3 | 4 | 5, offset: number = 0)
         {
             newPlayheads[getAdjacentHex(hexIndex, direction, offset)].push({
                 age: 0,
                 direction,
                 lifespan: timeToLive,
+                store: {}
             });
         },
         getHexIndex()
@@ -58,15 +91,45 @@ function buildHelpers(appState: AppState, layerIndex: number, currentBeat: numbe
             if (newPlayheadDef.direction !== undefined) newPlayhead.direction = newPlayheadDef.direction;
             newPlayheads[hexIndex][playheadIndex] = newPlayhead;
         },
-        warpPlayhead(playheadIndex: number, newHexIndex: number)
+        getPlayheadStore(playheadIndex: number)
+        {
+            if (playheadIndex < 0 || playheadIndex >= newPlayheads[hexIndex].length) return {};
+            return newPlayheads[hexIndex][playheadIndex].store;
+        },
+        warpPlayhead(playheadIndex: number, newHexIndex: number, newLayerIndex?: number)
         {
             if (playheadIndex < 0 || playheadIndex >= newPlayheads[hexIndex].length) return;
+            newLayerIndex = newLayerIndex ?? layerIndex;
+            if (newLayerIndex >= appState.layers.length || newLayerIndex < 0) return;
 
-            scheduledForMove.push({
+            const existingIndex = scheduledForMove.findIndex(m =>
+                m.src.hexIndex === hexIndex &&
+                m.src.layerIndex === layerIndex &&
+                m.playheadIndex === playheadIndex    
+            );
+
+            const newMoveInfo = {
                 playheadIndex,
-                destHex: newHexIndex % NumHexes,
-                srcHex: hexIndex
-            });
+                src: {
+                    hexIndex,
+                    layerIndex
+                },
+                dest: {
+                    hexIndex: newHexIndex,
+                    layerIndex: newLayerIndex
+                }
+            };
+
+            if (existingIndex === -1)
+            {
+                scheduledForMove.push(newMoveInfo);
+            }
+            else
+            {
+                scheduledForMove[existingIndex] = newMoveInfo;
+            }
+
+            scheduledForMove.push();
         },
         skipPlayhead(playheadIndex: number, direction: number, skipAmount: number)
         {
@@ -74,8 +137,14 @@ function buildHelpers(appState: AppState, layerIndex: number, currentBeat: numbe
 
             scheduledForMove.push({
                 playheadIndex,
-                destHex: getAdjacentHex(hexIndex, direction, skipAmount),
-                srcHex: hexIndex
+                src: {
+                    hexIndex,
+                    layerIndex
+                },
+                dest: { 
+                    hexIndex: getAdjacentHex(hexIndex, direction, skipAmount),
+                    layerIndex
+                }
             });
         },
         // removePlayhead(playheadIndex: number)
@@ -149,7 +218,6 @@ export function performStartCallbacks(appState: AppState): AppState
         {
             hex.forEach((tokenId) =>
             {
-                console.log(appState.settings, tokenId, appState.tokens[tokenId]);
                 if (!appState.settings.tokens[appState.tokens[tokenId].uid].enabled) return;
 
                 const token = {...newTokens[tokenId]};
@@ -165,7 +233,7 @@ export function performStartCallbacks(appState: AppState): AppState
                         token
                     );
 
-                    token.callbacks.onStart(token.store, helpers);
+                    token.callbacks.onStart.bind(null)(token.store, helpers);
                     newTokens[tokenId] = token;
                 }
 
@@ -215,7 +283,7 @@ export function performStopCallbacks(appState: AppState): AppState
                         token
                     );
 
-                    token.callbacks.onStop(token.store, helpers);
+                    token.callbacks.onStop.bind(null)(token.store, helpers);
                     newTokens[tokenId] = token;
                 }
             });
@@ -234,6 +302,37 @@ export function performStopCallbacks(appState: AppState): AppState
         layers: newLayers,
         tokens: newTokens
     };
+}
+
+export function performTransfers(appState: AppState, layerIndex: number): AppState
+{
+    const newPlayheads = appState.layers[layerIndex].playheads.slice(0);
+    let changeMade = false;
+
+    for (let i = awaitingLayerTransfer.length - 1; i >= 0; i--)
+    {
+        const awaiting = awaitingLayerTransfer[i];
+        if (awaiting.dest.layerIndex === layerIndex)
+        {
+            newPlayheads[awaiting.dest.hexIndex].push(awaitingLayerTransfer.splice(i, 1)[0].playhead);
+            changeMade = true;
+        }
+    }
+
+    if (changeMade)
+    {
+        return {
+            ...appState,
+            layers: appState.layers.map((l, li) => li !== layerIndex ? l : {
+                ...l,
+                playheads: newPlayheads
+            })
+        };
+    }
+    else
+    {
+        return appState;
+    }
 }
 
 export function progressLayer(appState: AppState, deltaNs: number, layerIndex: number): AppState
@@ -263,11 +362,27 @@ export function progressLayer(appState: AppState, deltaNs: number, layerIndex: n
                             age: playhead.age + 1
                         };
 
-                        const moveInfo = scheduledForMove.find(m => m.srcHex === hexIndex && m.playheadIndex === playheadIndex);
+                        const moveInfoIndex = scheduledForMove.findIndex(m =>
+                            m.src.layerIndex === layerIndex &&
+                            m.src.hexIndex === hexIndex &&
+                            m.playheadIndex === playheadIndex
+                        );
 
-                        if (moveInfo)
+                        if (moveInfoIndex !== -1)
                         {
-                            newPlayheads[moveInfo.destHex].push(newPlayhead);
+                            const moveInfo = scheduledForMove[moveInfoIndex];
+                            if (moveInfo.dest.layerIndex === layerIndex)
+                            {
+                                newPlayheads[moveInfo.dest.hexIndex].push(newPlayhead);
+                            }
+                            else
+                            {
+                                awaitingLayerTransfer.push({
+                                    dest: moveInfo.dest,
+                                    playhead: { ...playhead }
+                                });
+                            }
+                            scheduledForMove.splice(moveInfoIndex, 1);
                         }
                         else
                         {
@@ -298,8 +413,6 @@ export function progressLayer(appState: AppState, deltaNs: number, layerIndex: n
                     }
                 });
             });
-
-            scheduledForMove = [];
             
             // do token stuff //
             layer.tokenIds.forEach((hex, hexIndex) =>
@@ -323,7 +436,7 @@ export function progressLayer(appState: AppState, deltaNs: number, layerIndex: n
                                 token
                             );
 
-                            token.callbacks.onStart(token.store, helpers);
+                            token.callbacks.onStart.bind(null)(token.store, helpers);
                             newTokens[tokenId] = token;
                         }
                     }
@@ -341,7 +454,11 @@ export function progressLayer(appState: AppState, deltaNs: number, layerIndex: n
 
                         // console.log(token.store);
                         
-                        const debug = token.callbacks.onTick(token.store, helpers, newPlayheads[hexIndex]);
+                        const debug = token.callbacks.onTick.bind(null)(
+                            token.store,
+                            helpers,
+                            newPlayheads[hexIndex].map(p => objectWithoutKeys(p, ["store"]))
+                        );
                         // console.log(debug);
                         newTokens[tokenId] = token;
                     }
