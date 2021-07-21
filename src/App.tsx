@@ -1,18 +1,18 @@
 import React, { useContext, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import './App.global.scss';
 import { AppContext, AppSettings, loadSettings } from './AppContext';
-import { confirmPrompt, filesFromDirectoryR, makeUserDataPath } from './utils/utils';
+import { array_copy, confirmPrompt, filesFromDirectoryR, makeUserDataPath } from './utils/utils';
 import HexGrid from "./Components/HexGrid";
 import Inspector from './Components/Inspector';
 import PlayerSettings from './Components/PlayerSettings';
 import LayerSettings from './Components/LayerSettings';
 import { ipcRenderer, remote, webFrame } from 'electron';
-import { performStartCallbacks, performStopCallbacks, progressLayer } from './utils/driver';
+import { performStartCallbacks, performStopCallbacks, performTransfers, progressLayer } from './utils/driver';
 import { loadTokensFromSearchPaths as _loadTokensFromSearchPaths } from './Tokens';
 import { getControlValue, TokenUID } from './Types';
 import * as path from "path";
 import Midi from './utils/midi';
-import { hexNotes, transposeNote } from './utils/elysiumutils';
+import { hexIndexesFromNote, hexNotes, transposeNote } from './utils/elysiumutils';
 import Settings from "./Components/Settings";
 import LfoEditor from "./Components/LfoEditor";
 import * as fs from "fs";
@@ -20,6 +20,10 @@ import TokenManager from './Components/TokenManager';
 import NumberInput from './Components/NumberInput';
 import open from "open";
 import { deserializeComposition, serializeComposition } from './Serialization';
+import usePrevious from './Hooks/usePrevious';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faPlay, faPause, faCog, faBug, faLayerGroup, faDonate, faToolbox, faEyeSlash, faEye, faEdit, faTrash, faTrashAlt, faMinus, faPlus, faSave, faCheck } from "@fortawesome/free-solid-svg-icons";
+import IconButton from './Components/IconButton';
 
 export default function App() {
     const { state, dispatch } = useContext(AppContext)!;
@@ -28,6 +32,7 @@ export default function App() {
     const [ isEditingLayerName, setIsEditingLayerName ] = useState(false);
     const [ isShowingSettings, setIsShowingSettings ] = useState(false);
     const [ isShowingInspector, setIsShowingInspector ] = useState(true);
+    const [ isShowingLeftColumn, setIsShowingLeftColumn ] = useState(true);
     const [ isShowingTokenSettings, setIsShowingTokenSettings ] = useState(false);
     const tickCallback = useRef<(deltaNs: number) => any>(() => 0);
     const timerWorker = useRef<Worker | null>(null);
@@ -35,6 +40,8 @@ export default function App() {
     const [ multiLayerSize, _setMultiLayerSize ] = useState(600);
     const multiLayerSizeMin = 100;
     const multiLayerSizeMax = 1000;
+    const previousNotes = usePrevious(state.midiNotes, []);
+    const notePlayedAsCache = useRef<Record<string, { note: string, channel: number }>>({});
 
     useEffect(() =>
     {
@@ -52,6 +59,61 @@ export default function App() {
 
     useEffect(() =>
     {
+        state.midiNotes.forEach((note, i) =>
+        {
+            const index = previousNotes.findIndex(n => n.number === note.number);
+
+            // check to see if we should play //
+            if (note.isOn && (index === -1 || !previousNotes[index].isOn))
+            {
+                const playedAs = transposeNote(
+                    note.name,
+                    getControlValue(
+                        state,
+                        state.selectedHex.layerIndex,
+                        state.controls[state.layers[state.selectedHex.layerIndex].transpose]
+                    )
+                );
+
+                const channel = getControlValue(
+                    state,
+                    state.selectedHex.layerIndex,
+                    state.controls[state.layers[state.selectedHex.layerIndex].midiChannel]
+                );
+
+                Midi.noteOn(
+                    [ playedAs ],
+                    state.settings.midiOutputs,
+                    channel,
+                    {
+                        velocity: note.velocity
+                    }
+                );
+
+                notePlayedAsCache.current[note.name] = { note: playedAs, channel };
+
+                if (state.isPlaying)
+                {
+                    dispatch({ type: "bufferMidi", payload: { layerIndex: state.selectedHex.layerIndex, note }});
+                }
+            }
+            // check to see if we should stop //
+            else if (!note.isOn && (index !== -1 && previousNotes[index].isOn))
+            {
+                Midi.noteOff(
+                    [ notePlayedAsCache.current[note.name].note ],
+                    state.settings.midiOutputs,
+                    notePlayedAsCache.current[note.name].channel,
+                    {
+                        release: note.release
+                    }
+                );
+            }
+        });
+    }, [ state.midiNotes ]);
+
+    useEffect(() =>
+    {
         tickCallback.current = (deltaNs: number) =>
         {
             if (state.isPlaying)
@@ -63,36 +125,49 @@ export default function App() {
                     newState = progressLayer(newState, deltaNs, layerIndex);
                     // console.log(newState);
                 });
+                state.layers.forEach((layer, layerIndex) =>
+                {
+                    newState = performTransfers(newState, layerIndex);
+                });
                 dispatch({ type: "setAppState", payload: newState });
-            }
-
-            if (state.isPlaying)
-            {
             }
         };
 
-        function keyDown(e: KeyboardEvent)
+        function toggleLeftColumn()
         {
-            if ((e.key === "+" || e.key === "=") && e.ctrlKey)
-            {
-                webFrame.setZoomLevel(webFrame.getZoomLevel() + 0.5);
-            }
-            if (e.key === "-" && e.ctrlKey)
-            {
-                webFrame.setZoomLevel(webFrame.getZoomLevel() - 0.5);
-            }
+            setIsShowingLeftColumn(!isShowingLeftColumn);
+        }
+
+        function toggleInspector()
+        {
+            setIsShowingInspector(!isShowingInspector);
+        }
+
+        function toggleMultilayer()
+        {
+            setIsMultiLayerMode(!isMultiLayerMode);
+        }
+
+        function addLayer()
+        {
+            dispatch({ type: "addLayer", payload: { select: !isMultiLayerMode } });
         }
 
         ipcRenderer.addListener("open", loadComposition);
         ipcRenderer.addListener("saveAs", saveComposition);
-
-        window.addEventListener("keydown", keyDown);
+        ipcRenderer.addListener("toggleLeftColumn", toggleLeftColumn);
+        ipcRenderer.addListener("toggleInspector", toggleInspector);
+        ipcRenderer.addListener("toggleMultilayer", toggleMultilayer);
+        ipcRenderer.addListener("addLayer", addLayer);
 
         return () =>
         {
             ipcRenderer.removeListener("open", loadComposition);
             ipcRenderer.removeListener("saveAs", saveComposition);
-            window.removeEventListener("keydown", keyDown);
+            ipcRenderer.removeListener("toggleLeftColumn", toggleLeftColumn);
+            ipcRenderer.removeListener("toggleInspector", toggleInspector);
+            ipcRenderer.removeListener("toggleMultilayer", toggleMultilayer);
+            ipcRenderer.removeListener("addLayer", addLayer);
         };
     });
 
@@ -105,6 +180,7 @@ export default function App() {
         else
         {
             dispatch({ type: "setAppState", payload: performStopCallbacks(state) });
+            Midi.allNotesOff();
         }
     }, [ state.isPlaying ]);
 
@@ -137,6 +213,8 @@ export default function App() {
         {
             alert("Could not load the following tokens:\n\n" + failed.join("\n"));
         }
+
+        dispatch({ type: "saveSettings" });
     }
 
     useEffect(() =>
@@ -159,7 +237,14 @@ export default function App() {
         Midi.onOutputsChanged = (outputs) =>
         {
             dispatch({ type: "setAllowedOutputs", payload: outputs });
-            dispatch({ type: "setSelectedOutputs", payload: outputs.map(o => o.id) });
+        };
+        Midi.onInputsChanged = (inputs) =>
+        {
+            dispatch({ type: "setAllowedInputs", payload: inputs });
+        };
+        Midi.onNotesChanged = (notes) =>
+        {
+            dispatch({ type: "setMidiNotes", payload: notes });
         };
 
         function keyDown(e: KeyboardEvent)
@@ -168,8 +253,31 @@ export default function App() {
                 (!document.activeElement ||
                     !["input","button","select","textarea"].includes(document.activeElement?.tagName.toLowerCase())))
             {
-                console.log(document.activeElement);
                 dispatch({ type: "toggleIsPlaying" });
+            }
+            
+            if ((e.key === "+" || e.key === "=") && e.ctrlKey)
+            {
+                webFrame.setZoomLevel(webFrame.getZoomLevel() + 0.5);
+            }
+            if (e.key === "-" && e.ctrlKey)
+            {
+                webFrame.setZoomLevel(webFrame.getZoomLevel() - 0.5);
+            }
+
+            if ("1234567890".includes(e.key) && e.ctrlKey)
+            {
+                let layerIndex = parseInt(e.key) - 1;
+
+                if (layerIndex === -1)
+                {
+                    layerIndex = 9;
+                }
+
+                if (layerIndex < state.layers.length)
+                {
+                    dispatch({ type: "setSelectedHex", payload: { ...state.selectedHex, layerIndex }});
+                }
             }
         }
 
@@ -178,9 +286,21 @@ export default function App() {
         return () =>
         {
             Midi.onOutputsChanged = null;
+            Midi.onInputsChanged = null;
+            Midi.onNotesChanged = null;
             document.body.removeEventListener("keydown", keyDown);
         };
     });
+
+    useEffect(() =>
+    {
+        Midi.setEnabledInputs(state.settings.midiInputs);
+    }, [state.settings.midiInputs]);
+
+    useEffect(() =>
+    {
+        Midi.setEnabledOutputs(state.settings.midiOutputs);
+    }, [state.settings.midiOutputs]);
 
     useEffect(() =>
     {
@@ -191,15 +311,20 @@ export default function App() {
                     hexNotes[state.selectedHex.hexIndex],
                     getControlValue(state, state.selectedHex.layerIndex, state.controls[state.layers[state.selectedHex.layerIndex].transpose])
                 )],
-                state.selectedOutputs, getControlValue(state, state.selectedHex.layerIndex, state.controls[state.layers[state.selectedHex.layerIndex].midiChannel]), {
+                state.settings.midiOutputs, getControlValue(state, state.selectedHex.layerIndex, state.controls[state.layers[state.selectedHex.layerIndex].midiChannel]), {
                 velocity: getControlValue(state, state.selectedHex.layerIndex, state.controls[state.velocity])!,
                 durationMs: getControlValue(state, state.selectedHex.layerIndex, state.controls[state.noteLength])! * 1000
             });
         }
     }, [ state.selectedHex.hexIndex ]);
 
-    function confirmRemoveLayer()
+    function confirmRemoveLayer(layerIndex?: number)
     {
+        if (layerIndex === undefined)
+        {
+            layerIndex = state.selectedHex.layerIndex;
+        }
+
         if (state.layers.length === 1)
         {
             remote.dialog.showMessageBox(remote.getCurrentWindow(), {
@@ -215,20 +340,20 @@ export default function App() {
             if (state.settings.confirmDelete)
             {
                 confirmPrompt(
-                    `Are you sure you want to delete the layer '${state.layers[state.selectedHex.layerIndex].name}'?`,
+                    `Are you sure you want to delete the layer '${state.layers[layerIndex].name}'?`,
                     "Confirm delete",
                     (confirmed) =>
                     {
                         if (confirmed)
                         {
-                            dispatch({ type: "removeCurrentLayer" });
+                            dispatch({ type: "removeLayer", payload: layerIndex! });
                         }
                     }
                 );
             }
             else
             {
-                dispatch({ type: "removeCurrentLayer" });
+                dispatch({ type: "removeLayer", payload: layerIndex });
             }
         }
     }
@@ -300,6 +425,11 @@ export default function App() {
         open("https://github.com/SongSing/acheron/issues/new?assignees=&labels=bug&template=1-Bug_report.md");
     }
 
+    function openPatreon()
+    {
+        open("https://www.patreon.com/whisperdoll");
+    }
+
     function handleTokenManagerHide()
     {
         setIsShowingTokenSettings(false);
@@ -308,18 +438,29 @@ export default function App() {
 
     const elysiumControls = 
         <div className="elysiumControls">
-            <button
+            <IconButton
+                icon={state.isPlaying ? faPause : faPlay}
                 onClick={() => dispatch({ type: "toggleIsPlaying" })}
             >
-                {state.isPlaying ? "❚❚ Pause" : "▶ Play"}
-            </button>
+                {state.isPlaying ? "Pause" : "Play"}
+            </IconButton>
             {/* <button onClick={reloadScripts}>↻ Refresh Tokens</button> */}
-            <button onClick={showSettings}>⚙ Settings</button>
-            <button onClick={() => setIsShowingTokenSettings(true)}>Manage Tokens</button>
+            <IconButton onClick={showSettings} icon={faCog}>Settings</IconButton>
+            <IconButton onClick={() => setIsShowingTokenSettings(true)} icon={faToolbox}>Manage Tokens</IconButton>
             {/* <button onClick={loadComposition}>📂 Open Composition</button>
             <button onClick={saveComposition}>💾 Save Composition</button> */}
-            <button onClick={() => setIsShowingInspector(!isShowingInspector)}>{isShowingInspector ? "Hide" : "Show"} Inspector</button>
-            <button onClick={() => setIsMultiLayerMode(!isMultiLayerMode)}>Toggle MultiLayer Mode</button>
+            {/* <IconButton
+                onClick={() => setIsShowingInspector(!isShowingInspector)}
+                icon={isShowingInspector ? faEyeSlash : faEye}
+            >
+                {isShowingInspector ? "Hide" : "Show"} Inspector
+            </IconButton> */}
+            <IconButton
+                onClick={() => setIsMultiLayerMode(!isMultiLayerMode)}
+                icon={faLayerGroup}
+            >
+                Toggle MultiLayer Mode
+            </IconButton>
             {isMultiLayerMode && <>
                 <span>Layer Size:</span>
                 <input
@@ -336,10 +477,22 @@ export default function App() {
                     onChange={(v) => setMultiLayerSize(v)}
                 />
             </>}
-            <button onClick={reportABug}>🐞 Report a Bug</button>
+            <IconButton onClick={reportABug} icon={faBug}>Report a Bug</IconButton>
+            <IconButton className="patreon" icon={faDonate} onClick={openPatreon}>Support on Patreon</IconButton>
         </div>;
 
     const inspector = isShowingInspector ? <Inspector layerIndex={state.selectedHex.layerIndex} /> : <></>;
+    const leftColumn = isShowingLeftColumn ?
+        <div className="leftColumn">
+            <div className="tabs">
+                <button onClick={() => setIsShowingPlayerSettings(true)} className={isShowingPlayerSettings ? "active" : ""}>Player</button>
+                <button onClick={() => setIsShowingPlayerSettings(false)} className={!isShowingPlayerSettings ? "active" : ""}>Layer</button>
+            </div>
+            {isShowingPlayerSettings ?
+                <PlayerSettings /> :
+                <LayerSettings layerIndex={state.selectedHex.layerIndex}></LayerSettings>
+            }
+        </div> : <></>;
 
     return (
         <div className="app">
@@ -349,10 +502,19 @@ export default function App() {
             {isMultiLayerMode ? (
                 <div className="multilayer-view">
                     <div className="cols">
+                        {leftColumn}
                         <div className="multilayer">
                             {state.layers.map((layer, layerIndex) => (
                                 <div className="layerContainer" key={layerIndex}>
-                                    <div className="layerName">{layer.name}</div>
+                                    <div className="layerName">
+                                        <span>{layer.name}</span>
+                                        <button
+                                            className="nostyle remove"
+                                            onClick={() => confirmRemoveLayer(layerIndex)}
+                                        >
+                                            ❌
+                                        </button>
+                                    </div>
                                     <HexGrid layerIndex={layerIndex} key={layerIndex} size={multiLayerSize} />
                                 </div>
                             ))}
@@ -363,16 +525,7 @@ export default function App() {
                 </div>
             ) : (<>
                 <div className="columns">
-                    <div className="leftColumn">
-                        <div className="tabs">
-                            <button onClick={() => setIsShowingPlayerSettings(true)} className={isShowingPlayerSettings ? "active" : ""}>Player</button>
-                            <button onClick={() => setIsShowingPlayerSettings(false)} className={!isShowingPlayerSettings ? "active" : ""}>Layer</button>
-                        </div>
-                        {isShowingPlayerSettings ?
-                            <PlayerSettings /> :
-                            <LayerSettings layerIndex={state.selectedHex.layerIndex}></LayerSettings>
-                        }
-                    </div>
+                    {leftColumn}
                     <div className="middleColumn">
                         <div className="layerSelectRow">
                             <label>
@@ -393,34 +546,39 @@ export default function App() {
                                                 key={i}
                                                 value={i}
                                             >
-                                                {layer.name}
+                                                {layer.name}{i === state.selectedHex.layerIndex || i > 9 ? "" : ` (Ctrl+${(i + 1) % 10})`}
                                             </option>
                                         ))}
                                     </select>
                                     }
                             </label>
                             {isEditingLayerName ?
-                                <button
+                                <IconButton
                                     onClick={(e) => setIsEditingLayerName(false)}
+                                    icon={faCheck}
                                 >
-                                    ✓ Save Name
-                                </button> :
-                                <button
+                                    Save Name
+                                </IconButton> :
+                                <IconButton
                                     onClick={(e) => setIsEditingLayerName(true)}
+                                    icon={faEdit}
                                 >
-                                    ✎ Edit Name
-                                </button>
+                                    Edit Name
+                                </IconButton>
                             }
-                            <button
-                                onClick={confirmRemoveLayer}
+                            <IconButton
+                                onClick={() => confirmRemoveLayer()}
+                                className="delete"
+                                icon={faMinus}
                             >
-                                ✖ Delete Layer
-                            </button>
-                            <button
+                                Delete Layer
+                            </IconButton>
+                            <IconButton
                                 onClick={(e) => dispatch({ type: "addLayer", payload: { select: true } })}
+                                icon={faPlus}
                             >
-                                + Add New Layer
-                            </button>
+                                Add New Layer
+                            </IconButton>
                         </div>
                         <HexGrid
                             layerIndex={state.selectedHex.layerIndex}

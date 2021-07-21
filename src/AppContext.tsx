@@ -5,9 +5,9 @@ import { SafeWriter } from "./utils/safewriter";
 import * as path from "path";
 import * as fs from "fs";
 import { buildLayer } from "./Layers";
-import { ControlState, Token, ControlDefinition, Playhead, getControlValue, Lfo, TokenDefinition, TokenCallbacks, TokenUID, TokenInstanceId, ControlInstanceId } from "./Types";
+import { ControlState, Token, ControlDefinition, Playhead, getControlValue, Lfo, TokenDefinition, TokenCallbacks, TokenUID, TokenInstanceId, ControlInstanceId, LayerNote } from "./Types";
 import { buildFromDefs, DefaultPlayerControls, LayerControlKey, PlayerControlKey } from "./utils/DefaultDefinitions";
-import { MidiOutput } from "./utils/midi";
+import { MidiDevice, MidiNote } from "./utils/midi";
 import { v4 as uuidv4 } from 'uuid';
 import { buildToken, copyToken } from "./Tokens";
 import { migrateSettings } from "./migrators";
@@ -27,26 +27,31 @@ export interface AppSettings
     tokens: Record<TokenUID, TokenSettings>;
     confirmDelete: boolean;
     tokenSearchPaths: string[];
+    midiInputs: string[];
+    midiOutputs: string[];
 }
 
 export interface LayerState
 {
     name: string;
-    enabled: string;
-    midiChannel: string;
-    key: string;
-    transpose: string;
-    tempo: string;
-    barLength: string;
     currentBeat: number;
-    velocity: string;
-    emphasis: string;
-    tempoSync: boolean;
-    noteLength: string;
-    timeToLive: string;
-    pulseEvery: string;
+    currentTimeMs: number;
+    enabled: ControlInstanceId;
+    midiChannel: ControlInstanceId;
+    key: ControlInstanceId;
+    transpose: ControlInstanceId;
+    tempo: ControlInstanceId;
+    barLength: ControlInstanceId;
+    velocity: ControlInstanceId;
+    emphasis: ControlInstanceId;
+    tempoSync: ControlInstanceId;
+    noteLength: ControlInstanceId;
+    timeToLive: ControlInstanceId;
+    pulseEvery: ControlInstanceId;
     tokenIds: string[][]; // each hex has an array of tokens
     playheads: Playhead[][]; // each hex has an array of playheads
+    midiBuffer: MidiNote[];
+    playingNotes: LayerNote[]; // from tokens
 }
 
 export interface AppState
@@ -61,6 +66,7 @@ export interface AppState
     barLength: ControlInstanceId;
     velocity: ControlInstanceId;
     emphasis: ControlInstanceId;
+    tempoSync: ControlInstanceId;
     noteLength: ControlInstanceId;
     timeToLive: ControlInstanceId;
     pulseEvery: ControlInstanceId;
@@ -68,10 +74,11 @@ export interface AppState
     settings: AppSettings;
     isPlaying: boolean;
     startTime: bigint;
-    allowedOutputs: MidiOutput[];
-    selectedOutputs: string[];
+    allowedOutputs: MidiDevice[];
+    allowedInputs: MidiDevice[];
     currentBeat: number;
     pulseSwitch: boolean;
+    midiNotes: MidiNote[];
     editingLfo: { controlId: string } | null;
     draggingType: "move" | "copy";
     isDragging: boolean;
@@ -86,7 +93,9 @@ export const initialSettings : AppSettings = {
     wrapPlayheads: true,
     tokens: {},
     confirmDelete: true,
-    tokenSearchPaths: [ path.normalize("./tokens") ]
+    tokenSearchPaths: [ path.normalize("./tokens") ],
+    midiInputs: [],
+    midiOutputs: []
 };
 
 const initialState : AppState = {
@@ -96,6 +105,7 @@ const initialState : AppState = {
     tokens: {},
     barLength: Object.entries(DefaultPlayerControls).find(e => e[1].key === "barLength")![0],
     emphasis: Object.entries(DefaultPlayerControls).find(e => e[1].key === "emphasis")![0],
+    tempoSync: Object.entries(DefaultPlayerControls).find(e => e[1].key === "tempoSync")![0],
     noteLength: Object.entries(DefaultPlayerControls).find(e => e[1].key === "noteLength")![0],
     pulseEvery: Object.entries(DefaultPlayerControls).find(e => e[1].key === "pulseEvery")![0],
     tempo: Object.entries(DefaultPlayerControls).find(e => e[1].key === "tempo")![0],
@@ -106,9 +116,10 @@ const initialState : AppState = {
     isPlaying: false,
     startTime: 0n,
     allowedOutputs: [],
-    selectedOutputs: [],
+    allowedInputs: [],
     currentBeat: 0,
     pulseSwitch: false,
+    midiNotes: [],
     editingLfo: null,
     tokenCallbacks: {},
     tokenDefinitions: {},
@@ -174,10 +185,13 @@ type Action = (
     | { type: "addLayer", payload?: { select: boolean }}
     | { type: "setCurrentLayerName", payload: string }
     | { type: "removeCurrentLayer" }
+    | { type: "removeLayer", payload: number }
     | { type: "setLayers", payload: LayerState[] }
     | { type: "setPlayheads", payload: { layerIndex: number, playheads: Playhead[][] } }
-    | { type: "setAllowedOutputs", payload: MidiOutput[] }
-    | { type: "setSelectedOutputs", payload: string[] }
+    | { type: "setAllowedInputs", payload: MidiDevice[] }
+    | { type: "setAllowedOutputs", payload: MidiDevice[] }
+    | { type: "setSelectedOutputs", payload: { names: string[] } }
+    | { type: "setSelectedInputs", payload: { names: string[] } }
     | { type: "pulse" }
     | { type: "editLfo", payload: { controlId: string } }
     | { type: "stopEditingLfo" }
@@ -199,6 +213,10 @@ type Action = (
     | { type: "addTokenSearchPath", payload: string }
     | { type: "enableAllTokens" }
     | { type: "setFirstRunFalse" }
+    | { type: "saveSettings" }
+    | { type: "setMidiNotes", payload: MidiNote[] }
+    | { type: "bufferMidi", payload: { layerIndex: number, note: MidiNote }}
+    | { type: "debufferOffNotes", payload: { layerIndex: number }}
 ) & {
     saveSettings?: boolean
 }
@@ -216,6 +234,11 @@ function reducer(state: AppState, action: Action): AppState
             {
                 return action.payload;
             }
+            case "saveSettings":
+            {
+                action = { ...action, saveSettings: true };
+                return state;
+            }
             case "setSettings":
                 return {
                     ...state,
@@ -231,7 +254,7 @@ function reducer(state: AppState, action: Action): AppState
                 };
             }
             case "setSelectedHex":
-                // console.log(state);
+                console.log(state);
                 return {
                     ...state,
                     selectedHex: action.payload
@@ -264,6 +287,8 @@ function reducer(state: AppState, action: Action): AppState
             {
                 const { tokenState, controls } = buildToken(state, action.payload.tokenUid);
 
+                const { payload } = action;
+
                 return {
                     ...state,
                     tokens: {
@@ -274,9 +299,9 @@ function reducer(state: AppState, action: Action): AppState
                         ...state.controls,
                         ...controls
                     },
-                    layers: state.layers.map((layer, layerIndex) => layerIndex !== action.payload.layerIndex ? layer : ({
+                    layers: state.layers.map((layer, layerIndex) => layerIndex !== payload.layerIndex ? layer : ({
                         ...layer,
-                        tokenIds: layer.tokenIds.map((tokenIdArray, hexIndex) => hexIndex !== action.payload.hexIndex ? tokenIdArray : (
+                        tokenIds: layer.tokenIds.map((tokenIdArray, hexIndex) => hexIndex !== payload.hexIndex ? tokenIdArray : (
                             tokenIdArray.concat([ tokenState.id ])
                         ))
                     }))
@@ -303,14 +328,16 @@ function reducer(state: AppState, action: Action): AppState
             }
             case "removeTokenFromHex":
             {
+                const { payload } = action;
+
                 return {
                     ...state,
                     tokens: objectWithoutKeys(state.tokens, [action.payload.tokenId]),
                     controls: objectWithoutKeys(state.controls, state.tokens[action.payload.tokenId].controlIds),
-                    layers: state.layers.map((layer, layerIndex) => layerIndex !== action.payload.layerIndex ? layer : ({
+                    layers: state.layers.map((layer, layerIndex) => layerIndex !== payload.layerIndex ? layer : ({
                         ...layer,
-                        tokenIds: layer.tokenIds.map((tokenIdArray, hexIndex) => hexIndex !== action.payload.hexIndex ? tokenIdArray : (
-                            tokenIdArray.filter(id => id !== action.payload.tokenId)
+                        tokenIds: layer.tokenIds.map((tokenIdArray, hexIndex) => hexIndex !== payload.hexIndex ? tokenIdArray : (
+                            tokenIdArray.filter(id => id !== payload.tokenId)
                         )
                     )}))
                 };
@@ -330,7 +357,7 @@ function reducer(state: AppState, action: Action): AppState
                 return {
                     ...state,
                     isPlaying: !state.isPlaying,
-                    layers: state.layers.map(l => ({ ...l, currentBeat: 0 })),
+                    layers: state.layers.map(l => ({ ...l, currentBeat: 0, currentTimeMs: 0 })),
                     startTime: process.hrtime.bigint()
                 };
             }
@@ -379,6 +406,26 @@ function reducer(state: AppState, action: Action): AppState
                     selectedHex: {...state.selectedHex, layerIndex: Math.min(state.layers.length - 2, state.selectedHex.layerIndex)}
                 };
             }
+            case "removeLayer":
+            {
+                if (state.layers.length === 1)
+                {
+                    return state;
+                }
+
+                const payload = action.payload;
+                
+                const tokensToRemove = state.layers[payload].tokenIds.reduce((acc, tids) => acc.concat(tids), []);
+                const controlsToRemove = tokensToRemove.map(tid => state.tokens[tid].controlIds).reduce((acc, tids) => acc.concat(tids), []);
+                
+                return {
+                    ...state,
+                    layers: state.layers.filter((_, li) => li !== payload),
+                    tokens: objectWithoutKeys(state.tokens, tokensToRemove),
+                    controls: objectWithoutKeys(state.controls, controlsToRemove),
+                    selectedHex: {...state.selectedHex, layerIndex: Math.min(state.layers.length - 1, state.selectedHex.layerIndex)}
+                };
+            }
             case "setLayers":
             {
                 return {
@@ -386,19 +433,38 @@ function reducer(state: AppState, action: Action): AppState
                     layers: action.payload
                 };
             }
+            case "setAllowedInputs":
+            {
+                return {
+                    ...state,
+                    allowedInputs: action.payload,
+                };
+            }
             case "setAllowedOutputs":
             {
                 return {
                     ...state,
                     allowedOutputs: action.payload,
-                    selectedOutputs: state.selectedOutputs.filter(oid => action.payload.some(o => o.id === oid))
+                };
+            }
+            case "setSelectedInputs":
+            {
+                return {
+                    ...state,
+                    settings: {
+                        ...state.settings,
+                        midiInputs: action.payload.names.filter(name => state.allowedInputs.some(o => o.name === name))
+                    }
                 };
             }
             case "setSelectedOutputs":
             {
                 return {
                     ...state,
-                    selectedOutputs: action.payload.filter(oid => state.allowedOutputs.some(o => o.id === oid))
+                    settings: {
+                        ...state.settings,
+                        midiOutputs: action.payload.names.filter(name => state.allowedOutputs.some(o => o.name === name))
+                    }
                 };
             }
             case "pulse":
@@ -482,12 +548,13 @@ function reducer(state: AppState, action: Action): AppState
             {
                 const tokensToRemove: string[] = [];
                 const controlsToRemove: string[] = [];
+                const { payload } = action;
 
                 state.layers.forEach(layer =>
                 {
                     layer.tokenIds.forEach(tokenIdArray =>
                     {
-                        const toRemove = tokenIdArray.filter(id => state.tokens[id].uid === action.payload);
+                        const toRemove = tokenIdArray.filter(id => state.tokens[id].uid === payload);
                         tokensToRemove.push(...toRemove);
                         toRemove.forEach(tid =>
                         {
@@ -552,6 +619,7 @@ function reducer(state: AppState, action: Action): AppState
                 const tokensToCopy = state.layers[action.payload.srcLayerIndex].tokenIds[action.payload.srcHexIndex].map(id => state.tokens[id]);
                 let newControls: Record<string, ControlState> = {};
                 let newTokens: Record<string, Token> = {};
+                const { payload } = action;
 
                 tokensToCopy.forEach((token) =>
                 {
@@ -565,9 +633,9 @@ function reducer(state: AppState, action: Action): AppState
                     ...state,
                     controls: { ...state.controls, ...newControls },
                     tokens: { ...state.tokens, ...newTokens },
-                    layers: state.layers.map((layer, li) => li !== action.payload.destLayerIndex ? layer : {
+                    layers: state.layers.map((layer, li) => li !== payload.destLayerIndex ? layer : {
                         ...layer,
-                        tokenIds: layer.tokenIds.map((tidArray, hexIndex) => hexIndex !== action.payload.destHexIndex ? tidArray : (
+                        tokenIds: layer.tokenIds.map((tidArray, hexIndex) => hexIndex !== payload.destHexIndex ? tidArray : (
                             Object.keys(newTokens)
                         ))
                     })
@@ -575,25 +643,27 @@ function reducer(state: AppState, action: Action): AppState
             }
             case "moveHex":
             {
+                const { payload } = action;
+
                 return {
                     ...state,
                     layers: state.layers.map((layer, li) => {
                         let ret = layer;
 
-                        if (li === action.payload.destLayerIndex)
+                        if (li === payload.destLayerIndex)
                         {
                             ret = {
                                 ...ret,
-                                tokenIds: ret.tokenIds.map((tokenIdArray, hexIndex) => hexIndex !== action.payload.destHexIndex ? tokenIdArray : (
-                                    state.layers[action.payload.srcLayerIndex].tokenIds[action.payload.srcHexIndex].slice(0)
+                                tokenIds: ret.tokenIds.map((tokenIdArray, hexIndex) => hexIndex !== payload.destHexIndex ? tokenIdArray : (
+                                    state.layers[payload.srcLayerIndex].tokenIds[payload.srcHexIndex].slice(0)
                                 ))
                             };
                         }
-                        if (li === action.payload.srcLayerIndex)
+                        if (li === payload.srcLayerIndex)
                         {
                             ret = {
                                 ...ret,
-                                tokenIds: ret.tokenIds.map((tokenIdArray, hexIndex) => hexIndex !== action.payload.srcHexIndex ? tokenIdArray : [])
+                                tokenIds: ret.tokenIds.map((tokenIdArray, hexIndex) => hexIndex !== payload.srcHexIndex ? tokenIdArray : [])
                             };
                         }
 
@@ -604,14 +674,15 @@ function reducer(state: AppState, action: Action): AppState
             case "clearHex":
             {
                 const tokens = state.layers[action.payload.layerIndex].tokenIds[action.payload.hexIndex].map(tid => state.tokens[tid]);
+                const { payload } = action;
 
                 return {
                     ...state,
                     controls: objectWithoutKeys(state.controls, tokens.map(t => t.controlIds).reduce((l, r) => l.concat(r), [])),
                     tokens: objectWithoutKeys(state.tokens, tokens.map(t => t.id)),
-                    layers: state.layers.map((layer, layerIndex) => action.payload.layerIndex !== layerIndex ? layer : {
+                    layers: state.layers.map((layer, layerIndex) => payload.layerIndex !== layerIndex ? layer : {
                         ...layer,
-                        tokenIds: layer.tokenIds.map((tokenIdArray, hexIndex) => action.payload.hexIndex !== hexIndex ? tokenIdArray : [])
+                        tokenIds: layer.tokenIds.map((tokenIdArray, hexIndex) => payload.hexIndex !== hexIndex ? tokenIdArray : [])
                     })
                 }
             }
@@ -661,6 +732,7 @@ function reducer(state: AppState, action: Action): AppState
             }
             case "setTokenSearchPath":
             {
+                const { payload } = action;
                 let p = action.payload.value;
 
                 if (action.payload.normalize)
@@ -672,17 +744,19 @@ function reducer(state: AppState, action: Action): AppState
                     ...state,
                     settings: {
                         ...state.settings,
-                        tokenSearchPaths: state.settings.tokenSearchPaths.map((v, i) => i !== action.payload.index ? v : p)
+                        tokenSearchPaths: state.settings.tokenSearchPaths.map((v, i) => i !== payload.index ? v : p)
                     }
                 };
             }
             case "removeTokenSearchPath":
             {
+                const { payload } = action;
+
                 return {
                     ...state,
                     settings: {
                         ...state.settings,
-                        tokenSearchPaths: state.settings.tokenSearchPaths.filter((_, i) => i !== action.payload)
+                        tokenSearchPaths: state.settings.tokenSearchPaths.filter((_, i) => i !== payload)
                     }
                 };
             }
@@ -721,6 +795,48 @@ function reducer(state: AppState, action: Action): AppState
                         ...state.settings,
                         isFirstRun: false
                     }
+                };
+            }
+            case "setMidiNotes":
+            {
+                return {
+                    ...state,
+                    midiNotes: action.payload
+                };
+            }
+            case "bufferMidi":
+            {
+                const payload = action.payload;
+
+                const buffer = state.layers[payload.layerIndex].midiBuffer.slice(0);
+                const index = buffer.findIndex(n => n.number === payload.note.number);
+                if (index === -1)
+                {
+                    buffer.push(payload.note);
+                }
+                else
+                {
+                    buffer[index] = payload.note;
+                }
+
+                return {
+                    ...state,
+                    layers: state.layers.map((l, li) => li !== payload.layerIndex ? l : {
+                        ...l,
+                        midiBuffer: buffer
+                    })
+                };
+            }
+            case "debufferOffNotes":
+            {
+                const payload = action.payload;
+
+                return {
+                    ...state,
+                    layers: state.layers.map((l, li) => li !== payload.layerIndex ? l : {
+                        ...l,
+                        midiBuffer: l.midiBuffer.filter(n => n.isOn)
+                    })
                 };
             }
             default:

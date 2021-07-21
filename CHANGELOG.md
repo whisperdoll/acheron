@@ -24,3 +24,16 @@ It's the first version.
 * Bugfixes relating to inheritance
 * Auto-enable builtin tokens
 * Fix beat signal staying on when paused
+
+# 1.1.3
+
+* Fixed bug with saving token search paths
+* Added MIDI input support
+    * Generate token's "MIDI" trigger works now
+* Added Patreon button
+* QOL changes relating to layout
+* Lots of keyboard shortcuts!
+* New icons
+* Fixed bug relating to dragging tokens in Multilayer Mode
+* Added Wormhole Token
+* Added tempo sync feature

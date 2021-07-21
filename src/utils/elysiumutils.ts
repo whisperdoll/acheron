@@ -137,6 +137,30 @@ export function indexFromNote(note: string): number
     return noteArray.length * octave + noteArray.indexOf(name);
 }
 
+const _hexIndexCache: Record<string, number[]> = {};
+export function hexIndexesFromNote(note: string): number[]
+{
+    if (Object.prototype.hasOwnProperty.call(_hexIndexCache, note))
+    {
+        return _hexIndexCache[note];
+    }
+    else
+    {
+        const ret: number[] = [];
+    
+        for (let i = 0; i < hexNotes.length; i++)
+        {
+            if (hexNotes[i] === note)
+            {
+                ret.push(i);
+            }
+        }
+    
+        _hexIndexCache[note] = ret;
+        return ret;
+    }
+}
+
 export const hexNotes = [
     "D#7",
     "G#6",

@@ -2,6 +2,7 @@
 {
     font-family: Arial, Helvetica, sans-serif;
     box-sizing: border-box;
+    position: relative;
 }
 
 .clicky
@@ -18,7 +19,6 @@
 {
     user-select: none;
 }
-
 
 .numberInput-container
 {
@@ -106,6 +106,19 @@ select, input[type="checkbox"]
     cursor: pointer;
 }
 
+label
+{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+input[type="checkbox"]
+{
+    width: 1.05em;
+    height: 1.05em;
+}
+
 button:not(.nostyle)
 {
     user-select: none;
@@ -125,6 +138,20 @@ button:not(.nostyle)
     {
         background-color: #222;
     }
+
+    &.iconButton
+    {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.4em;
+    
+        & > svg
+        {
+        }
+    }
 }
 
 button.nostyle
@@ -136,6 +163,36 @@ button.nostyle
     cursor: pointer;
     padding: 0;
     margin: 0;
+}
+
+button.patreon
+{
+    background-color: darken(#e85b46, 5);
+
+    &:hover
+    {
+        background-color: lighten(#e85b46, 2);
+    }
+
+    &:active
+    {
+        background-color: darken(#e85b46, 12);
+    }
+}
+
+button.delete
+{
+    background-color: #9c2020;
+
+    &:hover
+    {
+        background-color: lighten(#9c2020, 7);
+    }
+
+    &:active
+    {
+        background-color: darken(#9c2020, 7);
+    }
 }
 
 .app
@@ -467,11 +524,12 @@ $statusBarHeight: 32px;
     border-right: 1px solid #aaa;
     display: flex;
     flex-direction: column;
-    margin-right: 32px;
 }
 
 .middleColumn
 {
+    margin-left: 32px;
+    margin-right: 32px;
     display: flex;
     flex-direction: column;
     flex-grow: 1;
@@ -541,8 +599,9 @@ $statusBarHeight: 32px;
         user-select: none;
         position: absolute;
         z-index: 1;
-        left: 0;
-        top: 0;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
         
         &:focus
         {
@@ -593,6 +652,25 @@ $statusBarHeight: 32px;
             .layerName
             {
                 margin-bottom: 4px;
+
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+                justify-content: center;
+                gap: 4px;
+
+                span
+                {
+                    margin-top: 3px;
+                }
+                
+                .remove
+                {
+                    &:hover
+                    {
+                        background-color: rgba(255,255,255,0.5);
+                    }
+                }
             }
 
             .hexGrid
@@ -615,6 +693,14 @@ $statusBarHeight: 32px;
         margin: 0;
         border-bottom: 1px solid #aaa;
         border-bottom-left-radius: 12px;
+    }
+
+    .leftColumn
+    {
+        flex-grow: 0;
+        margin: 0;
+        border-bottom: 1px solid #aaa;
+        border-bottom-right-radius: 12px;
     }
 
     .elysiumControls
@@ -652,6 +738,30 @@ $statusBarHeight: 32px;
     flex-direction: column;
     justify-content: stretch;
     overflow: auto;
+
+    .layerHeader
+    {
+        text-align: center;
+        padding-top: 4px;
+        padding-bottom: 4px;
+        border: 1px solid #aaa;
+        border-left: 0;
+        border-right: 0;
+        font-weight: bold;
+    }
+
+    .scrolly
+    {
+        overflow: auto;
+    }
+
+    &.layerSettings .header
+    {
+        &:first-of-type
+        {
+            border-top: 0;
+        }
+    }
 }
 
 .header
@@ -678,7 +788,6 @@ $statusBarHeight: 32px;
     flex-direction: column;
     justify-content: stretch;
 
-    margin-left: 32px;
     border-left: 1px solid #aaa;
 
     & > *

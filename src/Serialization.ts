@@ -10,6 +10,7 @@ export interface SerializedCompositionControl
     id: string;
     currentValueType: "scalar" | "lfo" | "inherit";
     inherit?: string;
+    showIf?: string;
     scalarValue: any;
     lfo: Lfo;
 }
@@ -33,7 +34,7 @@ export interface SerializedCompositionLayer
     barLength: SerializedCompositionControl;
     velocity: SerializedCompositionControl;
     emphasis: SerializedCompositionControl;
-    tempoSync: boolean;
+    tempoSync: SerializedCompositionControl;
     noteLength: SerializedCompositionControl;
     timeToLive: SerializedCompositionControl;
     pulseEvery: SerializedCompositionControl;
@@ -106,6 +107,7 @@ function serializeControl(control: ControlState): SerializedCompositionControl
         inherit: control.inherit,
         scalarValue: control.scalarValue,
         lfo: control.lfo,
+        showIf: control.showIf,
     };
 }
 
@@ -148,7 +150,7 @@ export function serializeComposition(appState: AppState): SerializedComposition
                 barLength: serializeControl(appState.controls[layer.barLength]),
                 velocity: serializeControl(appState.controls[layer.velocity]),
                 emphasis: serializeControl(appState.controls[layer.emphasis]),
-                tempoSync: layer.tempoSync,
+                tempoSync: serializeControl(appState.controls[layer.emphasis]),
                 noteLength: serializeControl(appState.controls[layer.noteLength]),
                 timeToLive: serializeControl(appState.controls[layer.timeToLive]),
                 pulseEvery: serializeControl(appState.controls[layer.pulseEvery]),
@@ -246,12 +248,13 @@ export function deserializeComposition(appState: AppState, c: SerializedComposit
             barLength: layer.barLength.id,
             velocity: layer.velocity.id,
             emphasis: layer.emphasis.id,
-            tempoSync: layer.tempoSync,
+            tempoSync: layer.tempoSync.id,
             noteLength: layer.noteLength.id,
             timeToLive: layer.timeToLive.id,
             pulseEvery: layer.pulseEvery.id,
             tokenIds: layer.tokenIds,
             playheads: [],
+            midiBuffer: [],
             currentBeat: 0
         };
 

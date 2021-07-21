@@ -13,6 +13,7 @@ export default function()
         "barLength",
         "velocity",
         "emphasis",
+        "tempoSync",
         "noteLength"
     ];
 

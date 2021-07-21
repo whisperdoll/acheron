@@ -29,7 +29,6 @@ export default function(props: Props)
     const hexCanvas = useRef<Canvas | null>(null);
     const hexPoints = useRef<Point[]>([]);
     const mouseLocation = useRef<Point | null>(null);
-    const prevSelectedHex = usePrevious(state.selectedHex);
 
     const rows = 12;
     const cols = 17;
@@ -88,7 +87,7 @@ export default function(props: Props)
                     dispatch({ type: "clearHex", payload: { layerIndex: props.layerIndex, hexIndex: state.selectedHex.hexIndex }});
                 }
             }
-            else if ([...e.key].length === 1)
+            else if ([...e.key].length === 1 && !e.ctrlKey && !e.shiftKey)
             {
                 for (const uid in state.settings.tokens)
                 {
@@ -120,6 +119,7 @@ export default function(props: Props)
     useEffect(() =>
     {
         canvas.current = new Canvas({
+            align: { horizontal: true, vertical: true },
             canvasElement: canvasEl.current!,
             deepCalc: true,
             opaque: false,
@@ -386,6 +386,35 @@ export default function(props: Props)
             backCanvas.current?.fillHexagonCell(startPosition, new Point(~~(state.selectedHex.hexIndex / rows), state.selectedHex.hexIndex % rows), hexRadius, false, "#550");
         }
 
+
+        // draw midi notes //
+        if (props.layerIndex === state.selectedHex.layerIndex)
+        {
+            state.midiNotes.forEach((note) =>
+            {
+                const toPlay: { hexIndex: number, velocity: number }[] = [];
+    
+                for (let i = 0; i < hexNotes.length; i++)
+                {
+                    if (note.isOn && hexNotes[i] === note.name)
+                    {
+                        toPlay.push({ hexIndex: i, velocity: note.velocity });
+                    }
+                }
+    
+                toPlay.forEach((data) =>
+                {
+                    backCanvas.current?.fillHexagonCell(
+                        startPosition, 
+                        new Point(~~(data.hexIndex / rows), data.hexIndex % rows),
+                        hexRadius,
+                        false,
+                        `rgba(40,${90 + (data.velocity / 127 * 20)},${30 + (data.velocity / 127 * 60)},${(data.velocity / 127) * 0.8 + 0.2})`
+                    );
+                });
+            });
+        }
+
         // draw dragging //
         if (state.isDragging && state.draggingDestHex.hexIndex !== -1 && state.draggingDestHex.layerIndex === props.layerIndex)
         {
@@ -408,7 +437,7 @@ export default function(props: Props)
                 }
             }
         });
-    }, [ state.selectedHex, state.layers, props.layerIndex, state.draggingDestHex, state.isDragging ]);
+    }, [ state.selectedHex, state.layers, props.layerIndex, state.draggingDestHex, state.isDragging, state.midiNotes ]);
 
     // useEffect(() =>
     // {

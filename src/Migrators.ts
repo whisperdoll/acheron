@@ -100,7 +100,10 @@ export function migrateSettings(settings: Record<string, any>): AppSettings
             tokenSearchPaths: initialSettings.tokenSearchPaths.slice(0),
             tokens: newTokens,
             version: 1,
-            wrapPlayheads: settings.wrapPlayheads
+            wrapPlayheads: settings.wrapPlayheads,
+            isFirstRun: true,
+            midiInputs: [],
+            midiOutputs: []
         };
     }
 
@@ -153,6 +156,13 @@ function migrateSerializedLayer(global: SerializedComposition["global"], seriali
                 key: "key",
                 lfo: buildLfo("select", undefined, undefined, Object.keys(KeyMap).map((key) => ({ label: key, value: key }))),
                 scalarValue: Object.keys(KeyMap)[serialized.key]
+            },
+            tempoSync: {
+                id: "",
+                currentValueType: "scalar",
+                key: "tempoSync",
+                lfo: buildLfo("bool"),
+                scalarValue: serialized.tempoSync
             }
         };
 
@@ -169,6 +179,20 @@ function migrateSerializedLayer(global: SerializedComposition["global"], seriali
     }
     else
     {
+        if (typeof serialized.tempoSync === "boolean")
+        {
+            serialized = {
+                ...serialized as SerializedCompositionLayer,
+                tempoSync: {
+                    id: "",
+                    currentValueType: "scalar",
+                    key: "tempoSync",
+                    lfo: buildLfo("bool"),
+                    scalarValue: serialized.tempoSync
+                }
+            };
+        }
+
         return serialized as SerializedCompositionLayer;
     }
 }

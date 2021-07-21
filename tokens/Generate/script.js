@@ -105,7 +105,10 @@ function onTick(store, helpers, playheads)
     }
     else if (triggerMode === "midi")
     {
-        // todo
+        if (helpers.isMidiPlaying())
+        {
+            tryMakePlayhead();
+        }
     }
 
     return [currentBeat, (pulseEvery + offset) % helpers.getBarLength()];

@@ -2,6 +2,9 @@ import React, { useContext, useEffect, useLayoutEffect, useRef, useState } from 
 import { AppContext } from '../AppContext';
 import { hexNotes } from '../utils/elysiumutils';
 import { capitalize } from '../utils/utils';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faBan, faPlus } from '@fortawesome/free-solid-svg-icons';
+import IconButton from './IconButton';
 
 export default function TokenAdder()
 {
@@ -22,12 +25,13 @@ export default function TokenAdder()
 
     return (
         <div className="tokenAdder">
-            <button
+            <IconButton
                 onClick={toggleTokens}
                 className={"addButton " + (isShowingTokens ? "expanded" : "collapsed")}
+                icon={isShowingTokens ? faBan : faPlus}
             >
-                {isShowingTokens ? "❌ Cancel Adding Token" : "+ Add Token"}
-            </button>
+                {isShowingTokens ? "Cancel Adding Token" : "Add Token"}
+            </IconButton>
             {isShowingTokens &&
                 <div className="tokenAdderList">
                     {Object.entries(state.tokenDefinitions).map(([ key, definition ]) => (
