@@ -6,7 +6,7 @@ Electron-based recreation of https://github.com/mmower/elysium
 
 Built with https://github.com/electron-react-boilerplate/electron-react-boilerplate
 
-Demo video by [hellvalleyskytrees](https://twitter.com/hvst_music) here: https://www.youtube.com/watch?v=BkXd8Xn45_k
+Demo video by [hellvalleyskytrees](https://twitter.com/hvst_music) here: https://youtu.be/5q-6x3Tcj-4
 
 Documentation is here: https://github.com/SongSing/acheron/wiki/Acheron-Documentation
 
