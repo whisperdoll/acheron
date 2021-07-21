@@ -8,19 +8,25 @@ Built with https://github.com/electron-react-boilerplate/electron-react-boilerpl
 
 Demo video by [hellvalleyskytrees](https://twitter.com/hvst_music) here: https://www.youtube.com/watch?v=BkXd8Xn45_k
 
+Documentation is here: https://github.com/SongSing/acheron/wiki/Acheron-Documentation
+
 ## Setup
 
-You will need to import tokens from `src/tokens` when you first start the app. Just select all of the folders in there.
+Download the latest Acheron release here: https://github.com/SongSing/acheron/releases
+
+The current version as of this writing is 1.1.3
+
+Extract the zip file and run Acheron.exe.
+
+Please note that Acheron is a MIDI sequencer, and as such produces no sound on its own.
+
+You'll need a Digital Audio Workstation (or other VST host/MIDI receiving application) and MIDI loopback driver (such as [loopmidi](https://www.tobias-erichsen.de/software/loopmidi.html)), or a MIDI interface and a physical MIDI device.
 
 ## Troubleshooting
 
 >I don't have any tokens to work with.
 
-Did you follow the setup...?
-
->My composition won't load after moving folders around.
-
-Right now, tokens are saved by path in a composition file. I'll figure out a better way to do this eventually. You need to modify your composition file in a text editor and remedy the token paths.
+If you don't see all of the tokens in the Add Token menu, please click on Manage Tokens in the bar at the bottom of the window and make sure that the token search paths include /tokens/ in the root of the current Acheron version's folder, and that all of the tokens are enabled.
 
 >I have another issue!
 
@@ -31,7 +37,7 @@ Contact me through the issues section of Github or however else you know how to 
 `yarn start` will start the app in the `dev` environment.
 
 Custom tokens can be created and distributed without setting up a development environment.
-See [Token_Documentation.md](./Token_Documentation.md) for more information.
+See the [Custom Token Documentation](https://github.com/SongSing/acheron/wiki/Custom-Token-Documentation) for more information.
 
 ## Credits
 
