@@ -180,6 +180,7 @@ export default function App() {
         else
         {
             dispatch({ type: "setAppState", payload: performStopCallbacks(state) });
+            Midi.allNotesOff();
         }
     }, [ state.isPlaying ]);
 

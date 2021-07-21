@@ -38,6 +38,8 @@ export interface MidiNote
 let noteOnListener: (e: any) => any;
 let noteOffListener: (e: any) => any;
 
+const allNotes = Array(128).fill(0).map((_, i) => i);
+
 export default class Midi
 {
     private static enabledOutputNames: string[] = [];
@@ -237,7 +239,7 @@ export default class Midi
         });
     }
 
-    public static noteOff(notes: string[], outputNames: string[], channel: number, options: NoteOffOptions)
+    public static noteOff(notes: string[], outputNames: string[], channel: number, options?: NoteOffOptions)
     {
         outputNames.forEach((outputName) =>
         {
@@ -245,10 +247,18 @@ export default class Midi
 
             if (midiOutput)
             {
-                midiOutput.channels[channel].sendNoteOff(notes, {
+                midiOutput.channels[channel].sendNoteOff(notes, options ? {
                     release: options.release / 127
-                });
+                } : undefined);
             }
+        });
+    }
+
+    public static allNotesOff()
+    {
+        WebMidi.outputs.forEach((output: any) => 
+        {
+            output.sendNoteOff(allNotes);
         });
     }
 }

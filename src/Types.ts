@@ -270,4 +270,11 @@ function getLfoValue(appState: AppState, layerIndex: number, lfo: Lfo): any
     }
 }
 
-
+export interface LayerNote
+{
+    end: number;
+    notes: string[];
+    type: "beat" | "ms";
+    outputNames: string[];
+    channel: number;
+}

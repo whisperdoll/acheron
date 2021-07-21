@@ -5,7 +5,7 @@ import { SafeWriter } from "./utils/safewriter";
 import * as path from "path";
 import * as fs from "fs";
 import { buildLayer } from "./Layers";
-import { ControlState, Token, ControlDefinition, Playhead, getControlValue, Lfo, TokenDefinition, TokenCallbacks, TokenUID, TokenInstanceId, ControlInstanceId } from "./Types";
+import { ControlState, Token, ControlDefinition, Playhead, getControlValue, Lfo, TokenDefinition, TokenCallbacks, TokenUID, TokenInstanceId, ControlInstanceId, LayerNote } from "./Types";
 import { buildFromDefs, DefaultPlayerControls, LayerControlKey, PlayerControlKey } from "./utils/DefaultDefinitions";
 import { MidiDevice, MidiNote } from "./utils/midi";
 import { v4 as uuidv4 } from 'uuid';
@@ -34,22 +34,24 @@ export interface AppSettings
 export interface LayerState
 {
     name: string;
-    enabled: string;
-    midiChannel: string;
-    key: string;
-    transpose: string;
-    tempo: string;
-    barLength: string;
     currentBeat: number;
-    velocity: string;
-    emphasis: string;
-    tempoSync: boolean;
-    noteLength: string;
-    timeToLive: string;
-    pulseEvery: string;
+    currentTimeMs: number;
+    enabled: ControlInstanceId;
+    midiChannel: ControlInstanceId;
+    key: ControlInstanceId;
+    transpose: ControlInstanceId;
+    tempo: ControlInstanceId;
+    barLength: ControlInstanceId;
+    velocity: ControlInstanceId;
+    emphasis: ControlInstanceId;
+    tempoSync: ControlInstanceId;
+    noteLength: ControlInstanceId;
+    timeToLive: ControlInstanceId;
+    pulseEvery: ControlInstanceId;
     tokenIds: string[][]; // each hex has an array of tokens
     playheads: Playhead[][]; // each hex has an array of playheads
-    midiBuffer: MidiNote[]
+    midiBuffer: MidiNote[];
+    playingNotes: LayerNote[]; // from tokens
 }
 
 export interface AppState
@@ -64,6 +66,7 @@ export interface AppState
     barLength: ControlInstanceId;
     velocity: ControlInstanceId;
     emphasis: ControlInstanceId;
+    tempoSync: ControlInstanceId;
     noteLength: ControlInstanceId;
     timeToLive: ControlInstanceId;
     pulseEvery: ControlInstanceId;
@@ -102,6 +105,7 @@ const initialState : AppState = {
     tokens: {},
     barLength: Object.entries(DefaultPlayerControls).find(e => e[1].key === "barLength")![0],
     emphasis: Object.entries(DefaultPlayerControls).find(e => e[1].key === "emphasis")![0],
+    tempoSync: Object.entries(DefaultPlayerControls).find(e => e[1].key === "tempoSync")![0],
     noteLength: Object.entries(DefaultPlayerControls).find(e => e[1].key === "noteLength")![0],
     pulseEvery: Object.entries(DefaultPlayerControls).find(e => e[1].key === "pulseEvery")![0],
     tempo: Object.entries(DefaultPlayerControls).find(e => e[1].key === "tempo")![0],
@@ -353,7 +357,7 @@ function reducer(state: AppState, action: Action): AppState
                 return {
                     ...state,
                     isPlaying: !state.isPlaying,
-                    layers: state.layers.map(l => ({ ...l, currentBeat: 0 })),
+                    layers: state.layers.map(l => ({ ...l, currentBeat: 0, currentTimeMs: 0 })),
                     startTime: process.hrtime.bigint()
                 };
             }

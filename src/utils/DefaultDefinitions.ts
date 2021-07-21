@@ -13,6 +13,7 @@ export const PlayerControlKeys = [
     "tempo",
     "velocity",
     "emphasis",
+    "tempoSync",
     "noteLength",
     "timeToLive",
     "pulseEvery"
@@ -56,12 +57,17 @@ const playerControlDefs: Record<PlayerControlKey, ControlDefinition> = {
         max: 200,
         defaultValue: 120,
     },
+    tempoSync: {
+        label: "Tempo Sync",
+        type: "bool",
+        defaultValue: true
+    },
     noteLength: {
         label: "Note Length",
         type: "decimal",
         min: 0.1,
         max: 10,
-        defaultValue: 0.6,
+        defaultValue: 0.5,
         step: 0.1
     },
     timeToLive: {
@@ -97,7 +103,8 @@ export const LayerControlTypes = [
     "velocity",
     "noteLength",
     "pulseEvery",
-    "timeToLive"
+    "timeToLive",
+    "tempoSync"
 ] as const;
 
 export type LayerControlKey = typeof LayerControlTypes[number];
@@ -140,6 +147,9 @@ function layerControlDefs(): Record<LayerControlKey, ControlDefinition>
         },
         velocity: {
             inherit: "global.velocity"
+        },
+        tempoSync: {
+            inherit: "global.tempoSync"
         },
         noteLength: {
             inherit: "global.noteLength"

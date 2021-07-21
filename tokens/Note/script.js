@@ -96,7 +96,15 @@ function onTick(store, helpers, playheads)
     {
         if (probability / 100 > Math.random())
         {
-            helpers.playTriad(helpers.getHexIndex(), triad, noteLength * 1000, helpers.getCurrentBeat() === 0 ? emphasis : velocity, transpose);
+            const durationType = helpers.getLayerValue("tempoSync") ? "beat" : "ms";
+            helpers.playTriad(
+                helpers.getHexIndex(),
+                triad,
+                noteLength * (durationType === "ms" ? 1000 : 1),
+                durationType,
+                helpers.getCurrentBeat() === 0 ? emphasis : velocity,
+                transpose
+            );
             hasPerformed = true;
         }
     }

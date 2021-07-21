@@ -1,16 +1,18 @@
 import { AppState, LayerState } from "../AppContext";
-import { getControlValue, KeyMap, Playhead, Token } from "../Types";
+import { getControlValue, KeyMap, LayerNote, Playhead, Token } from "../Types";
 import { getAdjacentHex, getNoteParts, hexIndexesFromNote, hexNotes, noteArray, NumHexes, transposeNote } from "./elysiumutils";
-import { array_copy, createEmpty2dArray, mod, NsToS, objectWithoutKeys } from "./utils";
+import { array_copy, createEmpty2dArray, mod, NsToMs, NsToS, objectWithoutKeys } from "./utils";
 import Midi, { MidiNote } from "./midi";
+import { LayerControlKey } from "./DefaultDefinitions";
 
 const rows = 12;
 const cols = 17;
 let scheduledForRemoval: [] = [];
 let scheduledForMove: { src: { hexIndex: number, layerIndex: number }, dest: { hexIndex: number, layerIndex: number }, playheadIndex: number }[] = [];
 let awaitingLayerTransfer: { dest: { hexIndex: number, layerIndex: number }, playhead: Playhead }[] = [];
+let notesToAdd: LayerNote[] = [];
 
-function buildHelpers(appState: AppState, layerIndex: number, currentBeat: number, newPlayheads: Playhead[][], hexIndex: number, token: Token): Record<string, Function>
+function buildHelpers(appState: AppState, layerIndex: number, currentBeat: number, currentMs: number, newPlayheads: Playhead[][], hexIndex: number, token: Token): Record<string, Function>
 {
     const helpers = {
         getControlValue(key: string)
@@ -61,7 +63,6 @@ function buildHelpers(appState: AppState, layerIndex: number, currentBeat: numbe
                     });
                 });
             });
-            console.log(ret);
             return ret;
         },
         spawnPlayhead(hexIndex: number, timeToLive: number, direction: 0 | 1 | 2 | 3 | 4 | 5, offset: number = 0)
@@ -157,7 +158,7 @@ function buildHelpers(appState: AppState, layerIndex: number, currentBeat: numbe
         {
             return (direction + 3) % 6;
         },
-        playTriad(hexIndex: number, triad: number, durationMs: number, velocity: number, transpose: number = 0)
+        playTriad(hexIndex: number, triad: number, duration: number, durationType: "beat" | "ms", velocity: number, transpose: number = 0)
         {
             let notes: string[] = [hexNotes[hexIndex]];
             triad = mod(triad, 7);
@@ -182,10 +183,25 @@ function buildHelpers(appState: AppState, layerIndex: number, currentBeat: numbe
                 return transposeNote(note, finalTranspose);
             });
 
-            Midi.playNotes(transposed, appState.settings.midiOutputs, getControlValue(appState, layerIndex, appState.controls[appState.layers[layerIndex].midiChannel]), {
-                durationMs,
+            const channel = getControlValue(
+                appState,
+                layerIndex,
+                appState.controls[appState.layers[layerIndex].midiChannel]
+            );
+
+            Midi.noteOn(transposed, appState.settings.midiOutputs, channel, {
                 velocity
             });
+
+            notesToAdd.push({
+                end: durationType === "beat" ? currentBeat + duration : currentMs + duration,
+                notes: transposed,
+                type: durationType,
+                channel,
+                outputNames: appState.settings.midiOutputs
+            });
+
+            console.log(notesToAdd, currentBeat, currentMs, duration);
         },
         getCurrentBeat(withinBar: boolean = true): number
         {
@@ -196,6 +212,10 @@ function buildHelpers(appState: AppState, layerIndex: number, currentBeat: numbe
         getBarLength(): number
         {
             return getControlValue(appState, layerIndex, appState.controls[appState.layers[layerIndex].barLength]);
+        },
+        getLayerValue(key: LayerControlKey)
+        {
+            return getControlValue(appState, layerIndex, appState.controls[appState.layers[layerIndex][key]]);
         }
     };
 
@@ -228,6 +248,7 @@ export function performStartCallbacks(appState: AppState): AppState
                         appState,
                         layerIndex,
                         layer.currentBeat,
+                        layer.currentTimeMs,
                         newPlayheads,
                         hexIndex,
                         token
@@ -278,6 +299,7 @@ export function performStopCallbacks(appState: AppState): AppState
                         appState,
                         layerIndex,
                         layer.currentBeat,
+                        layer.currentTimeMs,
                         newPlayheads,
                         hexIndex,
                         token
@@ -342,6 +364,7 @@ export function progressLayer(appState: AppState, deltaNs: number, layerIndex: n
     let newPlayheads: Playhead[][] = createEmpty2dArray(NumHexes);
     const layer = appState.layers[layerIndex];
     const beatDelta = NsToS(deltaNs) / (60 / getControlValue(appState, layerIndex, appState.controls[layer.tempo]));
+    const deltaMs = NsToMs(deltaNs);
     // console.log(layer.currentBeat, layer.currentBeat === 0, Math.floor(layer.currentBeat + beatDelta) > layer.currentBeat);
 
     if (appState.isPlaying)
@@ -431,6 +454,7 @@ export function progressLayer(appState: AppState, deltaNs: number, layerIndex: n
                                 appState,
                                 layerIndex,
                                 layer.currentBeat + beatDelta,
+                                layer.currentTimeMs + deltaMs,
                                 newPlayheads,
                                 hexIndex,
                                 token
@@ -447,6 +471,7 @@ export function progressLayer(appState: AppState, deltaNs: number, layerIndex: n
                             appState,
                             layerIndex,
                             layer.currentBeat + beatDelta,
+                            layer.currentTimeMs + deltaMs,
                             newPlayheads,
                             hexIndex,
                             token
@@ -472,20 +497,32 @@ export function progressLayer(appState: AppState, deltaNs: number, layerIndex: n
             newPlayheads = layer.playheads;
         }
 
+        const protoLayer: LayerState = {
+            ...layer,
+            playheads: newPlayheads,
+            currentTimeMs: layer.currentTimeMs + deltaMs,
+            currentBeat: layer.currentBeat + beatDelta,
+            playingNotes: layer.playingNotes.filter(n => {
+                const cmp = n.type === "beat" ? layer.currentBeat + beatDelta : layer.currentTimeMs + deltaMs;
+                if (n.end <= cmp)
+                {
+                    Midi.noteOff(n.notes, n.outputNames, n.channel);
+                    return false;
+                }
+                return true;
+            }).concat(notesToAdd)
+        };
+
+        notesToAdd = [];
+
         if (!shouldClearMidiBuffer)
         {
-            newLayers[layerIndex] = {
-                ...layer,
-                playheads: newPlayheads,
-                currentBeat: layer.currentBeat + beatDelta
-            };
+            newLayers[layerIndex] = protoLayer;
         }
         else
         {
             newLayers[layerIndex] = {
-                ...layer,
-                playheads: newPlayheads,
-                currentBeat: layer.currentBeat + beatDelta,
+                ...protoLayer,
                 midiBuffer: []
             };
         }

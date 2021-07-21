@@ -36,3 +36,4 @@ It's the first version.
 * New icons
 * Fixed bug relating to dragging tokens in Multilayer Mode
 * Added Wormhole Token
+* Added tempo sync feature
