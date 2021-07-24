@@ -135,7 +135,10 @@ export default class Midi
             }
             else
             {
-                this.attachNoteListeners(input);
+                input.open().then(() =>
+                {
+                    this.attachNoteListeners(input);
+                });
             }
         });
     }

@@ -43,3 +43,4 @@ It's the first version.
 * Added new Token helpers functions
     * `getLayer()` - returns the layer a token is on (zero-indexed)
     * `getNumLayers()` - returns the number of layers in the composition
+* Small bugfix regarding with MIDI device reconnection
