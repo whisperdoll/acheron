@@ -216,6 +216,14 @@ function buildHelpers(appState: AppState, layerIndex: number, currentBeat: numbe
         getLayerValue(key: LayerControlKey)
         {
             return getControlValue(appState, layerIndex, appState.controls[appState.layers[layerIndex][key]]);
+        },
+        getLayer(): number
+        {
+            return layerIndex;
+        },
+        getNumLayers(): number
+        {
+            return appState.layers.length;
         }
     };
 

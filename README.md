@@ -14,7 +14,7 @@ Documentation is here: https://github.com/SongSing/acheron/wiki/Acheron-Document
 
 Download the latest Acheron release here: https://github.com/SongSing/acheron/releases
 
-The current version as of this writing is 1.1.3
+The current version as of this writing is 1.1.4
 
 Extract the zip file and run Acheron.exe.
 
