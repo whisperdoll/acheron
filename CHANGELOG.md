@@ -44,3 +44,9 @@ It's the first version.
     * `getLayer()` - returns the layer a token is on (zero-indexed)
     * `getNumLayers()` - returns the number of layers in the composition
 * Small bugfix regarding with MIDI device reconnection
+
+# 1.1.5 (2023/6/02)
+
+* Fixed bug where opened files wouldn't play
+* Removed nonfunctional Ghost Beats parameter from the Note token
+* Added Twist, Randomize, and Lifespan tokens
