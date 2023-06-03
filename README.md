@@ -31,6 +31,11 @@ If you don't see all of the tokens in the Add Token menu, please click on Manage
 >I have another issue!
 
 Contact me through the issues section of Github or however else you know how to contact me and I'll help.
+## Known Issues
+
+Deleting layers currently crashes Acheron.
+
+If gate values are changed while a composition is running, these changes won't be applied until you stop and restart the player.
 
 ## Development
 
