@@ -52,13 +52,6 @@
         },
         "noteLength": {
             "inherit": "global.noteLength"
-        },
-        "ghostBeats": {
-            "label": "Ghost Beats",
-            "type": "int",
-            "min": 0,
-            "max": 16,
-            "defaultValue": 0
         }
     }
 }
