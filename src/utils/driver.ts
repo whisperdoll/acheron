@@ -510,7 +510,7 @@ export function progressLayer(appState: AppState, deltaNs: number, layerIndex: n
             playheads: newPlayheads,
             currentTimeMs: layer.currentTimeMs + deltaMs,
             currentBeat: layer.currentBeat + beatDelta,
-            playingNotes:layer.playingNotes === undefined ? []:layer.playingNotes.filter(n => {
+            playingNotes:layer.playingNotes === undefined ? [].concat(notesToAdd):layer.playingNotes.filter(n => {
                 const cmp = n.type === "beat" ? layer.currentBeat + beatDelta : layer.currentTimeMs + deltaMs;
                 if (n.end <= cmp)
                 {
