@@ -2,7 +2,7 @@
 
 ## About
 
-Electron-based recreation of https://github.com/mmower/elysium
+Electron-based recreation of https://github.com/mmower/elysium, a probabilistic generative MIDI sequencer based on the harmonic table note layout.
 
 Built with https://github.com/electron-react-boilerplate/electron-react-boilerplate
 
