@@ -1,4 +1,5 @@
-# Acheron
+
+# ![(Acheron icon)](assets/icons/64x64.png "Acheron icon")Acheron
 
 ## About
 
@@ -47,9 +48,14 @@ See the [Custom Token Documentation](https://github.com/SongSing/acheron/wiki/Cu
 ## Credits
 
 * [Matt Mower](https://github.com/mmower) for creating the [original incarnation of this app](https://github.com/mmower/elysium).
-* [hellvalleyskytrees](https://twitter.com/hvst_music) for the app icon, testing, demoing, documentation, and general consultation+encouragement.
-    * She's released an album of music using this sequencer! https://hellvalleyskytrees.bandcamp.com/album/voidscapes-vol-4
-
+* [hellvalleyskytrees](https://twitter.com/hvst_music) for the app icon, testing, demoing, randomize, twist, and lifespan tokens, documentation, and general consultation+encouragement.
+    * She's released six albums of music using this sequencer!
+        * https://hellvalleyskytrees.bandcamp.com/album/voidscapes-vol-4
+        * https://hellvalleyskytrees.bandcamp.com/album/voidscapes-vol-5
+        * https://hellvalleyskytrees.bandcamp.com/album/voidscapes-vol-6
+        * https://hellvalleyskytrees.bandcamp.com/album/voidscapes-vol-7
+        * https://hellvalleyskytrees.bandcamp.com/album/voidscapes-vol-8
+        * https://hellvalleyskytrees.bandcamp.com/album/voidscapes-vol-9
 ## License
 
 MIT - see LICENSE file.
