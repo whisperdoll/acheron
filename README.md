@@ -13,7 +13,7 @@ Documentation is here: https://github.com/whisperdoll/acheron/wiki/Acheron-Docum
 
 ## Setup
 
-Download the latest Acheron release here: https://github.com/SongSing/acheron/releases
+Download the latest Acheron release here: https://github.com/whisperdoll/acheron/releases
 
 The current version as of this writing is 1.1.5
 
@@ -43,7 +43,7 @@ If gate values are changed while a composition is running, these changes won't b
 `yarn start` will start the app in the `dev` environment.
 
 Custom tokens can be created and distributed without setting up a development environment.
-See the [Custom Token Documentation](https://github.com/SongSing/acheron/wiki/Custom-Token-Documentation) for more information.
+See the [Custom Token Documentation](https://github.com/whisperdoll/acheron/wiki/Custom-Token-Documentation) for more information.
 
 ## Credits
 
