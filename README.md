@@ -21,7 +21,10 @@ Extract the zip file and run Acheron.exe.
 
 Please note that Acheron is a MIDI sequencer, and as such produces no sound on its own.
 
-You'll need a Digital Audio Workstation (or other VST host/MIDI receiving application) and MIDI loopback driver (such as [loopbe](https://www.nerds.de/en/loopbe1.html) or [loopmidi](https://www.tobias-erichsen.de/software/loopmidi.html)), or a MIDI interface and a physical MIDI device.
+You'll need a Digital Audio Workstation (or other VST host/MIDI receiving application) and MIDI loopback driver (such as [loopmidi](https://www.tobias-erichsen.de/software/loopmidi.html)), or a MIDI interface and a physical MIDI device.
+
+- If you aren't using a physical MIDI device, you should first install [loopmidi](https://www.tobias-erichsen.de/software/loopmidi.html) and use it to create a virtual midi port, then select that port as an output in Acheron's settings (and as an input in your DAW if applicable).
+- A simple way to play and record midi from Acheron is to use [onlinesequencer.net](https://onlinesequencer.net/) in your web browser, which requires no setup beyond installing loopmidi, provides many instruments, has a fairly simple UI, and has the ability to export recorded tracks as MIDI or WAV.
 
 ## Troubleshooting
 
