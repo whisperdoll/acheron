@@ -3,7 +3,7 @@
 
 ## About
 
-Electron-based recreation of https://github.com/mmower/elysium, a probabilistic generative MIDI sequencer based on the harmonic table note layout.
+Electron-based recreation of https://github.com/mmower/elysium, a probabilistic generative MIDI sequencer based on the [harmonic table](https://en.wikipedia.org/wiki/Harmonic_table_note_layout) note layout.
 
 Built with https://github.com/electron-react-boilerplate/electron-react-boilerplate
 
@@ -24,7 +24,7 @@ Please note that Acheron is a MIDI sequencer, and as such produces no sound on i
 You'll need a Digital Audio Workstation (or other VST host/MIDI receiving application) and MIDI loopback driver (such as [loopmidi](https://www.tobias-erichsen.de/software/loopmidi.html)), or a MIDI interface and a physical MIDI device.
 
 - If you aren't using a physical MIDI device, you should first install [loopmidi](https://www.tobias-erichsen.de/software/loopmidi.html) and use it to create a virtual midi port, then select that port as an output in Acheron's settings (and as an input in your DAW if applicable).
-- A simple way to play and record midi from Acheron is to use [onlinesequencer.net](https://onlinesequencer.net/) in your web browser, which requires no setup beyond installing loopmidi, provides many instruments, has a fairly simple UI, and has the ability to export recorded tracks as MIDI or WAV.
+- An easy way to play and record MIDI from Acheron is to use [onlinesequencer.net](https://onlinesequencer.net/) in your web browser, which requires no setup beyond installing loopmidi, provides many instruments, has a fairly simple UI, and has the ability to export recorded tracks as MIDI or WAV.
 
 ## Troubleshooting
 
