@@ -17,8 +17,6 @@ Download the latest Acheron release here: https://github.com/whisperdoll/acheron
 
 The current version as of this writing is **1.1.5**
 
-Extract the zip file and run Acheron.exe.
-
 **Please note that Acheron is a MIDI sequencer, and as such produces no sound on its own.**
 
 You'll need a Digital Audio Workstation (or other VST host/MIDI receiving application) and MIDI loopback driver (such as [loopmidi](https://www.tobias-erichsen.de/software/loopmidi.html)), or a MIDI interface and a physical MIDI device.
@@ -26,7 +24,7 @@ You'll need a Digital Audio Workstation (or other VST host/MIDI receiving applic
 To use Acheron without a physical MIDI device (e.g. with a DAW or other software):
 - First, download and install Tobias Erichsen's [loopmidi](https://www.tobias-erichsen.de/software/loopmidi.html)
 - Use loopMIDI to create a virtual midi port (click the plus button at the bottom left of the window.)
-- Run Acheron.
+- Extract Acheron-1.1.5-win.zip and run Acheron.exe.
 - Select Settings (at the bottom of the window.)
 - Under MIDI Outputs select the virtual MIDI port you just created (called "loopMIDI port" by default.)
 - Make sure "loopMIDI port" is enabled as an input in your DAW (if applicable.)
