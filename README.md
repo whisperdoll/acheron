@@ -15,16 +15,28 @@ Documentation is here: https://github.com/whisperdoll/acheron/wiki/Acheron-Docum
 
 Download the latest Acheron release here: https://github.com/whisperdoll/acheron/releases
 
-The current version as of this writing is 1.1.5
+The current version as of this writing is **1.1.5**
 
 Extract the zip file and run Acheron.exe.
 
-Please note that Acheron is a MIDI sequencer, and as such produces no sound on its own.
+**Please note that Acheron is a MIDI sequencer, and as such produces no sound on its own.**
 
 You'll need a Digital Audio Workstation (or other VST host/MIDI receiving application) and MIDI loopback driver (such as [loopmidi](https://www.tobias-erichsen.de/software/loopmidi.html)), or a MIDI interface and a physical MIDI device.
 
-- If you aren't using a physical MIDI device, you should first install [loopmidi](https://www.tobias-erichsen.de/software/loopmidi.html) and use it to create a virtual midi port, then select that port as an output in Acheron's settings (and as an input in your DAW if applicable).
-- An easy way to play and record MIDI from Acheron is to use [onlinesequencer.net](https://onlinesequencer.net/) in your web browser, which requires no setup beyond installing loopmidi, provides many instruments, has a fairly simple UI, and has the ability to export recorded tracks as MIDI or WAV.
+To use Acheron without a physical MIDI device (e.g. with a DAW or other software):
+- First, download and install Tobias Erichsen's [loopmidi](https://www.tobias-erichsen.de/software/loopmidi.html)
+- Use loopMIDI to create a virtual midi port (click the plus button at the bottom left of the window.)
+- Run Acheron.
+- Select Settings (at the bottom of the window.)
+- Under MIDI Outputs select the virtual MIDI port you just created (called "loopMIDI port" by default.)
+- Make sure "loopMIDI port" is enabled as an input in your DAW (if applicable.)
+
+Optional: 
+
+- If you don't have a DAW, try [onlinesequencer.net](https://onlinesequencer.net/) which runs in the browser & requires no setup for use with Acheron.
+   * Onlinesequencer's record button is on the bottom left of the page, while the save button is near the top middle. the arrow next to the save button allows exporting MIDI or WAV files.
+
+
 
 ## Troubleshooting
 
