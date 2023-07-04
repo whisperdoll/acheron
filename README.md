@@ -7,23 +7,25 @@ Electron-based recreation of https://github.com/mmower/elysium, a probabilistic 
 
 Built with https://github.com/electron-react-boilerplate/electron-react-boilerplate
 
-Demo video by [hellvalleyskytrees](https://twitter.com/hvst_music) here: https://youtu.be/5q-6x3Tcj-4
+Demo/tutorial video by [hellvalleyskytrees](https://twitter.com/hvst_music) here: https://youtu.be/y59SFoR82PU
 
 Documentation is here: https://github.com/whisperdoll/acheron/wiki/Acheron-Documentation
+
+It is highly recomended that you watch the video first, then read the documentation (though it's also pretty fun to just poke around and figure things out!)
 
 ## Setup
 
 Download the latest Acheron release here: https://github.com/whisperdoll/acheron/releases
 
-The current version as of this writing is **1.1.5**
+The current version as of this writing is **1.1.5.1**
 
 **Please note that Acheron is a MIDI sequencer, and as such produces no sound on its own.**
 
 You'll need a Digital Audio Workstation (or other VST host/MIDI receiving application) and MIDI loopback driver (such as [loopmidi](https://www.tobias-erichsen.de/software/loopmidi.html)), or a MIDI interface and a physical MIDI device.
 
 To use Acheron without a physical MIDI device (e.g. with a DAW or other software):
-- First, download and install Tobias Erichsen's [loopmidi](https://www.tobias-erichsen.de/software/loopmidi.html)
-- Use loopMIDI to create a virtual midi port (click the plus button at the bottom left of the window.)
+- First, download and install Tobias Erichsen's [loopMIDI](https://www.tobias-erichsen.de/software/loopmidi.html)
+- Use loopMIDI to create a virtual MIDI port (click the plus button at the bottom left of the window.)
 - Extract Acheron-1.1.5-win.zip and run Acheron.exe.
 - Select Settings (at the bottom of the window.)
 - Under MIDI Outputs select the virtual MIDI port you just created (called "loopMIDI port" by default.)
@@ -62,13 +64,14 @@ See the [Custom Token Documentation](https://github.com/whisperdoll/acheron/wiki
 
 * [Matt Mower](https://github.com/mmower) for creating the [original incarnation of this app](https://github.com/mmower/elysium).
 * [hellvalleyskytrees](https://twitter.com/hvst_music) for the app icon, testing, demoing, randomize, twist, and lifespan tokens, documentation, and general consultation+encouragement.
-    * She's released six albums of music using this sequencer!
+    * She's released seven albums of music so far using this sequencer!
         * https://hellvalleyskytrees.bandcamp.com/album/voidscapes-vol-4
         * https://hellvalleyskytrees.bandcamp.com/album/voidscapes-vol-5
         * https://hellvalleyskytrees.bandcamp.com/album/voidscapes-vol-6
         * https://hellvalleyskytrees.bandcamp.com/album/voidscapes-vol-7
         * https://hellvalleyskytrees.bandcamp.com/album/voidscapes-vol-8
         * https://hellvalleyskytrees.bandcamp.com/album/voidscapes-vol-9
+        * https://hellvalleyskytrees.bandcamp.com/album/voidscapes-vol-10
 ## License
 
 MIT - see LICENSE file.
