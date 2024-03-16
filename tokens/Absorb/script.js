@@ -42,7 +42,7 @@ function onStart(store, helpers)
 {
 	if (store.gateCounter == undefined)
 	{
-		store.gateCounter = 0;	
+		store.gateCounter = 0;
 	}
 }
 
