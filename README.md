@@ -13,11 +13,13 @@ Documentation is here: https://github.com/whisperdoll/acheron/wiki/Acheron-Docum
 
 It is highly recomended that you watch the video first, then read the documentation (though it's also pretty fun to just poke around and figure things out!)
 
+
 ## Setup
 
 Download the latest Acheron release here: https://github.com/whisperdoll/acheron/releases
 
-The current version as of this writing is **1.1.5.1**
+The current version as of this writing is **1.1.6**
+
 
 **Please note that Acheron is a MIDI sequencer, and as such produces no sound on its own.**
 
@@ -47,11 +49,12 @@ If you don't see all of the tokens in the Add Token menu, please click on Manage
 >I have another issue!
 
 Contact me through the issues section of Github or however else you know how to contact me and I'll help.
+
+
 ## Known Issues
 
 Deleting layers currently crashes Acheron.
 
-If gate values are changed while a composition is running, these changes won't be applied until you stop and restart the player.
 
 ## Development
 
@@ -60,10 +63,12 @@ If gate values are changed while a composition is running, these changes won't b
 Custom tokens can be created and distributed without setting up a development environment.
 See the [Custom Token Documentation](https://github.com/whisperdoll/acheron/wiki/Custom-Token-Documentation) for more information.
 
+
 ## Credits
 
+* [http://www.whisperdoll.love/](whisperdoll) for creating Acheron.
 * [Matt Mower](https://github.com/mmower) for creating the [original incarnation of this app](https://github.com/mmower/elysium).
-* [hellvalleyskytrees](https://twitter.com/hvst_music) for the app icon, testing, demoing, randomize, twist, and lifespan tokens, documentation, and general consultation+encouragement.
+* [hellvalleyskytrees](https://twitter.com/hvst_music) for the app icon, testing, demoing, a few tokens, documentation, and general consultation+encouragement.
     * She's released seven albums of music so far using this sequencer!
         * https://hellvalleyskytrees.bandcamp.com/album/voidscapes-vol-4
         * https://hellvalleyskytrees.bandcamp.com/album/voidscapes-vol-5
