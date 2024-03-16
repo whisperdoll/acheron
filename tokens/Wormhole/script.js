@@ -90,8 +90,15 @@
 
 function onStart(store, helpers)
 {
-    store.gateCounter = 0;
-    store.sequenceCounter = 0;
+ 	if (store.gateCounter == undefined)
+	{
+		store.gateCounter = 0;	
+	}
+	
+	if (store.sequenceCounter == undefined)
+	{
+		store.sequenceCounter = 0;	
+	}
 }
 
 function onStop(store, helpers)
