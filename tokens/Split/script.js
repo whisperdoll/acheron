@@ -49,6 +49,7 @@ function onStart(store, helpers)
 	{
 		store.gateCounter = 0;
 	}
+}
 
 function onStop(store, helpers)
 {
