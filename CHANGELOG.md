@@ -45,8 +45,12 @@ It's the first version.
     * `getNumLayers()` - returns the number of layers in the composition
 * Small bugfix regarding with MIDI device reconnection
 
-# 1.1.5 (2023/6/02)
+# 1.1.5 (2023/06/02)
 
 * Fixed bug where opened files wouldn't play
 * Removed nonfunctional Ghost Beats parameter from the Note token
 * Added Twist, Randomize, and Lifespan tokens
+
+# 1.1.6 (2024/03/16)
+
+* Fixed bug that prevented the gate system from working while running a composition
