@@ -28,7 +28,7 @@ You'll need a Digital Audio Workstation (or other VST host/MIDI receiving applic
 To use Acheron without a physical MIDI device (e.g. with a DAW or other software):
 - First, download and install Tobias Erichsen's [loopMIDI](https://www.tobias-erichsen.de/software/loopmidi.html)
 - Use loopMIDI to create a virtual MIDI port (click the plus button at the bottom left of the window.)
-- Extract Acheron-1.1.5-win.zip and run Acheron.exe.
+- Extract Acheron-1.1.6-win.zip and run Acheron.exe.
 - Select Settings (at the bottom of the window.)
 - Under MIDI Outputs select the virtual MIDI port you just created (called "loopMIDI port" by default.)
 - Make sure "loopMIDI port" is enabled as an input in your DAW (if applicable.)
