@@ -66,7 +66,7 @@ See the [Custom Token Documentation](https://github.com/whisperdoll/acheron/wiki
 
 ## Credits
 
-* [http://www.whisperdoll.love/](whisperdoll) for creating Acheron.
+* [whisperdoll](http://www.whisperdoll.love/) for creating Acheron.
 * [Matt Mower](https://github.com/mmower) for creating the [original incarnation of this app](https://github.com/mmower/elysium).
 * [hellvalleyskytrees](https://twitter.com/hvst_music) for the app icon, testing, demoing, a few tokens, documentation, and general consultation+encouragement.
     * She's released seven albums of music so far using this sequencer!
