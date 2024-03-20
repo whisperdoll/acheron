@@ -423,7 +423,7 @@ function reducer(state: AppState, action: Action): AppState
                     layers: state.layers.filter((_, li) => li !== payload),
                     tokens: objectWithoutKeys(state.tokens, tokensToRemove),
                     controls: objectWithoutKeys(state.controls, controlsToRemove),
-                    selectedHex: {...state.selectedHex, layerIndex: Math.min(state.layers.length - 1, state.selectedHex.layerIndex)}
+                    selectedHex: {...state.selectedHex, layerIndex: 0}
                 };
             }
             case "setLayers":
