@@ -54,3 +54,9 @@ It's the first version.
 # 1.1.6 (2024/03/16)
 
 * Fixed bug that prevented the gate system from working while running a composition
+
+# 1.1.7 (2024/03/23)
+
+* Fixed layer deletion bug
+* Added Mac version
+    * I built the Mac version on an ancient Mac Mini, so if you try it, maybe let me know if it works on modern Macs or not
