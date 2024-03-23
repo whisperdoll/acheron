@@ -18,12 +18,12 @@ It is highly recomended that you watch the video first, then read the documentat
 
 Download the latest Acheron release here: https://github.com/whisperdoll/acheron/releases
 
-The current version as of this writing is **1.1.6**
+The current version as of this writing is **1.1.7**
 
 
 **Please note that Acheron is a MIDI sequencer, and as such produces no sound on its own.**
 
-You'll need a Digital Audio Workstation (or other VST host/MIDI receiving application) and MIDI loopback driver (such as [loopmidi](https://www.tobias-erichsen.de/software/loopmidi.html)), or a MIDI interface and a physical MIDI device.
+You'll need a Digital Audio Workstation (or other VST host/MIDI receiving application) and MIDI loopback driver (such as [loopmidi](https://www.tobias-erichsen.de/software/loopmidi.html) on Windows, or the built-in IAC driver in the Audio/Midi Settings on Mac), or a MIDI interface and a physical MIDI device.
 
 To use Acheron without a physical MIDI device (e.g. with a DAW or other software):
 - First, download and install Tobias Erichsen's [loopMIDI](https://www.tobias-erichsen.de/software/loopmidi.html)
@@ -51,11 +51,6 @@ If you don't see all of the tokens in the Add Token menu, please click on Manage
 Contact me through the issues section of Github or however else you know how to contact me and I'll help.
 
 
-## Known Issues
-
-Deleting layers currently crashes Acheron.
-
-
 ## Development
 
 `yarn start` will start the app in the `dev` environment.
@@ -66,9 +61,9 @@ See the [Custom Token Documentation](https://github.com/whisperdoll/acheron/wiki
 
 ## Credits
 
-* [whisperdoll](http://www.whisperdoll.love/) for creating Acheron.
+* [whisperdoll](http://www.whisperdoll.love/), creator of and primary contributor to Acheron.
 * [Matt Mower](https://github.com/mmower) for creating the [original incarnation of this app](https://github.com/mmower/elysium).
-* [hellvalleyskytrees](https://twitter.com/hvst_music) for the app icon, testing, demoing, a few tokens, documentation, and general consultation+encouragement.
+* [hellvalleyskytrees](https://twitter.com/hvst_music) for the app icon, testing, Mac build, a few tokens, documentation, and general consultation + encouragement.
     * She's released seven albums of music so far using this sequencer!
         * https://hellvalleyskytrees.bandcamp.com/album/voidscapes-vol-4
         * https://hellvalleyskytrees.bandcamp.com/album/voidscapes-vol-5
