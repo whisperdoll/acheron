@@ -23,15 +23,19 @@ The current version as of this writing is **1.1.7**
 
 **Please note that Acheron is a MIDI sequencer, and as such produces no sound on its own.**
 
-You'll need a Digital Audio Workstation (or other VST host/MIDI receiving application) and MIDI loopback driver (such as [loopmidi](https://www.tobias-erichsen.de/software/loopmidi.html) on Windows, or the built-in IAC driver in the Audio/Midi Settings on Mac), or a MIDI interface and a physical MIDI device.
+You'll need a Digital Audio Workstation (or other VST host/MIDI receiving application) and MIDI loopback driver (such as [loopmidi](https://www.tobias-erichsen.de/software/loopmidi.html) on Windows, or the built-in [IAC driver](https://support.apple.com/guide/audio-midi-setup/transfer-midi-information-between-apps-ams1013/mac) in the Audio/Midi Settings on Mac), or a MIDI interface and a physical MIDI device.
 
 To use Acheron without a physical MIDI device (e.g. with a DAW or other software):
-- First, download and install Tobias Erichsen's [loopMIDI](https://www.tobias-erichsen.de/software/loopmidi.html)
-- Use loopMIDI to create a virtual MIDI port (click the plus button at the bottom left of the window.)
-- Extract Acheron-1.1.6-win.zip and run Acheron.exe.
+
+- Windows:
+    - First, download and install Tobias Erichsen's [loopMIDI](https://www.tobias-erichsen.de/software/loopmidi.html)
+    - Use loopMIDI to create a virtual MIDI port (click the plus button at the bottom left of the window.)
+- Mac:
+    - Set up the [IAC driver](https://support.apple.com/guide/audio-midi-setup/transfer-midi-information-between-apps-ams1013/mac) in Audio/Midi Settings
+- Extract Acheron-1.1.7-win.zip or Acheron 1.1.7-mac.dmg and run Acheron.exe/.app.
 - Select Settings (at the bottom of the window.)
-- Under MIDI Outputs select the virtual MIDI port you just created (called "loopMIDI port" by default.)
-- Make sure "loopMIDI port" is enabled as an input in your DAW (if applicable.)
+- Under MIDI Outputs select the virtual MIDI port you just created with loopMIDI or the IAC Driver
+- Make sure "loopMIDI port" (on Windows) or "IAC driver" (on Mac) is enabled as an input in your DAW (if applicable.)
 
 Optional: 
 
@@ -42,7 +46,7 @@ Optional:
 
 ## Troubleshooting
 
->I don't have any tokens to work with.
+>I don't have any tokens to work with / tokens have weird bugs.
 
 If you don't see all of the tokens in the Add Token menu, please click on Manage Tokens in the bar at the bottom of the window and make sure that the token search paths include /tokens/ in the root of the current Acheron version's folder, and that all of the tokens are enabled.
 
