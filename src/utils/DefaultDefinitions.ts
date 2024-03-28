@@ -54,7 +54,7 @@ const playerControlDefs: Record<PlayerControlKey, ControlDefinition> = {
         label: "Emphasis",
         type: "int",
         min: 1,
-        max: 200,
+        max: 127,
         defaultValue: 120,
     },
     tempoSync: {
