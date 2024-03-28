@@ -18,7 +18,7 @@ It is highly recomended that you watch the video first, then read the documentat
 
 Download the latest Acheron release here: https://github.com/whisperdoll/acheron/releases
 
-The current version as of this writing is **1.1.7**
+The current version as of this writing is **1.1.8**
 
 
 **Please note that Acheron is a MIDI sequencer, and as such produces no sound on its own.**
@@ -32,7 +32,7 @@ To use Acheron without a physical MIDI device (e.g. with a DAW or other software
     - Use loopMIDI to create a virtual MIDI port (click the plus button at the bottom left of the window.)
 - Mac:
     - Set up the [IAC driver](https://support.apple.com/guide/audio-midi-setup/transfer-midi-information-between-apps-ams1013/mac) in Audio/Midi Settings
-- Extract Acheron-1.1.7-win.zip or Acheron 1.1.7-mac.dmg and run Acheron.exe/.app.
+- Extract Acheron-1.1.8-win.zip or Acheron 1.1.8-mac.dmg and run Acheron.exe/.app.
 - Select Settings (at the bottom of the window.)
 - Under MIDI Outputs select the virtual MIDI port you just created with loopMIDI or the IAC Driver
 - Make sure "loopMIDI port" (on Windows) or "IAC driver" (on Mac) is enabled as an input in your DAW (if applicable.)
