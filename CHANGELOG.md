@@ -60,3 +60,7 @@ It's the first version.
 * Fixed layer deletion bug
 * Added Mac version
     * I built the Mac version on an ancient Mac Mini, so if you try it, maybe let me know if it works on modern Macs or not
+
+# 1.1.8 (2024/03/28)
+
+* Increased maximums of some parameters
