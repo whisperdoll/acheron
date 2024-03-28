@@ -19,8 +19,8 @@
         "transpose": {
             "label": "Transpose",
             "type": "int",
-            "min": -24,
-            "max": 24,
+            "min": -36,
+            "max": 36,
             "defaultValue": 0
         },
         "gateOffset": {
