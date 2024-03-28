@@ -25,22 +25,22 @@ const playerControlDefs: Record<PlayerControlKey, ControlDefinition> = {
     transpose: {
         label: "Transpose",
         type: "int",
-        min: -24,
-        max: 24,
+        min: -36,
+        max: 36,
         defaultValue: 0,
     },
     barLength: {
         label: "Bar Length",
         type: "int",
         min: 1,
-        max: 12,
+        max: 128,
         defaultValue: 4,
     },
     tempo: {
         label: "Tempo",
         type: "int",
         min: 1,
-        max: 300,
+        max: 720,
         defaultValue: 120,
     },
     velocity: {
@@ -74,14 +74,14 @@ const playerControlDefs: Record<PlayerControlKey, ControlDefinition> = {
         label: "Time to Live",
         type: "int",
         min: 1,
-        max: 64,
+        max: 128,
         defaultValue: 16,
     },
     pulseEvery: {
         label: "Pulse Every",
         type: "int",
         min: 1,
-        max: 64,
+        max: 128,
         defaultValue: 16,
     }
 };
