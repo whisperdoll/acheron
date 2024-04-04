@@ -32,6 +32,7 @@ To use Acheron without a physical MIDI device (e.g. with a DAW or other software
     - Use loopMIDI to create a virtual MIDI port (click the plus button at the bottom left of the window.)
 - Mac:
     - Set up the [IAC driver](https://support.apple.com/guide/audio-midi-setup/transfer-midi-information-between-apps-ams1013/mac) in Audio/Midi Settings
+    - Mac version works on 10.13 High Sierra, doesn't work on Ventura (or presumably higher), if you think you can help with this please contact me (hellvalleyskytrees)
 - Extract Acheron-1.1.8-win.zip or Acheron 1.1.8-mac.dmg and run Acheron.exe/.app.
 - Select Settings (at the bottom of the window.)
 - Under MIDI Outputs select the virtual MIDI port you just created with loopMIDI or the IAC Driver
