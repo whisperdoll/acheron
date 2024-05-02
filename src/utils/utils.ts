@@ -3,7 +3,7 @@ import * as path from "path"
 import * as fs from "fs"
 import { SafeWriter } from "./safewriter";
 let exec = require("child_process").exec;
-import { remote } from "electron";
+const remote = require('@electron/remote');
 
 export function confirmPrompt(prompt: string, title: string, callback: (confirmed: boolean) => any)
 {
@@ -300,7 +300,7 @@ export function makeUserDataPath()
     
 export function getUserDataPath() : string
 {
-    let upath = (electron.app || electron.remote.app).getPath("userData");
+    let upath = (electron.app || remote.app).getPath("userData");
     return path.join(upath, "acheron/");
 }
 

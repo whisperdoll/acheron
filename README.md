@@ -58,7 +58,7 @@ Contact me through the issues section of Github or however else you know how to 
 
 ## Development
 
-`yarn start` will start the app in the `dev` environment.
+`npm start` will start the app in the `dev` environment.
 
 Custom tokens can be created and distributed without setting up a development environment.
 See the [Custom Token Documentation](https://github.com/whisperdoll/acheron/wiki/Custom-Token-Documentation) for more information.

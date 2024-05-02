@@ -87,12 +87,11 @@ export default function Settings(props: Props)
                 <div className="midiSelect">
                     <div>MIDI Inputs:</div>
                     {state.allowedInputs.map((input) => (
-                        <label className="clicky">
+                        <label className="clicky" key={input.name}>
                             <input
                                 type="checkbox"
                                 checked={state.settings.midiInputs.includes(input.name)}
                                 onChange={(e) => handleInputToggled(e, input.name)}
-                                key={input.name}
                             />
                             <span>{input.name}</span>
                         </label>
@@ -101,12 +100,11 @@ export default function Settings(props: Props)
                 <div className="midiSelect">
                     <div>MIDI Outputs:</div>
                     {state.allowedOutputs.map((output) => (
-                        <label className="clicky">
+                        <label className="clicky" key={output.name}>
                             <input
                                 type="checkbox"
                                 checked={state.settings.midiOutputs.includes(output.name)}
                                 onChange={(e) => handleOutputToggled(e, output.name)}
-                                key={output.name}
                             />
                             <span>{output.name}</span>
                         </label>

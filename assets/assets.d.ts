@@ -33,3 +33,8 @@ declare module '*.css' {
   const content: Styles;
   export default content;
 }
+
+declare module '*.worker' {
+  const content: string;
+  export default content;
+}

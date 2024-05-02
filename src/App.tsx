@@ -6,7 +6,8 @@ import HexGrid from "./Components/HexGrid";
 import Inspector from './Components/Inspector';
 import PlayerSettings from './Components/PlayerSettings';
 import LayerSettings from './Components/LayerSettings';
-import { ipcRenderer, remote, webFrame } from 'electron';
+import { ipcRenderer, webFrame } from 'electron';
+const remote = require('@electron/remote');
 import { performStartCallbacks, performStopCallbacks, performTransfers, progressLayer } from './utils/driver';
 import { loadTokensFromSearchPaths as _loadTokensFromSearchPaths } from './Tokens';
 import { getControlValue, TokenUID } from './Types';
@@ -24,6 +25,7 @@ import usePrevious from './Hooks/usePrevious';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlay, faPause, faCog, faBug, faLayerGroup, faDonate, faToolbox, faEyeSlash, faEye, faEdit, faTrash, faTrashAlt, faMinus, faPlus, faSave, faCheck } from "@fortawesome/free-solid-svg-icons";
 import IconButton from './Components/IconButton';
+import timerWorkerPath from '../assets/timerWorker.worker';
 
 export default function App() {
     const { state, dispatch } = useContext(AppContext)!;
@@ -45,7 +47,7 @@ export default function App() {
 
     useEffect(() =>
     {
-        timerWorker.current = new Worker(path.join(process.cwd(), "src/timerWorker.js"));
+        timerWorker.current = new Worker(timerWorkerPath);
         timerWorker.current.postMessage("start");
 
         timerWorker.current.addEventListener("message", (e) => tickCallback.current(e.data));

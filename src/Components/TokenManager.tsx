@@ -1,8 +1,8 @@
 import React, { useContext } from "react";
 import { AppContext, AppSettings } from "../AppContext";
 import { array_copy, array_remove, array_remove_at, confirmPrompt } from "../utils/utils";
-import { remote } from "electron";
 import { TokenUID } from "../Types";
+const remote = require('@electron/remote');
 
 interface Props
 {
