@@ -84,18 +84,18 @@
     ],
     "publish": {
       "provider": "github",
-      "owner": "SongSing",
+      "owner": "whisperdoll",
       "repo": "acheron"
     }
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/SongSing/acheron.git"
+    "url": "git+https://github.com/whisperdoll/acheron.git"
   },
   "author": {
     "name": "whisperdoll",
     "email": "aliceminacarter@gmail.com",
-    "url": "https://songsing.github.io"
+    "url": "https://whisperdoll.github.io"
   },
   "license": "MIT",
   "jest": {
