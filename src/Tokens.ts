@@ -99,7 +99,9 @@ export function loadTokensFromSearchPaths(paths: string[]): { tokens: Record<Tok
     paths.forEach((path) =>
     {
         path = npath.resolve(path);
-        const candidates = tryReadDir(path) || tryReadDir(npath.join(remote.app.getAppPath(), '../../', path));
+        const candidates = tryReadDir(path) ||
+                               (process.platform === 'darwin' &&
+                                   tryReadDir(npath.join(remote.app.getAppPath(), '../../', path)));
 
         if (!candidates) {
             badPaths.push(path);
