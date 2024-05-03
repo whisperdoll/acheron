@@ -6,6 +6,7 @@ import * as npath from "path";
 import { AppState, LayerState } from "./AppContext";
 import { array_copy, isFileNotFoundError } from "./utils/utils";
 import { v4 as uuidv4 } from 'uuid';
+const remote = require('@electron/remote');
 
 function compareOptions(o1?: SelectOption[], o2?: SelectOption[])
 {
@@ -83,26 +84,25 @@ export function loadTokensFromSearchPaths(paths: string[]): { tokens: Record<Tok
     const badPaths: string[] = [];
     const ret: Record<TokenUID, { tokenDef: TokenDefinition, callbacks: TokenCallbacks }> = {};
 
-    paths.forEach((path) =>
-    {
-        path = npath.resolve(path);
-        let candidates: fs.Dirent[];
-
-        try
-        {
-            candidates = fs.readdirSync(path, { withFileTypes: true });
-        }
-        catch (e)
-        {
-            if (isFileNotFoundError(e))
-            {
-                badPaths.push(path);
-            }
-            else
-            {
+    const tryReadDir = (path: string) => {
+        try {
+            return fs.readdirSync(path, { withFileTypes: true });
+        } catch(e) {
+            if (!isFileNotFoundError(e)) {
                 console.error(e);
             }
 
+            return false;
+        }
+    };
+
+    paths.forEach((path) =>
+    {
+        path = npath.resolve(path);
+        const candidates = tryReadDir(path) || tryReadDir(npath.join(remote.app.getAppPath(), '../../', path));
+
+        if (!candidates) {
+            badPaths.push(path);
             return;
         }
 
