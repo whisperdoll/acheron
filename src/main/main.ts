@@ -9,7 +9,7 @@
  * `./src/main.js` using webpack. This gives us some performance wins.
  */
 import path from 'path';
-import { app, BrowserWindow, shell, ipcMain } from 'electron';
+import { app, BrowserWindow, shell, ipcMain, MenuItemConstructorOptions, Menu } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import MenuBuilder from './menu';
@@ -78,7 +78,6 @@ const createWindow = async () => {
     icon: getAssetPath('icon.png'),
     webPreferences: {
       nodeIntegration: true,
-      enableRemoteModule: true,
       contextIsolation: false,
       nodeIntegrationInWorker: true,
       backgroundThrottling: false,
@@ -118,6 +117,13 @@ const createWindow = async () => {
   new AppUpdater();
 };
 
+app.setAboutPanelOptions({
+  applicationName: "Acheron", 
+  applicationVersion: "",
+  version: "1.1.9-alpha",
+  credits: "https://github.com/whisperdoll/acheron/blob/main/README.md#credits",
+});
+
 /**
  * Add event listeners...
  */
@@ -141,3 +147,18 @@ app
     });
   })
   .catch(console.log);
+
+  ipcMain.on("show-context-menu", (e, menu: { label: string, value: string }[]) =>
+{
+    const template: MenuItemConstructorOptions[] = menu.map(({ label, value }) =>
+    {
+        return label === "---" ? { type: "separator" } : {
+            label,
+            click: () => e.sender.send("context-menu-command", value)
+        };
+    });
+
+    Menu.buildFromTemplate(template).popup({
+        window: BrowserWindow.fromWebContents(e.sender) ?? undefined
+    });
+});

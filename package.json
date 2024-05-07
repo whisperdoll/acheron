@@ -47,7 +47,8 @@
       "entitlementsInherit": "assets/entitlements.mac.plist",
       "gatekeeperAssess": false,
       "identity": null,
-      "notarize": false
+      "notarize": false,
+      "icon": "assets/icon.icns"
     },
     "dmg": {
       "contents": [

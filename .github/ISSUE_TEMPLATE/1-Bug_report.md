@@ -10,8 +10,8 @@ labels: 'bug'
 
 <!-- If the following boxes are not ALL checked, your issue is likely to be closed -->
 
-- [ ] Using an up-to-date [`release`](https://github.com/SongSing/acheron/releases)
-- [ ] Tried solutions mentioned in the [troubleshooting section of the README](https://github.com/SongSing/acheron/blob/main/README.md#troubleshooting)
+- [ ] Using an up-to-date [`release`](https://github.com/whisperdoll/acheron/releases)
+- [ ] Tried solutions mentioned in the [troubleshooting section of the README](https://github.com/whisperdoll/acheron/blob/main/README.md#troubleshooting)
 
 ## Expected Behavior
 

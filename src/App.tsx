@@ -202,14 +202,8 @@ export default function App() {
             }});
             addedUids.push(tokenUid);
         });
-        
-        for (const uid in defs)
-        {
-            if (!addedUids.includes(uid))
-            {
-                dispatch({ type: "removeTokenDefinition", payload: uid });
-            }
-        }
+
+        dispatch({ type: "pruneTokenDefinitions", payload: { addedUids }});
 
         if (failed.length > 0)
         {
@@ -424,7 +418,7 @@ export default function App() {
 
     function reportABug()
     {
-        open("https://github.com/SongSing/acheron/issues/new?assignees=&labels=bug&template=1-Bug_report.md");
+        open("https://github.com/whisperdoll/acheron/issues/new?assignees=&labels=bug&template=1-Bug_report.md");
     }
 
     function openPatreon()

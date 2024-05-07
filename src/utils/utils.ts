@@ -286,6 +286,14 @@ export function objectWithoutKeys<K extends string | number | symbol, T extends 
     return ret;
 }
 
+export function sliceObject<K extends string | number | symbol, T extends Record<K, any>>(o: T, keys: K[]):
+    Pick<typeof o, typeof keys[number]>
+{
+    const ret = {} as Record<K, any>;
+    keys.forEach(key => ret[key] = o[key]);
+    return ret;
+}
+
 export function makeUserDataPath()
 {
     try
@@ -604,4 +612,9 @@ export function boolToSort<T>(fn: (a: T, b: T) => boolean): (a: T, b: T) => numb
     {
         return fn(a, b) ? -1 : 1;
     };
+}
+
+export function p(arg: any, label?: string) {
+    console.log(...(label ? [label, arg] : [arg]));
+    return arg;
 }

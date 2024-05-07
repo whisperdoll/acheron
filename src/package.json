@@ -1,13 +1,13 @@
 {
   "name": "acheron",
   "productName": "Acheron",
-  "version": "1.1.8",
+  "version": "1.1.9-alpha",
   "description": "Hex-based MIDI sequencer",
   "main": "./main.prod.js",
   "author": {
     "name": "whisperdoll",
     "email": "aliceminacarter@gmail.com",
-    "url": "https://songsing.github.io"
+    "url": "https://whisperdoll.github.io"
   },
   "scripts": {
     "electron-rebuild": "node -r ../.erb/scripts/BabelRegister.js ../.erb/scripts/ElectronRebuild.js",

@@ -4,7 +4,7 @@ import { ControlDataTypes, ControlState, SelectOption, TokenDefinition, Token, T
 import { buildFromDefs } from "./utils/DefaultDefinitions";
 import * as npath from "path";
 import { AppState, LayerState } from "./AppContext";
-import { array_copy, isFileNotFoundError } from "./utils/utils";
+import { array_copy, isFileNotFoundError, p } from "./utils/utils";
 import { v4 as uuidv4 } from 'uuid';
 const remote = require('@electron/remote');
 
@@ -98,10 +98,17 @@ export function loadTokensFromSearchPaths(paths: string[]): { tokens: Record<Tok
 
     paths.forEach((path) =>
     {
-        path = npath.resolve(path);
-        const candidates = tryReadDir(path) ||
-                               (process.platform === 'darwin' &&
-                                   tryReadDir(npath.join(remote.app.getAppPath(), '../../', path)));
+        let candidates = tryReadDir(path);
+        if (!candidates) { // this is not based on testing as far as i know, just following legacy code in case it was needed on windows
+            badPaths.push(path);
+            path = npath.resolve(path);
+            candidates = tryReadDir(path);
+        }
+        if (!candidates) {
+            badPaths.push(path);
+            path = npath.join(remote.app.getAppPath(), '../../', path);
+            candidates = tryReadDir(path);
+        }
 
         if (!candidates) {
             badPaths.push(path);
