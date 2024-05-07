@@ -99,19 +99,21 @@ export function loadTokensFromSearchPaths(paths: string[]): { tokens: Record<Tok
     paths.forEach((path) =>
     {
         let candidates = tryReadDir(path);
+        const triedPaths = [];
         if (!candidates) { // this is not based on testing as far as i know, just following legacy code in case it was needed on windows
-            badPaths.push(path);
+            triedPaths.push(path);
             path = npath.resolve(path);
             candidates = tryReadDir(path);
         }
         if (!candidates) {
-            badPaths.push(path);
+            triedPaths.push(path);
             path = npath.join(remote.app.getAppPath(), '../../', path);
             candidates = tryReadDir(path);
         }
 
         if (!candidates) {
-            badPaths.push(path);
+            triedPaths.push(path);
+            badPaths.push(...triedPaths);
             return;
         }
 
