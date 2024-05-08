@@ -1,7 +1,7 @@
 {
   "name": "acheron",
   "productName": "Acheron",
-  "version": "1.1.9-alpha",
+  "version": "1.1.9",
   "description": "Hex-based MIDI sequencer",
   "main": "./src/main/main.ts",
   "scripts": {
@@ -50,6 +50,9 @@
       "notarize": false,
       "icon": "assets/icon.icns"
     },
+    "nsis": {
+			"differentialPackage": false
+		},
     "dmg": {
       "contents": [
         {
@@ -62,7 +65,8 @@
           "type": "link",
           "path": "/Applications"
         }
-      ]
+      ],
+      "writeUpdateInfo": false
     },
     "win": {
       "target": [

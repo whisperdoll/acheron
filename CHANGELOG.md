@@ -64,3 +64,9 @@ It's the first version.
 # 1.1.8 (2024/03/28)
 
 * Increased maximums of some parameters
+
+# 1.1.9 (2024/05/07)
+
+* Fix a bug where having a bad token path would sometimes brick the program
+* Enable dev mode
+* Added better Mac support

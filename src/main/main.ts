@@ -120,7 +120,7 @@ const createWindow = async () => {
 app.setAboutPanelOptions({
   applicationName: "Acheron", 
   applicationVersion: "",
-  version: "1.1.9-alpha",
+  version: "1.1.9",
   credits: "https://github.com/whisperdoll/acheron/blob/main/README.md#credits",
 });
 
