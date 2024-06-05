@@ -11,9 +11,6 @@ Demo/tutorial video by [hellvalleyskytrees](https://twitter.com/hvst_music) here
 
 Documentation is here: https://github.com/whisperdoll/acheron/wiki/Acheron-Documentation
 
-It is highly recomended that you watch the video first, then read the documentation (though it's also pretty fun to just poke around and figure things out!)
-
-
 ## Setup
 
 Download the latest Acheron release here: https://github.com/whisperdoll/acheron/releases
