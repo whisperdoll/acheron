@@ -6,7 +6,8 @@ import HexGrid from "./Components/HexGrid";
 import Inspector from './Components/Inspector';
 import PlayerSettings from './Components/PlayerSettings';
 import LayerSettings from './Components/LayerSettings';
-import { ipcRenderer, remote, webFrame } from 'electron';
+import { ipcRenderer, webFrame } from 'electron';
+const remote = require('@electron/remote');
 import { performStartCallbacks, performStopCallbacks, performTransfers, progressLayer } from './utils/driver';
 import { loadTokensFromSearchPaths as _loadTokensFromSearchPaths } from './Tokens';
 import { getControlValue, TokenUID } from './Types';
@@ -24,6 +25,7 @@ import usePrevious from './Hooks/usePrevious';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlay, faPause, faCog, faBug, faLayerGroup, faDonate, faToolbox, faEyeSlash, faEye, faEdit, faTrash, faTrashAlt, faMinus, faPlus, faSave, faCheck } from "@fortawesome/free-solid-svg-icons";
 import IconButton from './Components/IconButton';
+import timerWorkerPath from '../assets/timerWorker.worker';
 
 export default function App() {
     const { state, dispatch } = useContext(AppContext)!;
@@ -45,7 +47,7 @@ export default function App() {
 
     useEffect(() =>
     {
-        timerWorker.current = new Worker(path.join(process.cwd(), "src/timerWorker.js"));
+        timerWorker.current = new Worker(timerWorkerPath);
         timerWorker.current.postMessage("start");
 
         timerWorker.current.addEventListener("message", (e) => tickCallback.current(e.data));
@@ -200,14 +202,8 @@ export default function App() {
             }});
             addedUids.push(tokenUid);
         });
-        
-        for (const uid in defs)
-        {
-            if (!addedUids.includes(uid))
-            {
-                dispatch({ type: "removeTokenDefinition", payload: uid });
-            }
-        }
+
+        dispatch({ type: "pruneTokenDefinitions", payload: { addedUids }});
 
         if (failed.length > 0)
         {
@@ -422,7 +418,7 @@ export default function App() {
 
     function reportABug()
     {
-        open("https://github.com/SongSing/acheron/issues/new?assignees=&labels=bug&template=1-Bug_report.md");
+        open("https://github.com/whisperdoll/acheron/issues/new?assignees=&labels=bug&template=1-Bug_report.md");
     }
 
     function openPatreon()
@@ -485,7 +481,7 @@ export default function App() {
     const leftColumn = isShowingLeftColumn ?
         <div className="leftColumn">
             <div className="tabs">
-                <button onClick={() => setIsShowingPlayerSettings(true)} className={isShowingPlayerSettings ? "active" : ""}>Player</button>
+                <button onClick={() => setIsShowingPlayerSettings(true)} className={isShowingPlayerSettings ? "active" : ""}>Global</button>
                 <button onClick={() => setIsShowingPlayerSettings(false)} className={!isShowingPlayerSettings ? "active" : ""}>Layer</button>
             </div>
             {isShowingPlayerSettings ?

@@ -97,17 +97,17 @@ export default function(props: Props)
         }
 
         if (newValue === null) throw "uh oh...";
-        handleChange({ scalarValue: newValue });
+        handleChange({ fixedValue: newValue });
     }
 
     function handleSelectValueChanged(e: React.ChangeEvent<HTMLSelectElement>)
     {
-        handleChange({ scalarValue: e.currentTarget.value });
+        handleChange({ fixedValue: e.currentTarget.value });
     }
 
     function handleDirectionChanged(direction: number)
     {
-        handleChange({ scalarValue: direction });
+        handleChange({ fixedValue: direction });
     }
 
     const handleValueTypeChanged = (e: React.ChangeEvent<HTMLSelectElement>) =>
@@ -117,11 +117,11 @@ export default function(props: Props)
 
     function handleTriadChanged(triad: number)
     {
-        handleChange({ scalarValue: triad });
+        handleChange({ fixedValue: triad });
     }
 
     let controlPart: JSX.Element;
-    if(controlState.currentValueType === "scalar")
+    if(controlState.currentValueType === "fixed")
     {
         switch (controlState.type)
         {
@@ -236,7 +236,7 @@ export default function(props: Props)
                     onChange={handleValueTypeChanged}
                     className="valueType"
                 >
-                    <option value="scalar">Scalar</option>
+                    <option value="fixed">Fixed</option>
                     {(controlState.inherit && <option value="inherit">Inherit</option>)}
                     <option value="lfo">LFO</option>
                 </select>

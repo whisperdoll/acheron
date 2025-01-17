@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { AppContext, AppState, LayerState } from '../AppContext';
-import { KeyMap, ControlState, NumMIDIChannels } from '../Types';
+import { Keymap, ControlState, NumMIDIChannels } from '../Types';
 import { LayerControlKey } from '../utils/DefaultDefinitions';
 import { hexNotes } from '../utils/elysiumutils';
 import Control from './Control';

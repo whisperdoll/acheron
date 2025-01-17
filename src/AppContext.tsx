@@ -1,6 +1,6 @@
 import App from "./App";
 import React, { useReducer, FunctionComponent } from "react";
-import { array_remove, array_remove_at, boolToSort, capitalize, filesFromDirectoryR, getUserDataPath, objectWithoutKeys } from "./utils/utils";
+import { array_remove, array_remove_at, boolToSort, capitalize, filesFromDirectoryR, getUserDataPath, objectWithoutKeys, sliceObject } from "./utils/utils";
 import { SafeWriter } from "./utils/safewriter";
 import * as path from "path";
 import * as fs from "fs";
@@ -11,6 +11,8 @@ import { MidiDevice, MidiNote } from "./utils/midi";
 import { v4 as uuidv4 } from 'uuid';
 import { buildToken, copyToken } from "./Tokens";
 import { migrateSettings } from "./migrators";
+
+const LOG = false;
 
 export interface TokenSettings
 {
@@ -61,7 +63,8 @@ export interface AppState
     tokens: Record<TokenInstanceId, Token>;
     tokenDefinitions: Record<TokenUID, TokenDefinition>;
     tokenCallbacks: Record<TokenUID, TokenCallbacks>;
-    transpose: ControlInstanceId;
+    key: ControlInstanceId;
+	transpose: ControlInstanceId;
     tempo: ControlInstanceId;
     barLength: ControlInstanceId;
     velocity: ControlInstanceId;
@@ -110,7 +113,8 @@ const initialState : AppState = {
     pulseEvery: Object.entries(DefaultPlayerControls).find(e => e[1].key === "pulseEvery")![0],
     tempo: Object.entries(DefaultPlayerControls).find(e => e[1].key === "tempo")![0],
     timeToLive: Object.entries(DefaultPlayerControls).find(e => e[1].key === "timeToLive")![0],
-    transpose: Object.entries(DefaultPlayerControls).find(e => e[1].key === "transpose")![0],
+    key: Object.entries(DefaultPlayerControls).find(e => e[1].key === "key")![0],
+	transpose: Object.entries(DefaultPlayerControls).find(e => e[1].key === "transpose")![0],
     velocity: Object.entries(DefaultPlayerControls).find(e => e[1].key === "velocity")![0],
     layers: [], // appended to after layer contruction
     isPlaying: false,
@@ -198,6 +202,7 @@ type Action = (
     | { type: "setLfo", payload: { controlId: string, lfo: Lfo }}
     | { type: "setTokenDefinition", payload: { definition: TokenDefinition, callbacks: TokenCallbacks, enabled?: boolean } }
     | { type: "removeTokenDefinition", payload: TokenUID }
+    | { type: "pruneTokenDefinitions", payload: { addedUids: string[] } }
     | { type: "setTokenShortcut", payload: { uid: TokenUID, shortcut: string }}
     | { type: "clearTokenShortcut", payload: TokenUID }
     | { type: "copyHex", payload: { srcLayerIndex: number, destLayerIndex: number, srcHexIndex: number, destHexIndex: number }}
@@ -254,7 +259,6 @@ function reducer(state: AppState, action: Action): AppState
                 };
             }
             case "setSelectedHex":
-                console.log(state);
                 return {
                     ...state,
                     selectedHex: action.payload
@@ -423,7 +427,7 @@ function reducer(state: AppState, action: Action): AppState
                     layers: state.layers.filter((_, li) => li !== payload),
                     tokens: objectWithoutKeys(state.tokens, tokensToRemove),
                     controls: objectWithoutKeys(state.controls, controlsToRemove),
-                    selectedHex: {...state.selectedHex, layerIndex: Math.min(state.layers.length - 1, state.selectedHex.layerIndex)}
+                    selectedHex: {...state.selectedHex, layerIndex: 0}
                 };
             }
             case "setLayers":
@@ -570,6 +574,44 @@ function reducer(state: AppState, action: Action): AppState
                     settings: {
                         ...state.settings,
                         tokens: objectWithoutKeys(state.settings.tokens, [action.payload])
+                    },
+                    layers: state.layers.map((layer) =>
+                    {
+                        return {
+                            ...layer,
+                            tokenIds: layer.tokenIds.map(tidArray => tidArray.filter(tid => !tokensToRemove.includes(tid)))
+                        };
+                    }),
+                    tokens: objectWithoutKeys(state.tokens, tokensToRemove),
+                    controls: objectWithoutKeys(state.controls, controlsToRemove)
+                };
+            }
+            case "pruneTokenDefinitions":
+            {
+                const tokensToRemove: string[] = [];
+                const controlsToRemove: string[] = [];
+                const { payload: { addedUids } } = action;
+
+                state.layers.forEach(layer =>
+                {
+                    layer.tokenIds.forEach(tokenIdArray =>
+                    {
+                        const toRemove = tokenIdArray.filter(id => !addedUids.includes(state.tokens[id].uid));
+                        tokensToRemove.push(...toRemove);
+                        toRemove.forEach(tid =>
+                        {
+                            controlsToRemove.push(...state.tokens[tid].controlIds);
+                        });
+                    });
+                });
+
+                return {
+                    ...state,
+                    tokenDefinitions: sliceObject(state.tokenDefinitions, addedUids),
+                    tokenCallbacks: sliceObject(state.tokenCallbacks, addedUids),
+                    settings: {
+                        ...state.settings,
+                        tokens: sliceObject(state.settings.tokens, addedUids)
                     },
                     layers: state.layers.map((layer) =>
                     {
@@ -846,6 +888,17 @@ function reducer(state: AppState, action: Action): AppState
 
     const newState = figureItOut();
     action.saveSettings && saveSettings(newState);
+
+    if (LOG || (window as any).LOG_DISPATCH) {
+        console.log(`=== DISPATCH ${action.type}`);
+        if (action.hasOwnProperty('payload')) {
+            console.log('payload:', (action as any).payload);
+        }
+        console.log('old state:', state);
+        console.log('new state:', newState);
+        console.log('');
+    }
+
     return newState;
 }
 

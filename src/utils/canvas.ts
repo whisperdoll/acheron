@@ -59,7 +59,7 @@ export class Canvas
             Canvas.triangleCanvas.height = 12;
             
             var ctx = Canvas.triangleCanvas.getContext("2d")!;
-            ctx.fillStyle = "white";
+            ctx.fillStyle = "White";
 
             ctx.beginPath();
             ctx.moveTo(6, 0);
@@ -701,11 +701,11 @@ export class Canvas
             {
                 this.fillText(
                     line,
-                    centerPt.plus(new Point(0, start + (fontSize + 2) * i)),
-                    i === 0 ? color : "#FFCCFF",
+                    centerPt.plus(new Point(0, start + (fontSize + 4) * i)),
+                    i === 0 ? color : "#FFFFFF",
                     undefined,
                     "center",
-                    fontSize + "px sans-serif"
+                    fontSize * 1.225 + "px sans-serif"
                 );
             });
         }
@@ -783,11 +783,11 @@ export class Canvas
                     {
                         this.fillText(
                             line,
-                            centerPt.plus(new Point(0, start + (fontSize + 2) * i)),
-                            i === 0 ? color : "#FFCCFF",
+                            centerPt.plus(new Point(0, start + (fontSize + 4) * i)),
+                            i === 0 ? color : "#FFFFFF",
                             undefined,
                             "center",
-                            fontSize + "px sans-serif"
+                            i != 0 ? fontSize * 1.25 + "px sans-serif" : fontSize * 0.95 + "px sans-serif"
                         );
                     });
 
@@ -856,11 +856,11 @@ export class Canvas
                     {
                         this.fillText(
                             line,
-                            centerPt.plus(new Point(0, start + (fontSize + 2) * i)),
-                            i === 0 ? color : "#FFCCFF",
+                            centerPt.plus(new Point(0, start + (fontSize + 4) * i)),
+                            i === 0 ? color : "#FFFFFF",
                             undefined,
                             "center",
-                            fontSize + "px sans-serif"
+                            fontSize * 1.225 + "px sans-serif"
                         );
                     });
 

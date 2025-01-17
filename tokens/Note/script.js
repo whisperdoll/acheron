@@ -2,7 +2,7 @@
 
 {
     "label": "Note",
-    "symbol": "♫",
+    "symbol": "♪",
     "uid": "whisperdoll.note",
     "controls": {
         "probability": {
@@ -19,8 +19,8 @@
         "transpose": {
             "label": "Transpose",
             "type": "int",
-            "min": -24,
-            "max": 24,
+            "min": -36,
+            "max": 36,
             "defaultValue": 0
         },
         "gateOffset": {
@@ -52,13 +52,6 @@
         },
         "noteLength": {
             "inherit": "global.noteLength"
-        },
-        "ghostBeats": {
-            "label": "Ghost Beats",
-            "type": "int",
-            "min": 0,
-            "max": 16,
-            "defaultValue": 0
         }
     }
 }
@@ -67,7 +60,10 @@
 
 function onStart(store, helpers)
 {
-    store.gateCounter = 0;
+	if (store.gateCounter == undefined)
+	{
+		store.gateCounter = 0;
+	}
 }
 
 function onStop(store, helpers)

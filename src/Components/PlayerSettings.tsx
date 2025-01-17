@@ -2,13 +2,18 @@ import React, { useContext, useEffect, useLayoutEffect, useRef, useState } from 
 import { AppContext, AppState } from '../AppContext';
 import { PlayerControlKey, PlayerControlKeys } from '../utils/DefaultDefinitions';
 import Control from './Control';
+import { Keymap, ControlState, NumMIDIChannels } from '../Types';
 
 export default function()
 {
     const { state, dispatch } = useContext(AppContext)!;
 
+    const layerControls: PlayerControlKey[] = [
+        "key"
+	];
+
     const noteControls: PlayerControlKey[] = [
-        "transpose",
+		"transpose",
         "tempo",
         "barLength",
         "velocity",
@@ -33,6 +38,8 @@ export default function()
 
     return (
         <div className="playerSettings">
+		    <div className="header">Layers</div>
+            {layerControls.map(buildControl)}
             <div className="header">Notes</div>
             {noteControls.map(buildControl)}
             <div className="header">Generators</div>

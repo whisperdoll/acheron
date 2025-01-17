@@ -44,3 +44,35 @@ It's the first version.
     * `getLayer()` - returns the layer a token is on (zero-indexed)
     * `getNumLayers()` - returns the number of layers in the composition
 * Small bugfix regarding with MIDI device reconnection
+
+# 1.1.5 (2023/06/02)
+
+* Fixed bug where opened files wouldn't play
+* Removed nonfunctional Ghost Beats parameter from the Note token
+* Added Twist, Randomize, and Lifespan tokens
+
+# 1.1.6 (2024/03/16)
+
+* Fixed bug that prevented the gate system from working while running a composition
+
+# 1.1.7 (2024/03/23)
+
+* Fixed layer deletion bug
+* Added Mac version
+    * I built the Mac version on an ancient Mac Mini, so if you try it, maybe let me know if it works on modern Macs or not
+
+# 1.1.8 (2024/03/28)
+
+* Increased maximums of some parameters
+
+# 1.1.9 (2024/05/07)
+
+* Fix a bug where having a bad token path would sometimes brick the program
+* Enable dev mode
+* Added better Mac support
+
+# 1.2.0 (2025/01/16)
+
+*Added Global key control (Warning: this change breaks the ability to open files created with previous versions)
+*Changed a bit of terminology, the Player tab is now the Global tab, and Scalar values are now Fixed values
+*Changed colors and sizes of hex grid elements in an attempt to draw attention to the tokens placed on a hex rather than the note names

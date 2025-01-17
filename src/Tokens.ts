@@ -1,11 +1,12 @@
 import * as fs from "fs";
 import * as vm from "vm";    
-import { ControlDataTypes, ControlState, SelectOption, TokenDefinition, Token, TokenCallbacks, copyControl, TokenUID } from "./Types";
+import { KeyMap, ControlDataTypes, ControlState, SelectOption, TokenDefinition, Token, TokenCallbacks, copyControl, TokenUID } from "./Types";
 import { buildFromDefs } from "./utils/DefaultDefinitions";
 import * as npath from "path";
 import { AppState, LayerState } from "./AppContext";
-import { array_copy, isFileNotFoundError } from "./utils/utils";
+import { array_copy, isFileNotFoundError, p } from "./utils/utils";
 import { v4 as uuidv4 } from 'uuid';
+const remote = require('@electron/remote');
 
 function compareOptions(o1?: SelectOption[], o2?: SelectOption[])
 {
@@ -83,26 +84,36 @@ export function loadTokensFromSearchPaths(paths: string[]): { tokens: Record<Tok
     const badPaths: string[] = [];
     const ret: Record<TokenUID, { tokenDef: TokenDefinition, callbacks: TokenCallbacks }> = {};
 
-    paths.forEach((path) =>
-    {
-        path = npath.resolve(path);
-        let candidates: fs.Dirent[];
-
-        try
-        {
-            candidates = fs.readdirSync(path, { withFileTypes: true });
-        }
-        catch (e)
-        {
-            if (isFileNotFoundError(e))
-            {
-                badPaths.push(path);
-            }
-            else
-            {
+    const tryReadDir = (path: string) => {
+        try {
+            return fs.readdirSync(path, { withFileTypes: true });
+        } catch(e) {
+            if (!isFileNotFoundError(e)) {
                 console.error(e);
             }
 
+            return false;
+        }
+    };
+
+    paths.forEach((path) =>
+    {
+        let candidates = tryReadDir(path);
+        const triedPaths = [];
+        if (!candidates) { // this is not based on testing as far as i know, just following legacy code in case it was needed on windows
+            triedPaths.push(path);
+            path = npath.resolve(path);
+            candidates = tryReadDir(path);
+        }
+        if (!candidates) {
+            triedPaths.push(path);
+            path = npath.join(remote.app.getAppPath(), '../../', path);
+            candidates = tryReadDir(path);
+        }
+
+        if (!candidates) {
+            triedPaths.push(path);
+            badPaths.push(...triedPaths);
             return;
         }
 

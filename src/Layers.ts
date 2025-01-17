@@ -1,5 +1,5 @@
 import { AppState, LayerState } from "./AppContext";
-import { ControlState, getControlValue } from "./Types";
+import { KeyMap, ControlState, getControlValue } from "./Types";
 import { DefaultLayerControls } from "./utils/DefaultDefinitions";
 import { NumHexes } from "./utils/elysiumutils";
 import { createEmpty2dArray, NsToMs, NsToS } from "./utils/utils";
