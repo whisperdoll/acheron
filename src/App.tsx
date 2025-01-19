@@ -481,7 +481,7 @@ export default function App() {
     const leftColumn = isShowingLeftColumn ?
         <div className="leftColumn">
             <div className="tabs">
-                <button onClick={() => setIsShowingPlayerSettings(true)} className={isShowingPlayerSettings ? "active" : ""}>Player</button>
+                <button onClick={() => setIsShowingPlayerSettings(true)} className={isShowingPlayerSettings ? "active" : ""}>Global</button>
                 <button onClick={() => setIsShowingPlayerSettings(false)} className={!isShowingPlayerSettings ? "active" : ""}>Layer</button>
             </div>
             {isShowingPlayerSettings ?

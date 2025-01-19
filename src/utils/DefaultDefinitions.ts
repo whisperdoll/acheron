@@ -1,4 +1,4 @@
-import { ControlState, ControlDefinition, Lfo, SelectOption, ControlDataType, NumMIDIChannels, KeyMap } from "../Types";
+import { ControlState, ControlDefinition, Lfo, SelectOption, ControlDataType, NumMIDIChannels, KeyMap} from "../Types";
 import { AppState } from "../AppContext";
 import { v4 as uuidv4 } from 'uuid';
 import { getInheritParts } from "./elysiumutils";
@@ -8,6 +8,7 @@ import { getInheritParts } from "./elysiumutils";
 // ----------------------------------------------------------------
 
 export const PlayerControlKeys = [
+    "key",
     "transpose",
     "barLength",
     "tempo",
@@ -19,10 +20,94 @@ export const PlayerControlKeys = [
     "pulseEvery"
 ] as const;
 
+export const noteArray: string[] = [
+    "C", // 0
+    "C#", // 1
+    "D", // 2
+    "D#", // 3
+    "E", // 4
+    "F", // 5
+    "F#", // 6 
+    "G", // 7
+    "G#", // 8
+    "A", // 9
+    "A#", // 10
+    "B", // 11
+];
+
+function major(root: number)
+{
+    return [
+        root,
+        root + 2,
+        root + 4,
+        root + 5,
+        root + 7,
+        root + 9,
+        root + 11
+    ].map(n => n % 12);
+}
+
+function minor(root: number)
+{
+    return [
+        root,
+        root + 2,
+        root + 3,
+        root + 5,
+        root + 7,
+        root + 8,
+        root + 10,
+    ].map(n => n % 12);
+}
+
+
 export type PlayerControlKey = typeof PlayerControlKeys[number];
 
 const playerControlDefs: Record<PlayerControlKey, ControlDefinition> = {
-    transpose: {
+	key: {
+        label: "Key",
+        type: "select",
+        options: Object.keys({
+    "None": noteArray.map((n, i) => i),
+    "A major": major(noteArray.indexOf("A")),
+    "A minor": minor(noteArray.indexOf("A")),
+    "A flat major": major(noteArray.indexOf("G#")),
+    "A flat minor": minor(noteArray.indexOf("G#")),
+    "A sharp minor": minor(noteArray.indexOf("A#")),
+    "B major": major(noteArray.indexOf("B")),
+    "B minor": minor(noteArray.indexOf("B")),
+    "B flat major": major(noteArray.indexOf("A#")),
+    "B flat minor": minor(noteArray.indexOf("A#")),
+    "C major": major(noteArray.indexOf("C")),
+    "C minor": minor(noteArray.indexOf("C")),
+    "C flat major": major(noteArray.indexOf("B")),
+    "C sharp major": major(noteArray.indexOf("C#")),
+    "C sharp minor": minor(noteArray.indexOf("C#")),
+    "D major": major(noteArray.indexOf("D")),
+    "D minor": minor(noteArray.indexOf("D")),
+    "D flat major": major(noteArray.indexOf("C#")),
+    "D flat minor": minor(noteArray.indexOf("C#")),
+    "D sharp minor": minor(noteArray.indexOf("D#")),
+    "E major": major(noteArray.indexOf("E")),
+    "E minor": minor(noteArray.indexOf("E")),
+    "E flat major": major(noteArray.indexOf("D#")),
+    "E flat minor": minor(noteArray.indexOf("D#")),
+    "F major": major(noteArray.indexOf("F")),
+    "F minor": minor(noteArray.indexOf("F")),
+    "F flat major": major(noteArray.indexOf("E")),
+    "F sharp major": major(noteArray.indexOf("F#")),
+    "F sharp minor": minor(noteArray.indexOf("F#")),
+    "G major": major(noteArray.indexOf("G")),
+    "G minor": minor(noteArray.indexOf("G")),
+    "G flat minor": minor(noteArray.indexOf("F#")),
+    "G sharp minor": minor(noteArray.indexOf("G#"))
+}).map((key) => ({
+            label: key,
+            value: key
+        }))
+    },
+	transpose: {
         label: "Transpose",
         type: "int",
         min: -36,
@@ -126,12 +211,7 @@ function layerControlDefs(): Record<LayerControlKey, ControlDefinition>
             defaultValue: 1
         },
         key: {
-            label: "Key",
-            type: "select",
-            options: Object.keys(KeyMap).map((key) => ({
-                label: key,
-                value: key
-            }))
+            inherit: "global.key"
         },
         barLength: {
             inherit: "global.barLength"
@@ -245,7 +325,7 @@ export function buildFromDefs(defs: Record<string, ControlDefinition>): Record<s
                         step: defaultControl.step,
                         options: defaultControl.options?.slice(0),
                         inherit: defs[key].inherit,
-                        scalarValue: defaultControl.scalarValue,
+                        fixedValue: defaultControl.fixedValue,
                         currentValueType: "inherit",
                         lfo: buildLfo(defaultControl.type, defaultControl.min, defaultControl.max, defaultControl.options),
                         id,
@@ -271,8 +351,8 @@ export function buildFromDefs(defs: Record<string, ControlDefinition>): Record<s
                     step: def.step,
                     options: def.options?.slice(0),
                     inherit: undefined,
-                    currentValueType: "scalar",
-                    scalarValue: getDefaultValue(defs[key]),
+                    currentValueType: "fixed",
+                    fixedValue: getDefaultValue(defs[key]),
                     lfo: buildLfo(def.type, def.min, def.max, def.options),
                     id,
                     key,

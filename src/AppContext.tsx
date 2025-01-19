@@ -63,7 +63,8 @@ export interface AppState
     tokens: Record<TokenInstanceId, Token>;
     tokenDefinitions: Record<TokenUID, TokenDefinition>;
     tokenCallbacks: Record<TokenUID, TokenCallbacks>;
-    transpose: ControlInstanceId;
+    key: ControlInstanceId;
+	transpose: ControlInstanceId;
     tempo: ControlInstanceId;
     barLength: ControlInstanceId;
     velocity: ControlInstanceId;
@@ -112,7 +113,8 @@ const initialState : AppState = {
     pulseEvery: Object.entries(DefaultPlayerControls).find(e => e[1].key === "pulseEvery")![0],
     tempo: Object.entries(DefaultPlayerControls).find(e => e[1].key === "tempo")![0],
     timeToLive: Object.entries(DefaultPlayerControls).find(e => e[1].key === "timeToLive")![0],
-    transpose: Object.entries(DefaultPlayerControls).find(e => e[1].key === "transpose")![0],
+    key: Object.entries(DefaultPlayerControls).find(e => e[1].key === "key")![0],
+	transpose: Object.entries(DefaultPlayerControls).find(e => e[1].key === "transpose")![0],
     velocity: Object.entries(DefaultPlayerControls).find(e => e[1].key === "velocity")![0],
     layers: [], // appended to after layer contruction
     isPlaying: false,

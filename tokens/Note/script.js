@@ -2,7 +2,7 @@
 
 {
     "label": "Note",
-    "symbol": "♫",
+    "symbol": "♪",
     "uid": "whisperdoll.note",
     "controls": {
         "probability": {
