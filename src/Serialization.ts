@@ -8,10 +8,10 @@ export interface SerializedCompositionControl
 {
     key: string;
     id: string;
-    currentValueType: "scalar" | "lfo" | "inherit";
+    currentValueType: "fixed" | "lfo" | "inherit";
     inherit?: string;
     showIf?: string;
-    scalarValue: any;
+    fixedValue: any;
     lfo: Lfo;
 }
 
@@ -76,7 +76,7 @@ function buildTokenFromSerialized(appState: AppState, serialized: SerializedComp
                 id: serializedControl.id,
                 currentValueType: serializedControl.currentValueType,
                 inherit: serializedControl.inherit,
-                scalarValue: serializedControl.scalarValue,
+                fixedValue: serializedControl.fixedValue,
                 lfo: {...serializedControl.lfo}
             };
         }
@@ -105,7 +105,7 @@ function serializeControl(control: ControlState): SerializedCompositionControl
         id: control.id,
         currentValueType: control.currentValueType,
         inherit: control.inherit,
-        scalarValue: control.scalarValue,
+        fixedValue: control.fixedValue,
         lfo: control.lfo,
         showIf: control.showIf,
     };
@@ -128,6 +128,7 @@ export function serializeComposition(appState: AppState): SerializedComposition
         version: 2,
         tokens: tokenMap,
         global: {
+		    key: serializeControl(appState.controls[appState.key]),
             transpose: serializeControl(appState.controls[appState.transpose]),
             tempo: serializeControl(appState.controls[appState.tempo]),
             barLength: serializeControl(appState.controls[appState.barLength]),
@@ -199,7 +200,7 @@ export function deserializeComposition(appState: AppState, c: SerializedComposit
                 id: serializedControl.id,
                 currentValueType: serializedControl.currentValueType,
                 inherit: serializedControl.inherit,
-                scalarValue: serializedControl.scalarValue,
+                fixedValue: serializedControl.fixedValue,
                 lfo: {...serializedControl.lfo}
             };
             appControls[control.id] = control;
@@ -226,7 +227,7 @@ export function deserializeComposition(appState: AppState, c: SerializedComposit
                     id: serializedControl.id || control.id, // empty id means it was created from a migration and needs to be assigned an id
                     currentValueType: serializedControl.currentValueType,
                     inherit: serializedControl.inherit,
-                    scalarValue: serializedControl.scalarValue,
+                    fixedValue: serializedControl.fixedValue,
                     lfo: {...serializedControl.lfo}
                 };
                 (layer[control.key as keyof SerializedCompositionLayer] as SerializedCompositionControl).id = control.id; // see above id comment
@@ -270,6 +271,7 @@ export function deserializeComposition(appState: AppState, c: SerializedComposit
 
     return {
         ...appState,
+		key: c.global.key.id,
         transpose: c.global.transpose.id,
         tempo: c.global.tempo.id,
         barLength: c.global.barLength.id,

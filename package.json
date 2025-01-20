@@ -1,7 +1,7 @@
 {
   "name": "acheron",
   "productName": "Acheron",
-  "version": "1.1.9",
+  "version": "1.2.0",
   "description": "Hex-based MIDI sequencer",
   "main": "./src/main/main.ts",
   "scripts": {
@@ -51,8 +51,8 @@
       "icon": "assets/icon.icns"
     },
     "nsis": {
-			"differentialPackage": false
-		},
+      "differentialPackage": false
+    },
     "dmg": {
       "contents": [
         {
@@ -70,9 +70,10 @@
     },
     "win": {
       "target": [
-        "nsis"
+        "portable"
       ],
-      "signAndEditExecutable": false
+	  "icon": "assets/icon.ico",
+      "signAndEditExecutable": true
     },
     "linux": {
       "target": [
@@ -230,7 +231,7 @@
     "vm2": "^3.9.3",
     "webmidi": "3.0.0-alpha.5"
   },
-  "devEngines": {
+  "Engines": {
     "node": ">=14.x",
     "npm": ">=7.x"
   },

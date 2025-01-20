@@ -149,7 +149,7 @@ export default function(props: Props)
             hexRadius,
             new Point(cols, rows),
             false,
-            "white",
+            "#DDBBDD",
             lineWidth
         );
 
@@ -189,7 +189,7 @@ export default function(props: Props)
             hexRadius,
             new Point(cols, rows),
             false,
-            "white",
+            "#ffccff",
             hexNotes.map((hexNote, i) =>
             {
                 const symbols = state.layers[props.layerIndex].tokenIds[i].map(tokenId => state.tokens[tokenId].symbol);
@@ -383,7 +383,7 @@ export default function(props: Props)
         // draw selected //
         if (hexIsSelected)
         {
-            backCanvas.current?.fillHexagonCell(startPosition, new Point(~~(state.selectedHex.hexIndex / rows), state.selectedHex.hexIndex % rows), hexRadius, false, "#550");
+            backCanvas.current?.fillHexagonCell(startPosition, new Point(~~(state.selectedHex.hexIndex / rows), state.selectedHex.hexIndex % rows), hexRadius, false, "#702570");
         }
 
 

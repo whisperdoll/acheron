@@ -70,3 +70,9 @@ It's the first version.
 * Fix a bug where having a bad token path would sometimes brick the program
 * Enable dev mode
 * Added better Mac support
+
+# 1.2.0 (2025/01/16)
+
+*Added Global key control (Warning: this change breaks the ability to open files created with previous versions)
+*Changed a bit of terminology, the Player tab is now the Global tab, and Scalar values are now Fixed values
+*Changed colors and sizes of hex grid elements in an attempt to draw attention to the tokens placed on a hex rather than the note names
