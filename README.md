@@ -9,14 +9,12 @@ Built with https://github.com/electron-react-boilerplate/electron-react-boilerpl
 
 Documentation is here: https://github.com/whisperdoll/acheron/wiki/Acheron-Documentation
 
-It is highly recommended that you watch the video first, then read the documentation (though it's also pretty fun to just poke around and figure things out!)
-
 
 ## Setup
 
 Download the latest Acheron release here: https://github.com/whisperdoll/acheron/releases
 
-The current version as of this writing is **1.2.0**
+The current version as of this writing is **1.2.1**
 
 
 **Please note that Acheron is a MIDI sequencer, and as such produces no sound on its own.**
@@ -66,7 +64,7 @@ See the [Custom Token Documentation](https://github.com/whisperdoll/acheron/wiki
 
 * [whisperdoll](http://www.whisperdoll.love/), creator of and primary contributor to Acheron.
 * [Matt Mower](https://github.com/mmower) for creating the [original incarnation of this app](https://github.com/mmower/elysium).
-* [hellvalleyskytrees](hellvalleyskytrees.bsky.social) for the app icon, testing, a few tokens, documentation, and general consultation + encouragement.
+* [hellvalleyskytrees](hellvalleyskytrees.bsky.social) for the app icon, testing, a few tokens, and documentation,.
     * She's released fifteen albums of music so far using this sequencer and it's predecessor! Check out the latest here:
         * https://hellvalleyskytrees.bandcamp.com/album/voidscapes-vol-15
 ## License
