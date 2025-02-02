@@ -20,9 +20,9 @@ interface SerializedCompositionControlV1
 {
     key: string;
     id: string;
-    currentValueType: "scalar" | "lfo" | "inherit";
+    currentValueType: "fixed" | "lfo" | "inherit";
     inherit?: string;
-    scalarValue: any;
+    fixedValue: any;
     lfo: LfoV1;
 }
 
@@ -63,6 +63,7 @@ interface SerializedCompositionV1
     version: number;
     tokens: SerializedCompositionTokenV1[];
     global: {
+		key: number;
         transpose: SerializedCompositionControlV1;
         tempo: SerializedCompositionControlV1;
         barLength: SerializedCompositionControlV1;
@@ -138,31 +139,31 @@ function migrateSerializedLayer(global: SerializedComposition["global"], seriali
             version: 2,
             enabled: {
                 id: "",
-                currentValueType: "scalar",
+                currentValueType: "fixed",
                 key: "enabled",
                 lfo: buildLfo("bool"),
-                scalarValue: serialized.enabled
+                fixedValue: serialized.enabled
             },
             midiChannel: {
                 id: "",
-                currentValueType: "scalar",
+                currentValueType: "fixed",
                 key: "midiChannel",
                 lfo: buildLfo("int", 1, NumMIDIChannels),
-                scalarValue: serialized.midiChannel
+                fixedValue: serialized.midiChannel
             },
             key: {
                 id: "",
-                currentValueType: "scalar",
+                currentValueType: "fixed",
                 key: "key",
                 lfo: buildLfo("select", undefined, undefined, Object.keys(KeyMap).map((key) => ({ label: key, value: key }))),
-                scalarValue: Object.keys(KeyMap)[serialized.key]
+                fixedValue: Object.keys(KeyMap)[serialized.key]
             },
             tempoSync: {
                 id: "",
-                currentValueType: "scalar",
+                currentValueType: "fixed",
                 key: "tempoSync",
                 lfo: buildLfo("bool"),
-                scalarValue: serialized.tempoSync
+                fixedValue: serialized.tempoSync
             }
         };
 
@@ -185,10 +186,10 @@ function migrateSerializedLayer(global: SerializedComposition["global"], seriali
                 ...serialized as SerializedCompositionLayer,
                 tempoSync: {
                     id: "",
-                    currentValueType: "scalar",
+                    currentValueType: "fixed",
                     key: "tempoSync",
                     lfo: buildLfo("bool"),
-                    scalarValue: serialized.tempoSync
+                    fixedValue: serialized.tempoSync
                 }
             };
         }

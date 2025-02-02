@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { getControlFromInheritParts, getInheritParts, noteArray } from "./utils/elysiumutils";
 import { NsToMs, NsToS } from "./utils/utils";
 
-export type ControlValueType = "scalar" | "lfo" | "inherit";
+export type ControlValueType = "fixed" | "lfo" | "inherit";
 
 export const NumMIDIChannels = 16;
 
@@ -122,8 +122,8 @@ export interface ControlState
     options?: SelectOption[];
     inherit?: string;
     showIf?: string;
-    scalarValue: any;
-    currentValueType: "scalar" | "lfo" | "inherit";
+    fixedValue: any;
+    currentValueType: "fixed" | "lfo" | "inherit";
     lfo: Lfo;
 }
 
@@ -182,9 +182,9 @@ export function getControlValue(appState: AppState, layerIndex: number, controlS
                 return null;
         }
     }
-    else if (controlState.currentValueType === "scalar")
+    else if (controlState.currentValueType === "fixed")
     {
-        return controlState.scalarValue;
+        return controlState.fixedValue;
     }
     else
     {
