@@ -14,7 +14,7 @@ Documentation is here: https://github.com/whisperdoll/acheron/wiki/Acheron-Docum
 
 Download the latest Acheron release here: https://github.com/whisperdoll/acheron/releases
 
-The current version as of this writing is **1.2.1**
+The current version as of this writing is **1.2.1.1**
 
 
 **Please note that Acheron is a MIDI sequencer, and as such produces no sound on its own.**
