@@ -7,6 +7,8 @@ Electron-based recreation of https://github.com/mmower/elysium, a probabilistic 
 
 Built with https://github.com/electron-react-boilerplate/electron-react-boilerplate
 
+Vide tutorial is here: https://www.youtube.com/watch?v=We5PVgwhN7g
+
 Documentation is here: https://github.com/whisperdoll/acheron/wiki/Acheron-Documentation
 
 
