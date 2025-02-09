@@ -1,7 +1,7 @@
 {
   "name": "acheron",
   "productName": "Acheron",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Hex-based MIDI sequencer",
   "main": "./main.prod.js",
   "author": {
