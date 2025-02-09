@@ -65,8 +65,8 @@ See the [Custom Token Documentation](https://github.com/whisperdoll/acheron/wiki
 * [whisperdoll](http://www.whisperdoll.love/), creator of and primary contributor to Acheron.
 * [Matt Mower](https://github.com/mmower) for creating the [original incarnation of this app](https://github.com/mmower/elysium).
 * [hellvalleyskytrees](hellvalleyskytrees.bsky.social) for the app icon, testing, a few tokens, and documentation,.
-    * She's released fifteen albums of music so far using this sequencer and it's predecessor! Check out the latest here:
-        * https://hellvalleyskytrees.bandcamp.com/album/voidscapes-vol-15
+    * She's released sixteen albums of music so far using this sequencer and it's predecessor! Check out the latest here:
+        * https://hellvalleyskytrees.bandcamp.com/album/voidscapes-vol-16
 ## License
 
 MIT - see LICENSE file.
