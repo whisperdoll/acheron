@@ -220,7 +220,7 @@ export interface TokenDefinition
     path: string;
 }
 
-export const LfoTypes = ["sin","square","random","sequence","sawtooth"] as const;
+export const LfoTypes = ["sine","square","random","sequence","sawtooth","reversesawtooth"] as const;
 export type LfoType = typeof LfoTypes[number];
 
 export interface Lfo
@@ -252,9 +252,13 @@ function getLfoValue(appState: AppState, layerIndex: number, lfo: Lfo): any
         }
         case "sawtooth":
         {
-            return lfo.min + ((t / period) / (lfo.max - lfo.min));
+            return lfo.min + ((t / period) * (lfo.max - lfo.min));
         }
-        case "sin":
+		case "reversesawtooth":
+        {
+            return lfo.max - ((t / period) * (lfo.max - lfo.min));
+        }
+        case "sine":
         {
             const amp = (lfo.max - lfo.min) / 2;
             return (lfo.min + amp) + amp * Math.sin(t/period * Math.PI * 2);
