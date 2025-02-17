@@ -17,7 +17,7 @@ export default function(props: Props)
     const layer = state.layers[props.layerIndex];
 
     const layerControls: LayerControlKey[] = [
-        "enabled",
+//        "enabled",
         "midiChannel",
         "key"
     ];
