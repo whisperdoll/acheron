@@ -16,7 +16,7 @@ Documentation is here: https://github.com/whisperdoll/acheron/wiki/Acheron-Docum
 
 Download the latest Acheron release here: https://github.com/whisperdoll/acheron/releases
 
-The current version as of this writing is **1.2.1.1**
+The current version as of this writing is **1.2.2**
 
 
 **Please note that Acheron is a MIDI sequencer, and as such produces no sound on its own.**
@@ -65,9 +65,10 @@ See the [Custom Token Documentation](https://github.com/whisperdoll/acheron/wiki
 
 * [whisperdoll](http://www.whisperdoll.love/), creator of and primary contributor to Acheron.
 * [Matt Mower](https://github.com/mmower) for creating the [original incarnation of this app](https://github.com/mmower/elysium).
+* CreamSodaFloat for helping with some math for the LFOs.
 * [hellvalleyskytrees](hellvalleyskytrees.bsky.social) for the app icon, testing, a few tokens, and documentation,.
-    * She's released sixteen albums of music so far using this sequencer and it's predecessor! Check out the latest here:
-        * https://hellvalleyskytrees.bandcamp.com/album/voidscapes-vol-16
+    * She's released seventeen albums of music so far using this sequencer and it's predecessor! Check out the latest here:
+        * https://hellvalleyskytrees.bandcamp.com/album/voidscapes-vol-17
 ## License
 
 MIT - see LICENSE file.
