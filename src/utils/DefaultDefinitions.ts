@@ -409,7 +409,7 @@ export function buildLfo(type: ControlDataType, n_min?: number, n_max?: number, 
         max,
         min,
         sequence: [],
-        type: "sin"
+        type: "sine"
     };
 
     return lfo;

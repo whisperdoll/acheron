@@ -7,7 +7,7 @@ import { getInheritParts } from "./utils/elysiumutils";
 
 interface LfoV1
 {
-    type: "sin"|"square"|"random"|"sequence"|"sawtooth";
+    type: "sine"|"square"|"random"|"sequence"|"sawtooth";
     min: number;
     max: number;
     lowPeriod: number;
