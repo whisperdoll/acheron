@@ -261,11 +261,11 @@ function getLfoValue(appState: AppState, layerIndex: number, lfo: Lfo): any
         case "triangle":
         {
             const amp = (lfo.max - lfo.min) / 2;
-            return (0 <= t && t <= period / 2)
+            return ((0 <= t && t <= period / 2)
 			? amp - (4 * amp / period) * Math.abs(t - period / 4)
 			: (period / 2 < t && t <= period)
 			? (4 * amp / period) * Math.abs(t - (3 * period / 4)) - amp
-			: 0;
+			: 0)+ (amp * 2);
 		}
 		case "sine":
         {

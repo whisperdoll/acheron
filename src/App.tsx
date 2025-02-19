@@ -305,7 +305,7 @@ export default function App() {
             Midi.playNotes(
                 [transposeNote(
                     hexNotes[state.selectedHex.hexIndex],
-                    getControlValue(state, state.selectedHex.layerIndex, state.controls[state.layers[state.selectedHex.layerIndex].transpose])
+                    getControlValue(state, state.selectedHex.layerIndex, state.controls[state.layers[state.selectedHex.layerIndex].transpose]) + 12
                 )],
                 state.settings.midiOutputs, getControlValue(state, state.selectedHex.layerIndex, state.controls[state.layers[state.selectedHex.layerIndex].midiChannel]), {
                 velocity: getControlValue(state, state.selectedHex.layerIndex, state.controls[state.velocity])!,
