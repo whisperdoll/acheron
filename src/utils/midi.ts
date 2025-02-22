@@ -75,6 +75,7 @@ export default class Midi
                 release: 0,
                 playedAs: ""
             };
+        };
 
         this.onNotesChanged && this.onNotesChanged(this.notes.slice(0));
     }
@@ -99,6 +100,7 @@ export default class Midi
         return e.rawValue;
     }
 
+    private static setEnabledOutputs(names: string[])
     {
         this.enabledOutputNames = names;
         WebMidi.outputs.forEach((output: any) =>
