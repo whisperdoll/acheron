@@ -7,13 +7,14 @@ import { getInheritParts } from "./utils/elysiumutils";
 
 interface LfoV1
 {
-    type: "sine"|"square"|"random"|"sequence"|"sawtooth";
+    type: "sine"|"square"|"random"|"sequence"|"sawtooth"|"reverse Sawtooth"|"cC";
     min: number;
     max: number;
     lowPeriod: number;
     hiPeriod: number;
     period: number;
-    sequence: any[];
+    sequence: any[]
+	cC: number;
 }
 
 interface SerializedCompositionControlV1

@@ -37,6 +37,7 @@ export interface MidiNote
 
 let noteOnListener: (e: any) => any;
 let noteOffListener: (e: any) => any;
+let controlListener: (e: any) => any;
 
 const allNotes = Array(128).fill(0).map((_, i) => i);
 
@@ -74,7 +75,6 @@ export default class Midi
                 release: 0,
                 playedAs: ""
             };
-        }
 
         this.onNotesChanged && this.onNotesChanged(this.notes.slice(0));
     }
@@ -93,8 +93,12 @@ export default class Midi
             this.onNotesChanged && this.onNotesChanged(this.notes.slice(0));
         }
     }
+    }
 
-    public static setEnabledOutputs(names: string[])
+	private static _controlListener(e: any) {
+        return e.rawValue;
+    }
+
     {
         this.enabledOutputNames = names;
         WebMidi.outputs.forEach((output: any) =>
@@ -112,6 +116,7 @@ export default class Midi
         {
             noteOnListener = this._noteOnListener.bind(this);
             noteOffListener = this._noteOffListener.bind(this);
+			controlListener = this._controlListener.bind(this);
         }
 
         if (!input.channels[1].hasListener("noteon", noteOnListener))
@@ -120,6 +125,7 @@ export default class Midi
             {
                 input.channels[i + 1].addListener("noteon", noteOnListener);
                 input.channels[i + 1].addListener("noteoff", noteOffListener);
+				input.channels[i + 1].addListener("controlchange", controlListener);
             }
         }
     }

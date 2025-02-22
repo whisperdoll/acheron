@@ -3,6 +3,7 @@ import { LayerControlKey, LayerControlTypes, PlayerControlKey, PlayerControlKeys
 import seedRandom from "seedRandom";
 import { v4 as uuidv4 } from 'uuid';
 import { getControlFromInheritParts, getInheritParts, noteArray } from "./utils/elysiumutils";
+import { AppSettings } from "../appcontext"
 import { NsToMs, NsToS } from "./utils/utils";
 
 export type ControlValueType = "fixed" | "lfo" | "inherit";
@@ -143,6 +144,11 @@ export function copyControl(control: ControlState): ControlState
     return ret;
 }
 
+	export function ccloop() {
+	midi.enabledInputNames.foreach((string) =>
+	WebMidi.inputs[i].addListener("controlchange", e => {},
+	));}
+
 export function getControlValue(appState: AppState, layerIndex: number, controlState: ControlState): any
 {
     if (controlState.currentValueType === "inherit" && controlState.inherit)
@@ -220,7 +226,7 @@ export interface TokenDefinition
     path: string;
 }
 
-export const LfoTypes = ["sine","square","triangle","random","sawtooth","reverse Sawtooth","sequence"] as const;
+export const LfoTypes = ["sine","square","triangle","random","sawtooth","reverse Sawtooth","sequence","control Change"] as const;
 export type LfoType = typeof LfoTypes[number];
 
 export interface Lfo
@@ -243,6 +249,8 @@ function getLfoValue(appState: AppState, layerIndex: number, lfo: Lfo): any
     const hiPeriod = lfo.hiPeriod * 1000;
     const period = lfo.period * 1000;
     const t = now % (lfo.type === "square" ? lowPeriod + hiPeriod : period);
+	
+
 
     switch (lfo.type)
     {
@@ -279,6 +287,10 @@ function getLfoValue(appState: AppState, layerIndex: number, lfo: Lfo): any
         case "sequence":
         {
             return lfo.sequence[Math.floor(t / period * lfo.sequence.length)];
+        }
+		case "control Change":
+        {
+            ccloop()
         }
     }
 }
