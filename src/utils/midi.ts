@@ -37,9 +37,11 @@ export interface MidiNote
 
 let noteOnListener: (e: any) => any;
 let noteOffListener: (e: any) => any;
-let controlListener: (e: any) => any;
+let controlchangeListener: (e: any) => any;
 
 const allNotes = Array(128).fill(0).map((_, i) => i);
+export var cC = 0;
+export var cCNumber = 0;
 
 export default class Midi
 {
@@ -51,8 +53,8 @@ export default class Midi
     public static onNotesChanged: null | ((notes: MidiNote[]) => any) = null;
     private static isEnabled = false;
 
-    private static _noteOnListener(e: any)
-    {
+    private static _noteOnListener(e: any) 
+	{
         const index = this.notes.findIndex(n => n.name === e.note.name);
         if (index === -1)
         {
@@ -75,7 +77,7 @@ export default class Midi
                 release: 0,
                 playedAs: ""
             };
-        };
+        }
 
         this.onNotesChanged && this.onNotesChanged(this.notes.slice(0));
     }
@@ -94,13 +96,15 @@ export default class Midi
             this.onNotesChanged && this.onNotesChanged(this.notes.slice(0));
         }
     }
+	
+    private static _controlchangeListener(e: any)
+    {
+		this.cC = e.rawValue;
+		this.cCNumber = e.controller.number;
     }
-
-	private static _controlListener(e: any) {
-        return e.rawValue;
-    }
-
-    private static setEnabledOutputs(names: string[])
+    
+	
+    public static setEnabledOutputs(names: string[])
     {
         this.enabledOutputNames = names;
         WebMidi.outputs.forEach((output: any) =>
@@ -118,7 +122,7 @@ export default class Midi
         {
             noteOnListener = this._noteOnListener.bind(this);
             noteOffListener = this._noteOffListener.bind(this);
-			controlListener = this._controlListener.bind(this);
+			controlchangeListener = this._controlchangeListener.bind(this);
         }
 
         if (!input.channels[1].hasListener("noteon", noteOnListener))
@@ -127,7 +131,7 @@ export default class Midi
             {
                 input.channels[i + 1].addListener("noteon", noteOnListener);
                 input.channels[i + 1].addListener("noteoff", noteOffListener);
-				input.channels[i + 1].addListener("controlchange", controlListener);
+				input.channels[i + 1].addListener("controlchange", controlchangeListener);
             }
         }
     }

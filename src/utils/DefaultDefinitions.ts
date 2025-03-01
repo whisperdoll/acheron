@@ -125,7 +125,7 @@ const playerControlDefs: Record<PlayerControlKey, ControlDefinition> = {
         label: "Tempo",
         type: "int",
         min: 1,
-        max: 720,
+        max: 960,
         defaultValue: 120,
     },
     velocity: {
@@ -159,14 +159,14 @@ const playerControlDefs: Record<PlayerControlKey, ControlDefinition> = {
         label: "Time to Live",
         type: "int",
         min: 1,
-        max: 128,
+        max: 256,
         defaultValue: 16,
     },
     pulseEvery: {
         label: "Pulse Every",
         type: "int",
         min: 1,
-        max: 128,
+        max: 256,
         defaultValue: 16,
     }
 };
@@ -327,7 +327,7 @@ export function buildFromDefs(defs: Record<string, ControlDefinition>): Record<s
                         inherit: defs[key].inherit,
                         fixedValue: defaultControl.fixedValue,
                         currentValueType: "inherit",
-                        lfo: buildLfo(defaultControl.type, defaultControl.min, defaultControl.max, defaultControl.options),
+                        lfo: buildLfo(defaultControl.type, defaultControl.min, defaultControl.max, defaultControl.options, defaultControl.control),
                         id,
                         key
                     };
@@ -353,7 +353,7 @@ export function buildFromDefs(defs: Record<string, ControlDefinition>): Record<s
                     inherit: undefined,
                     currentValueType: "fixed",
                     fixedValue: getDefaultValue(defs[key]),
-                    lfo: buildLfo(def.type, def.min, def.max, def.options),
+                    lfo: buildLfo(def.type, def.min, def.max, def.options, def.control),
                     id,
                     key,
                     ...getMinMaxForType(def.type, def.min, def.max, def.options),
@@ -409,6 +409,7 @@ export function buildLfo(type: ControlDataType, n_min?: number, n_max?: number, 
         max,
         min,
         sequence: [],
+		control: 0,
         type: "sine"
     };
 

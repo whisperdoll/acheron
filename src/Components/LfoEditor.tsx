@@ -26,9 +26,9 @@ export default function LfoEditor()
     return (
         <div className="lfoEditor-backdrop">
             <div className="lfoEditor-content">
-                <h1>{modifyingControl.label} LFO</h1>
+                <h1>{modifyingControl.label} Modulator</h1>
                 <div className="row">
-                    <span>LFO Type:</span>
+                    <span>Modulator Type:</span>
                     <select
                         onChange={e => modifyLfo({ type: e.currentTarget.value as LfoType })}
                         value={modifyingLfo.type}
@@ -65,19 +65,21 @@ export default function LfoEditor()
                         />
                     </div>
                 </>)}
-				{modifyingLfo.type === "control Change" && (<>
+				{modifyingLfo.type === "midi Control" && (<>
                     <div className="row">
                         <span>MIDI CC:</span>
                         <NumberInput
                             min={0}
                             max={127}
-                            value={1}
+                            value={modifyingLfo.control}
                             coerce={coerce}
-                            onChange={value => modifyLfo({ controlChange: value })}
+                            onChange={value => modifyLfo({ control: value })}
+							step={1.0}
                         />
                     </div>
+
                 </>)}
-                {modifyingLfo.type !== "square" && modifyingLfo.type !== "control Change" && (
+                {modifyingLfo.type !== "square" && modifyingLfo.type !== "midi Control" && (
                     <div className="row">
                         <span>Period (seconds):</span>
                         <NumberInput

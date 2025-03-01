@@ -3,10 +3,10 @@ import { LayerControlKey, LayerControlTypes, PlayerControlKey, PlayerControlKeys
 import seedRandom from "seedRandom";
 import { v4 as uuidv4 } from 'uuid';
 import { getControlFromInheritParts, getInheritParts, noteArray } from "./utils/elysiumutils";
-import { AppSettings } from "../appcontext"
 import { NsToMs, NsToS } from "./utils/utils";
+import Midi from "./utils/midi";
 
-export type ControlValueType = "fixed" | "lfo" | "inherit";
+export type ControlValueType = "fixed" | "modulate" | "inherit" | "multiply" | "add";
 
 export const NumMIDIChannels = 16;
 
@@ -109,6 +109,7 @@ export interface ControlDefinition
     inherit?: string;
     showIf?: string;
     defaultValue?: any;
+	control?: number;
 }
 
 export interface ControlState
@@ -124,8 +125,9 @@ export interface ControlState
     inherit?: string;
     showIf?: string;
     fixedValue: any;
-    currentValueType: "fixed" | "lfo" | "inherit";
+    currentValueType: "fixed" | "modulate" | "inherit" | "multiply" | "add";
     lfo: Lfo;
+	control?: number
 }
 
 export function copyControl(control: ControlState): ControlState
@@ -144,14 +146,41 @@ export function copyControl(control: ControlState): ControlState
     return ret;
 }
 
-	export function ccloop() {
-	midi.enabledInputNames.foreach((string) =>
-	WebMidi.inputs[i].addListener("controlchange", e => {},
-	));}
-
 export function getControlValue(appState: AppState, layerIndex: number, controlState: ControlState): any
 {
-    if (controlState.currentValueType === "inherit" && controlState.inherit)
+    if (controlState.currentValueType === "multiply" && controlState.inherit)
+    {
+        const inheritParts = getInheritParts(controlState.inherit);
+        if (inheritParts)
+        {
+            const inheritedControl = getControlFromInheritParts(appState, layerIndex, inheritParts);
+            return Math.max(Math.min(getControlValue(appState, layerIndex, inheritedControl) * controlState.fixedValue, controlState.max),controlState.min);
+        }
+        else
+        {
+            console.log(controlState.inherit, appState.controls);
+            console.log("null1");
+            return null;
+        }
+    }
+	
+	else if (controlState.currentValueType === "add" && controlState.inherit)
+    {
+        const inheritParts = getInheritParts(controlState.inherit);
+        if (inheritParts)
+        {
+            const inheritedControl = getControlFromInheritParts(appState, layerIndex, inheritParts);
+            return Math.max(Math.min(getControlValue(appState, layerIndex, inheritedControl) + controlState.fixedValue, controlState.max),controlState.min);
+        }
+        else
+        {
+            console.log(controlState.inherit, appState.controls);
+            console.log("null1");
+            return null;
+        }
+    }
+	
+    else if (controlState.currentValueType === "inherit" && controlState.inherit)
     {
         const inheritParts = getInheritParts(controlState.inherit);
         if (inheritParts)
@@ -166,7 +195,7 @@ export function getControlValue(appState: AppState, layerIndex: number, controlS
             return null;
         }
     }
-    else if (controlState.currentValueType === "lfo")
+    else if (controlState.currentValueType === "modulate")
     {
         const value = getLfoValue(appState, layerIndex, controlState.lfo) ?? 0;
         switch (controlState.type)
@@ -226,7 +255,7 @@ export interface TokenDefinition
     path: string;
 }
 
-export const LfoTypes = ["sine","square","triangle","random","sawtooth","reverse Sawtooth","sequence","control Change"] as const;
+export const LfoTypes = ["sine","square","triangle","random","sawtooth","reverse Sawtooth","sequence","midi Control"] as const;
 export type LfoType = typeof LfoTypes[number];
 
 export interface Lfo
@@ -238,6 +267,7 @@ export interface Lfo
     hiPeriod: number;
     period: number;
     sequence: any[];
+	control: number;
 }
 
 function getLfoValue(appState: AppState, layerIndex: number, lfo: Lfo): any
@@ -248,9 +278,8 @@ function getLfoValue(appState: AppState, layerIndex: number, lfo: Lfo): any
     const lowPeriod = lfo.lowPeriod * 1000;
     const hiPeriod = lfo.hiPeriod * 1000;
     const period = lfo.period * 1000;
+	const control = lfo.control;
     const t = now % (lfo.type === "square" ? lowPeriod + hiPeriod : period);
-	
-
 
     switch (lfo.type)
     {
@@ -288,10 +317,13 @@ function getLfoValue(appState: AppState, layerIndex: number, lfo: Lfo): any
         {
             return lfo.sequence[Math.floor(t / period * lfo.sequence.length)];
         }
-		case "control Change":
+		case "midi Control":
         {
-            ccloop()
-        }
+		    const amp = (lfo.max - lfo.min) / 2;
+			if (Midi.cC != undefined && Midi.cCNumber == lfo.control) {
+					return ((Midi.cC / 127) * amp) * 2 + lfo.min;
+			}
+		}
     }
 }
 

@@ -7,7 +7,7 @@ import { getInheritParts } from "./utils/elysiumutils";
 
 interface LfoV1
 {
-    type: "sine"|"square"|"random"|"sequence"|"sawtooth"|"reverse Sawtooth"|"cC";
+    type: "sine"|"square"|"random"|"sequence"|"sawtooth"|"reverse Sawtooth"|"midi Control";
     min: number;
     max: number;
     lowPeriod: number;
@@ -21,7 +21,7 @@ interface SerializedCompositionControlV1
 {
     key: string;
     id: string;
-    currentValueType: "fixed" | "lfo" | "inherit";
+    currentValueType: "fixed" | "modulate" | "inherit" | "multiply" | "add";
     inherit?: string;
     fixedValue: any;
     lfo: LfoV1;

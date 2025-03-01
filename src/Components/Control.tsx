@@ -238,17 +238,19 @@ export default function(props: Props)
                 >
                     <option value="fixed">Fixed</option>
                     {(controlState.inherit && <option value="inherit">Inherit</option>)}
-                    <option value="lfo">LFO</option>
+                    <option value="modulate">Modulate</option>
+					{(controlState.inherit && <option value="multiply">Multiply</option>)}
+					{(controlState.inherit && <option value="add">Add</option>)}
                 </select>
             </div>
             <div className="controlRow">
                 {controlPart}
             </div>
-            {controlState.currentValueType === "lfo" && (
+            {controlState.currentValueType === "modulate" && (
                 <button
                     className="editLfo"
                     onClick={() => dispatch({ type: "editLfo", payload: { controlId: props.controlId }})}
-                >✎ Edit LFO</button>
+                >✎ Edit </button>
             )}
         </div>
     );

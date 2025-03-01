@@ -1,7 +1,7 @@
 {
   "name": "acheron",
   "productName": "Acheron",
-  "version": "1.2.0",
+  "version": "1.2.4",
   "description": "Hex-based MIDI sequencer",
   "license": "MIT",
   "author": {
