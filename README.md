@@ -39,7 +39,6 @@ Optional:
 
 - If you don't have a DAW, try [onlinesequencer.net](https://onlinesequencer.net/) which runs in the browser & requires no setup for use with Acheron.
    * Onlinesequencer's record button is on the bottom left of the page, while the save button is near the top middle. the arrow next to the save button allows exporting MIDI or WAV files.
-- Acheron now includes several example files, demonstrating various features. These are in the examples folder.
 
 
 ## Troubleshooting
