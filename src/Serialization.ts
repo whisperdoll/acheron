@@ -8,7 +8,7 @@ export interface SerializedCompositionControl
 {
     key: string;
     id: string;
-    currentValueType: "fixed" | "lfo" | "inherit";
+    currentValueType: "fixed" | "modulate" | "inherit" | "multiply" | "add";
     inherit?: string;
     showIf?: string;
     fixedValue: any;
