@@ -40,7 +40,7 @@ let noteOffListener: (e: any) => any;
 let controlchangeListener: (e: any) => any;
 
 const allNotes = Array(128).fill(0).map((_, i) => i);
-export var cC = 0;
+export var cC = 1;
 export var cCNumber = 0;
 
 export default class Midi
