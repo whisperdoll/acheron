@@ -1,11 +1,17 @@
-import { useContext } from "react";
-import { PlayerControlKey } from "../utils/DefaultDefinitions";
+import { useContext, useState } from "react";
+import {
+  PlayerControlKey,
+  PlayerControlKeys,
+} from "../utils/DefaultDefinitions";
 import Control from "./Control";
 import state from "../state/AppState";
 import settings from "../state/AppSettings";
+import Dict from "../lib/dict";
 
 export default function PlayerSettings() {
-  const reactiveState = state.useState();
+  const controlStates = Dict.fromArray(
+    PlayerControlKeys.map((key) => [key, state.useState((s) => s[key])])
+  );
   const reactiveSettings = settings.useState();
   const layerControls: PlayerControlKey[] = ["key"];
 
@@ -24,7 +30,7 @@ export default function PlayerSettings() {
   function buildControl(controlKey: PlayerControlKey) {
     return (
       <Control
-        controlId={reactiveState[controlKey]}
+        controlId={controlStates[controlKey]}
         key={controlKey}
         layerIndex={-1}
       />

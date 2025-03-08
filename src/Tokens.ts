@@ -26,7 +26,7 @@ import TwistToken from "./tokens/twist.ts";
 import WormholeToken from "./tokens/wormhole.ts";
 import { AppState } from "./state/AppState.ts";
 
-export const Tokens: TokenDefinition[] = [
+export const tokenDefinitions: TokenDefinition[] = [
   AbsorbToken,
   GenerateToken,
   LifespanToken,

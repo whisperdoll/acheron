@@ -4,7 +4,7 @@ import * as path from "@tauri-apps/api/path";
 import { TokenUID } from "../Types";
 import { MaybeGeneratedPromise } from "../lib/utils";
 import Dict from "../lib/dict";
-import { Tokens } from "../Tokens";
+import { tokenDefinitions } from "../Tokens";
 
 export interface TokenSettings {
   shortcut: string;
@@ -28,7 +28,7 @@ export const defaultSettings: AppSettings = {
   playNoteOnClick: true,
   wrapPlayheads: true,
   tokens: Dict.fromArray<TokenUID, TokenSettings>(
-    Tokens.map<[TokenUID, TokenSettings]>((t) => [
+    tokenDefinitions.map<[TokenUID, TokenSettings]>((t) => [
       t.uid,
       { enabled: true, shortcut: "" },
     ])

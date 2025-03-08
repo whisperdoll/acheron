@@ -16,6 +16,8 @@ import direction5 from "../../assets/directions/5.png";
 import NumberInput from "./NumberInput";
 import state from "../state/AppState";
 import settings from "../state/AppSettings";
+import { pluck, sliceObject } from "../utils/utils";
+import { PlayerControlKeys } from "../utils/DefaultDefinitions";
 
 interface Props {
   controlId: string;
@@ -24,7 +26,6 @@ interface Props {
 
 export default function Control(props: Props) {
   const reactiveState = state.useState();
-  const reactiveSettings = settings.useState();
   const [_, forceUpdate] = useReducer((x) => x + 1, 0);
   const controlState = reactiveState.controls[props.controlId];
 
@@ -35,14 +36,7 @@ export default function Control(props: Props) {
   const layerIndex = useMemo(() => {
     let index = reactiveState.layers.findIndex(
       (l) =>
-        l.transpose === props.controlId ||
-        l.tempo === props.controlId ||
-        l.barLength === props.controlId ||
-        l.velocity === props.controlId ||
-        l.emphasis === props.controlId ||
-        l.noteLength === props.controlId ||
-        l.timeToLive === props.controlId ||
-        l.pulseEvery === props.controlId ||
+        pluck(l, PlayerControlKeys).includes(props.controlId) ||
         l.tokenIds.some((tidArray) =>
           tidArray.some((tid) =>
             reactiveState.tokens[tid].controlIds.includes(props.controlId)

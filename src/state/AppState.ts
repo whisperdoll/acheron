@@ -23,7 +23,7 @@ import {
 } from "../Types";
 import { DefaultPlayerControls } from "../utils/DefaultDefinitions";
 import { MidiDevice, MidiNote } from "../utils/midi";
-import { buildToken, copyToken, Tokens } from "../Tokens";
+import { buildToken, copyToken, tokenDefinitions } from "../Tokens";
 import { migrateSettings } from "../Migrators";
 import List from "../lib/list.ts";
 import {
@@ -131,7 +131,7 @@ const initialState: AppState = {
   pulseSwitch: false,
   midiNotes: [],
   editingLfo: null,
-  tokenDefinitions: List.indexBy(Tokens, (token) => token.uid),
+  tokenDefinitions: List.indexBy(tokenDefinitions, (token) => token.uid),
   draggingDestHex: { layerIndex: -1, hexIndex: -1 },
   draggingSourceHex: { layerIndex: -1, hexIndex: -1 },
   draggingType: "move",

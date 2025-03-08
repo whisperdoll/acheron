@@ -40,12 +40,19 @@ export function objectWithoutKeys<
 }
 
 export function sliceObject<
-  K extends string | number | symbol,
-  T extends Record<K, any>
+  T extends Record<string | number | symbol, any>,
+  K extends keyof T
 >(o: T, keys: K[]): Pick<typeof o, (typeof keys)[number]> {
   const ret = {} as Record<K, any>;
   keys.forEach((key) => (ret[key] = o[key]));
   return ret;
+}
+
+export function pluck<T, K extends (keyof T)[]>(
+  obj: T,
+  keys: [...K]
+): { [I in keyof K]: T[K[I]] } {
+  return keys.map((key) => obj[key]) as { [I in keyof K]: T[K[I]] };
 }
 
 export async function makeUserDataPath() {

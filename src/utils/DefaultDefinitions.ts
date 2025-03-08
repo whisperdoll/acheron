@@ -24,7 +24,7 @@ export const PlayerControlKeys = [
   "noteLength",
   "timeToLive",
   "pulseEvery",
-] as const;
+] as const satisfies string[];
 
 export const noteArray: string[] = [
   "C", // 0

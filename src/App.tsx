@@ -38,7 +38,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import IconButton from "./Components/IconButton";
 import timerWorkerPath from "../assets/timerWorker.worker?url";
-import { Tokens } from "./Tokens";
+import { tokenDefinitions } from "./Tokens";
 import { buildMenu } from "./Menu";
 import { invoke } from "@tauri-apps/api/core";
 import * as fs from "@tauri-apps/plugin-fs";
