@@ -54,7 +54,7 @@ Contact me through the issues section of Github or however else you know how to 
 
 ## Development
 
-`npm start` will start the app in the `dev` environment.
+`pnpm start` will start the app in the `dev` environment.
 
 Custom tokens can be created and distributed without setting up a development environment.
 See the [Custom Token Documentation](https://github.com/whisperdoll/acheron/wiki/Custom-Token-Documentation) for more information.

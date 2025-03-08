@@ -1,61 +1,58 @@
-import React, { useContext, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { AppContext, AppState, LayerState } from '../AppContext';
-import { Keymap, ControlState, NumMIDIChannels } from '../Types';
-import { LayerControlKey } from '../utils/DefaultDefinitions';
-import { hexNotes } from '../utils/elysiumutils';
-import Control from './Control';
-import NumberInput from './NumberInput';
+import { useContext } from "react";
+import { LayerControlKey } from "../utils/DefaultDefinitions";
+import Control from "./Control";
+import state from "../state/AppState";
+import settings from "../state/AppSettings";
 
-interface Props
-{
-    layerIndex: number;
+interface Props {
+  layerIndex: number;
 }
 
-export default function(props: Props)
-{
-    const { state, dispatch } = useContext(AppContext)!;
-    const layer = state.layers[props.layerIndex];
+export default function (props: Props) {
+  const reactiveState = state.useState();
+  const reactiveSettings = settings.useState();
+  const layer = reactiveState.layers[props.layerIndex];
 
-    const layerControls: LayerControlKey[] = [
-//        "enabled",
-        "midiChannel",
-        "key"
-    ];
+  const layerControls: LayerControlKey[] = [
+    //        "enabled",
+    "midiChannel",
+    "key",
+  ];
 
-    const noteControls: LayerControlKey[] = [
-        "transpose",
-        "tempo",
-        "barLength",
-        "velocity",
-        "emphasis",
-        "noteLength"
-    ];
+  const noteControls: LayerControlKey[] = [
+    "transpose",
+    "tempo",
+    "barLength",
+    "velocity",
+    "emphasis",
+    "noteLength",
+  ];
 
-    const generatorControls: LayerControlKey[] = [
-        "timeToLive",
-        "pulseEvery"
-    ];
+  const generatorControls: LayerControlKey[] = ["timeToLive", "pulseEvery"];
 
-    function buildControl(controlKey: LayerControlKey)
-    {
-        return <Control
-            controlId={state.layers[props.layerIndex][controlKey]}
-            key={controlKey}
-            layerIndex={props.layerIndex}
-        />;
-    }
-
+  function buildControl(controlKey: LayerControlKey) {
     return (
-        <div className="layerSettings">
-            <div className="layerHeader">{state.layers[props.layerIndex].name}</div>
-            <div className="scrolly">
-                <div className="header">Layer</div>
-                {layerControls.map(buildControl)}
-                <div className="header">Notes</div>
-                {noteControls.map(buildControl)}
-                <div className="header">Generators</div>
-                {generatorControls.map(buildControl)}
-            </div>
-        </div>
+      <Control
+        controlId={reactiveState.layers[props.layerIndex][controlKey]}
+        key={controlKey}
+        layerIndex={props.layerIndex}
+      />
     );
-};
+  }
+
+  return (
+    <div className="layerSettings">
+      <div className="layerHeader">
+        {reactiveState.layers[props.layerIndex].name}
+      </div>
+      <div className="scrolly">
+        <div className="header">Layer</div>
+        {layerControls.map(buildControl)}
+        <div className="header">Notes</div>
+        {noteControls.map(buildControl)}
+        <div className="header">Generators</div>
+        {generatorControls.map(buildControl)}
+      </div>
+    </div>
+  );
+}

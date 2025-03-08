@@ -1,23 +1,20 @@
 let interval = null;
-let lastTime = process.hrtime.bigint();
+let lastTime = performance.now();
 
-self.addEventListener("message", (e) =>
-{
-    switch (e.data)
-    {
-        case "start":
-            if (interval !== null) return;
-            lastTime = process.hrtime.bigint();
-            interval = setInterval(() =>
-            {
-                const now = process.hrtime.bigint();
-                self.postMessage(Number(now - lastTime));
-                lastTime = now;
-            }, 10);
-            break;
-        case "stop":
-            clearInterval(interval);
-            interval = null;
-            break;
-    }
+self.addEventListener("message", (e) => {
+  switch (e.data) {
+    case "start":
+      if (interval !== null) return;
+      lastTime = performance.now();
+      interval = setInterval(() => {
+        const now = performance.now();
+        self.postMessage(now - lastTime);
+        lastTime = now;
+      }, 10);
+      break;
+    case "stop":
+      clearInterval(interval);
+      interval = null;
+      break;
+  }
 });

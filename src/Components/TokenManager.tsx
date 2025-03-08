@@ -1,150 +1,127 @@
 import React, { useContext } from "react";
-import { AppContext, AppSettings } from "../AppContext";
-import { array_copy, array_remove, array_remove_at, confirmPrompt } from "../utils/utils";
 import { TokenUID } from "../Types";
-const remote = require('@electron/remote');
+import state from "../state/AppState";
+import settings from "../state/AppSettings";
 
-interface Props
-{
-    onHide: () => any;
+interface Props {
+  onHide: () => any;
 }
 
-export default function TokenManager(props: Props)
-{
-    const { state, dispatch } = useContext(AppContext)!;
+export default function TokenManager(props: Props) {
+  const reactiveState = state.useState();
+  const reactiveSettings = settings.useState();
 
-    function handleShortcutKey(e: React.KeyboardEvent<HTMLInputElement>, uid: TokenUID)
-    {
-        if ([...e.key].length === 1)
+  function handleShortcutKey(
+    e: React.KeyboardEvent<HTMLInputElement>,
+    uid: TokenUID
+  ) {
+    if ([...e.key].length === 1) {
+      settings.set(
         {
-            dispatch({ type: "setTokenShortcut", payload: { uid, shortcut: e.key }, saveSettings: true });
-        }
-        else if (e.key === "Delete" || e.key === "Backspace")
-        {
-            dispatch({ type: "clearTokenShortcut", payload: uid, saveSettings: true });
-        }
+          tokens: {
+            ...reactiveSettings.tokens,
+            [uid]: { ...reactiveSettings.tokens[uid], shortcut: e.key },
+          },
+        },
+        "set token shortcut"
+      );
+    } else if (e.key === "Delete" || e.key === "Backspace") {
+      if ([...e.key].length === 1) {
+        settings.set(
+          {
+            tokens: {
+              ...reactiveSettings.tokens,
+              [uid]: { ...reactiveSettings.tokens[uid], shortcut: "" },
+            },
+          },
+          "clear token shortcut"
+        );
+      }
     }
+  }
 
-    // function addToken()
-    // {
-    //     const paths = remote.dialog.showOpenDialogSync(remote.getCurrentWindow(), {
-    //         title: "Open Token Folder...",
-    //         properties: [ "openDirectory", "multiSelections" ]
-    //     });
+  // function addToken()
+  // {
+  //     const paths = remote.dialog.showOpenDialogSync(remote.getCurrentWindow(), {
+  //         title: "Open Token Folder...",
+  //         properties: [ "openDirectory", "multiSelections" ]
+  //     });
 
-    //     if (paths)
-    //     {
-    //         paths.forEach((path) =>
-    //         {
-    //             const res = loadToken(path);
-    //             if (res)
-    //             {
-    //                 dispatch({ type: "setTokenDefinition", payload: {
-    //                     path,
-    //                     callbacks: res.callbacks,
-    //                     definition: res.tokenDef
-    //                 }});
-    //             }
-    //         });
-    //     }
-    // }
+  //     if (paths)
+  //     {
+  //         paths.forEach((path) =>
+  //         {
+  //             const res = loadToken(path);
+  //             if (res)
+  //             {
+  //                 dispatch({ type: "setTokenDefinition", payload: {
+  //                     path,
+  //                     callbacks: res.callbacks,
+  //                     definition: res.tokenDef
+  //                 }});
+  //             }
+  //         });
+  //     }
+  // }
 
-    // function promptRemoveToken(path: string)
-    // {
-    //     if (!state.settings.confirmDelete ||
-    //         confirmPrompt(`Are you sure you want to remove the token '${state.tokenDefinitions[path].label}'?`, "Confirm remove token"))
-    //     {
-    //         dispatch({ type: "removeTokenDefinition", payload: { path }, saveSettings: true });
-    //     }
-    // }
+  // function promptRemoveToken(path: string)
+  // {
+  //     if (!state.settings.confirmDelete ||
+  //         confirmPrompt(`Are you sure you want to remove the token '${state.tokenDefinitions[path].label}'?`, "Confirm remove token"))
+  //     {
+  //         dispatch({ type: "removeTokenDefinition", payload: { path }, saveSettings: true });
+  //     }
+  // }
 
-    function toggleEnabled(tokenUid: TokenUID)
-    {
-        dispatch({ type: "toggleTokenEnabled", payload: tokenUid, saveSettings: true });
-    }
+  function toggleEnabled(tokenUid: TokenUID) {}
 
-    function handlePathTextChanged(index: number, e: React.ChangeEvent<HTMLInputElement>)
-    {
-        dispatch({ type: "setTokenSearchPath", payload: { index, value: e.currentTarget.value, normalize: false } });
-    }
+  function handlePathTextChanged(
+    index: number,
+    e: React.ChangeEvent<HTMLInputElement>
+  ) {}
 
-    function browsePath(index: number)
-    {
-        const paths = remote.dialog.showOpenDialogSync(remote.getCurrentWindow(), {
-            title: "Pick token search path...",
-            properties: [ "openDirectory" ]
-        });
+  function browsePath(index: number) {}
 
-        if (paths && paths[0])
-        {
-            dispatch({ type: "setTokenSearchPath", payload: { index, value: paths[0], normalize: true } });
-        }
-    }
-    
-    function removePath(index: number)
-    {
-        dispatch({ type: "removeTokenSearchPath", payload: index });
-    }
+  function removePath(index: number) {}
 
-    function addPath()
-    {
-        dispatch({ type: "addTokenSearchPath", payload: "" });
-    }
+  function addPath() {}
 
-    return (
-        <div className="tokenSettings-backdrop">
-            <div className="tokenSettings-content">
-                <h1>Manage Tokens</h1>
-                <div className="tokenSearchPaths-container">
-                    <div>Token Search Paths</div>
-                    {state.settings.tokenSearchPaths.map((path, i) => (
-                        <div key={i} className="row">
-                            <input
-                                type="text"
-                                value={path}
-                                onChange={e => handlePathTextChanged(i, e)}
-                            />
-                            <button onClick={() => browsePath(i)}>Browse...</button>
-                            <button onClick={() => removePath(i)}>❌ Remove</button>
-                        </div>
-                    ))}
-                    <button onClick={addPath}>+ Add Search Path</button>
-                </div>
-                <div className="tokenSettings">
-                    {Object.entries(state.settings.tokens).map(([uid, settings]) => (
-                        <div className="tokenSetting" key={uid}>
-                            <div className="tokenLabel">{state.tokenDefinitions[uid].label}</div>
-                            <div className="row">
-                                <label className="clicky">
-                                    <input
-                                        type="checkbox"
-                                        onChange={() => toggleEnabled(uid)}
-                                        checked={settings.enabled}
-                                    />
-                                    <span>Enabled</span>
-                                </label>
-                            </div>
-                            <div className="row">
-                                <span>Shortcut:</span>
-                                <input
-                                    type="text"
-                                    onKeyDown={(e) => handleShortcutKey(e, uid)}
-                                    value={settings.shortcut.toUpperCase()}
-                                />
-                            </div>
-                            {/* <button
+  return (
+    <div className="tokenSettings-backdrop">
+      <div className="tokenSettings-content">
+        <h1>Manage Tokens</h1>
+        <div className="tokenSearchPaths-container">
+          <div>Token Search Paths</div>
+
+          <button onClick={addPath}>+ Add Search Path</button>
+        </div>
+        <div className="tokenSettings">
+          {Object.entries(reactiveSettings.tokens).map(([uid, settings]) => (
+            <div className="tokenSetting" key={uid}>
+              <div className="tokenLabel">
+                {reactiveState.tokenDefinitions[uid].label}
+              </div>
+              <div className="row">
+                <span>Shortcut:</span>
+                <input
+                  type="text"
+                  onKeyDown={(e) => handleShortcutKey(e, uid)}
+                  value={settings.shortcut.toUpperCase()}
+                />
+              </div>
+              {/* <button
                                 onClick={() => promptRemoveToken(path)}
                             >❌ Remove</button> */}
-                        </div>
-                    ))}
-                </div>
-                {/* <button
+            </div>
+          ))}
+        </div>
+        {/* <button
                     onClick={addToken}
                 >+ Add Token</button> */}
-                <div className="bottomButtons">
-                    <button onClick={() => props.onHide()}>OK</button>
-                </div>
-            </div>
+        <div className="bottomButtons">
+          <button onClick={() => props.onHide()}>OK</button>
         </div>
-    );
+      </div>
+    </div>
+  );
 }

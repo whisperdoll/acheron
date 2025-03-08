@@ -1,21 +1,23 @@
-import React, { useEffect, useRef, useState, FC } from "react"
+import React from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { IconProp } from "@fortawesome/fontawesome-svg-core";
+import { IconDefinition } from "@fortawesome/free-solid-svg-icons";
 
-interface Props
-{
-    icon: IconProp;
-    onClick?: React.MouseEventHandler<HTMLButtonElement>;
-    className?: string;
+interface Props {
+  icon: IconDefinition;
+  onClick?: React.MouseEventHandler<HTMLButtonElement>;
+  className?: string;
 }
 
-const IconButton: React.FC<Props> = (props) =>
-{
-    return (
-        <button className={"iconButton " + (props.className ?? "")} onClick={props.onClick}>
-            <FontAwesomeIcon size="sm" icon={props.icon} /> <span>{props.children}</span>
-        </button>
-    );
-}
+const IconButton: React.FC<React.PropsWithChildren<Props>> = (props) => {
+  return (
+    <button
+      className={"iconButton " + (props.className ?? "")}
+      onClick={props.onClick}
+    >
+      <FontAwesomeIcon size="sm" icon={props.icon} />{" "}
+      <span>{props.children}</span>
+    </button>
+  );
+};
 
 export default IconButton;
