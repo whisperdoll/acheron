@@ -1,4 +1,5 @@
-import { AppState } from "../AppContext";
+import { AppState } from "../state/AppState";
+import { LayerState } from "../state/AppState";
 import { ControlState } from "../Types";
 import {
   LayerControlKey,
@@ -49,11 +50,12 @@ export function transposeNote(note: string, transpose: number) {
 }
 
 export function getInheritParts(
-  str: string
+  str: string | undefined
 ):
   | [p1: "global", p2: PlayerControlKey]
   | [p1: "layer", p2: LayerControlKey]
   | false {
+  if (str === undefined) return false;
   const parts = str.split(".");
   if (parts.length === 2) {
     if (parts[0] === "global") {
@@ -73,16 +75,17 @@ export function getInheritParts(
 }
 
 export function getControlFromInheritParts(
-  appState: AppState,
-  layerIndex: number,
+  controls: AppState["controls"],
+  playerControls: Pick<AppState, PlayerControlKey>,
+  layer: LayerState,
   inheritParts:
     | [p1: "global", p2: PlayerControlKey]
     | [p1: "layer", p2: LayerControlKey]
 ): ControlState {
   if (inheritParts[0] === "global") {
-    return appState.controls[appState[inheritParts[1]]];
+    return controls[playerControls[inheritParts[1]]];
   } else {
-    return appState.controls[appState.layers[layerIndex][inheritParts[1]]];
+    return controls[layer[inheritParts[1]]];
   }
 }
 

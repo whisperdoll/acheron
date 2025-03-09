@@ -1,7 +1,8 @@
-import React, { useContext } from "react";
+import React, { useContext, useEffect } from "react";
 import state from "../state/AppState";
 import settings, { AppSettings } from "../state/AppSettings";
 import List from "../lib/list";
+import TokenManager from "./TokenManager";
 
 interface Props {
   onHide: () => any;
@@ -58,9 +59,21 @@ export default function Settings(props: Props) {
     }
   }
 
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        props.onHide();
+      }
+    }
+
+    document.addEventListener("keydown", onKeyDown);
+
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, []);
+
   return (
-    <div className="settings-backdrop">
-      <div className="settings-content">
+    <div className="settings-backdrop" onClick={() => props.onHide()}>
+      <div className="settings-content" onClick={(e) => e.stopPropagation()}>
         <h1>Settings</h1>
         <label className="clicky">
           <input
@@ -86,32 +99,36 @@ export default function Settings(props: Props) {
           ></input>
           <span>Show confirmation prompts when removing things</span>
         </label>
-        <div className="midiSelect">
-          <div>MIDI Inputs:</div>
-          {reactiveState.allowedInputs.map((input) => (
-            <label className="clicky" key={input.name}>
-              <input
-                type="checkbox"
-                checked={reactiveSettings.midiInputs.includes(input.name)}
-                onChange={(e) => handleInputToggled(e, input.name)}
-              />
-              <span>{input.name}</span>
-            </label>
-          ))}
+        <h2>MIDI</h2>
+        <div className="midiSelects">
+          <div className="midiSelect">
+            <div>MIDI Inputs:</div>
+            {reactiveState.allowedInputs.map((input) => (
+              <label className="clicky" key={input.name}>
+                <input
+                  type="checkbox"
+                  checked={reactiveSettings.midiInputs.includes(input.name)}
+                  onChange={(e) => handleInputToggled(e, input.name)}
+                />
+                <span>{input.name}</span>
+              </label>
+            ))}
+          </div>
+          <div className="midiSelect">
+            <div>MIDI Outputs:</div>
+            {reactiveState.allowedOutputs.map((output) => (
+              <label className="clicky" key={output.name}>
+                <input
+                  type="checkbox"
+                  checked={reactiveSettings.midiOutputs.includes(output.name)}
+                  onChange={(e) => handleOutputToggled(e, output.name)}
+                />
+                <span>{output.name}</span>
+              </label>
+            ))}
+          </div>
         </div>
-        <div className="midiSelect">
-          <div>MIDI Outputs:</div>
-          {reactiveState.allowedOutputs.map((output) => (
-            <label className="clicky" key={output.name}>
-              <input
-                type="checkbox"
-                checked={reactiveSettings.midiOutputs.includes(output.name)}
-                onChange={(e) => handleOutputToggled(e, output.name)}
-              />
-              <span>{output.name}</span>
-            </label>
-          ))}
-        </div>
+        <TokenManager onHide={props.onHide} />
         <div className="bottomButtons">
           <button onClick={() => props.onHide()}>OK</button>
         </div>

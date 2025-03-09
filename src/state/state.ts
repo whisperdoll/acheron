@@ -76,13 +76,13 @@ export default class StateStore<StateType extends Record<string, any>> {
       Object.assign(this.values, resolvedNewState);
 
       if (equal(prevState, this.values)) {
-        // console.log("state equal so skipping callbacks");
         resolve(this.values);
-        prevState = this.values;
+        prevState = { ...this.values };
         continue;
       }
 
       DEBUG &&
+        why !== "tick" &&
         console.log(
           `setting state bc ${why}`,
           detailedDiff(prevState, this.values)
@@ -90,7 +90,7 @@ export default class StateStore<StateType extends Record<string, any>> {
 
       resolve(this.values);
       this.notifySubscribers(initialState, this.values);
-      prevState = this.values;
+      prevState = { ...this.values };
     }
 
     this.busy = false;
@@ -135,7 +135,8 @@ export default class StateStore<StateType extends Record<string, any>> {
       (_, newState) => {
         setStateValue(selector ? selector(newState) : { ...newState });
       },
-      [setStateValue]
+      [setStateValue],
+      selector
     );
 
     return stateValue;

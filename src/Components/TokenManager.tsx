@@ -40,88 +40,28 @@ export default function TokenManager(props: Props) {
     }
   }
 
-  // function addToken()
-  // {
-  //     const paths = remote.dialog.showOpenDialogSync(remote.getCurrentWindow(), {
-  //         title: "Open Token Folder...",
-  //         properties: [ "openDirectory", "multiSelections" ]
-  //     });
-
-  //     if (paths)
-  //     {
-  //         paths.forEach((path) =>
-  //         {
-  //             const res = loadToken(path);
-  //             if (res)
-  //             {
-  //                 dispatch({ type: "setTokenDefinition", payload: {
-  //                     path,
-  //                     callbacks: res.callbacks,
-  //                     definition: res.tokenDef
-  //                 }});
-  //             }
-  //         });
-  //     }
-  // }
-
-  // function promptRemoveToken(path: string)
-  // {
-  //     if (!state.settings.confirmDelete ||
-  //         confirmPrompt(`Are you sure you want to remove the token '${state.tokenDefinitions[path].label}'?`, "Confirm remove token"))
-  //     {
-  //         dispatch({ type: "removeTokenDefinition", payload: { path }, saveSettings: true });
-  //     }
-  // }
-
-  function toggleEnabled(tokenUid: TokenUID) {}
-
-  function handlePathTextChanged(
-    index: number,
-    e: React.ChangeEvent<HTMLInputElement>
-  ) {}
-
-  function browsePath(index: number) {}
-
-  function removePath(index: number) {}
-
   function addPath() {}
 
   return (
-    <div className="tokenSettings-backdrop">
-      <div className="tokenSettings-content">
-        <h1>Manage Tokens</h1>
-        <div className="tokenSearchPaths-container">
-          <div>Token Search Paths</div>
-
-          <button onClick={addPath}>+ Add Search Path</button>
-        </div>
-        <div className="tokenSettings">
-          {Object.entries(reactiveSettings.tokens).map(([uid, settings]) => (
-            <div className="tokenSetting" key={uid}>
-              <div className="tokenLabel">
-                {reactiveState.tokenDefinitions[uid].label}
-              </div>
-              <div className="row">
-                <span>Shortcut:</span>
-                <input
-                  type="text"
-                  onKeyDown={(e) => handleShortcutKey(e, uid)}
-                  value={settings.shortcut.toUpperCase()}
-                />
-              </div>
-              {/* <button
-                                onClick={() => promptRemoveToken(path)}
-                            >❌ Remove</button> */}
+    <>
+      <h2>Tokens</h2>
+      <div className="tokenSettings">
+        {Object.entries(reactiveSettings.tokens).map(([uid, settings]) => (
+          <div className="tokenSetting" key={uid}>
+            <div className="tokenLabel">
+              {reactiveState.tokenDefinitions[uid].label}
             </div>
-          ))}
-        </div>
-        {/* <button
-                    onClick={addToken}
-                >+ Add Token</button> */}
-        <div className="bottomButtons">
-          <button onClick={() => props.onHide()}>OK</button>
-        </div>
+            <div className="row">
+              <span>Shortcut:</span>
+              <input
+                type="text"
+                onKeyDown={(e) => handleShortcutKey(e, uid)}
+                value={settings.shortcut.toUpperCase()}
+              />
+            </div>
+          </div>
+        ))}
       </div>
-    </div>
+    </>
   );
 }

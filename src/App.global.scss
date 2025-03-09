@@ -1,5 +1,9 @@
 @use "sass:color";
 
+:root {
+  --multilayer-cols: 3;
+}
+
 * {
   font-family: Arial, Helvetica, sans-serif;
   box-sizing: border-box;
@@ -45,7 +49,7 @@
     justify-content: stretch;
 
     button {
-      padding: 2px 4px;
+      padding: 2px 0.25rem;
       font-size: 0.6em;
       flex-grow: 1;
 
@@ -80,7 +84,7 @@ select {
   color: white;
   border: 0;
   border-bottom: 1px solid #aaa;
-  padding: 4px 8px;
+  padding: 0.25rem 0.5rem;
 
   &:hover {
     background-color: rgba(255, 255, 255, 0.2);
@@ -114,7 +118,7 @@ button:not(.nostyle) {
   border: 0px solid #555;
   font-size: 1em;
   cursor: pointer;
-  padding: 8px;
+  padding: 0.5rem;
 
   &:hover {
     background-color: rgba(255, 255, 255, 0.2);
@@ -195,87 +199,90 @@ button.delete {
   align-items: center;
 
   .settings-content,
-  .lfoEditor-content,
-  .tokenSettings-content {
+  .lfoEditor-content {
     min-width: 20%;
     min-height: 20%;
     background-color: #223;
-    padding: 16px 24px;
+    padding: 1rem 1.5rem;
     display: flex;
     flex-direction: column;
+    max-height: 80%;
+    max-width: 80%;
+    overflow: auto;
+    gap: 0.25rem;
 
     h1 {
-      margin-top: 8px;
-      margin-bottom: 16px;
+      margin-top: 0.5rem;
+      margin-bottom: 1rem;
     }
 
-    &.tokenSettings-content {
-      max-width: 50%;
-      max-height: 80%;
+    h2 {
+      margin-top: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
 
-      .tokenSearchPaths-container {
-        border: 1px solid #aaa;
-        padding: 8px;
-        margin: 4px;
+    .midiSelects {
+      margin-top: 0.25rem;
+      display: flex;
+      flex-direction: row;
+      gap: 0.5rem;
+      align-items: start;
+      flex-wrap: wrap;
+
+      .midiSelect {
         display: flex;
         flex-direction: column;
+        gap: 0.25rem;
+        border: 1px solid #aaa;
+        padding: 0.25rem 0.25rem;
 
-        .row {
-          display: flex;
-          flex-direction: row;
-          align-items: stretch;
-        }
+        flex-basis: 100%;
 
-        & > * {
-          margin-bottom: 8px;
-
-          &:last-child {
-            margin-bottom: 0;
-          }
+        @media (min-width: 800px) {
+          flex-basis: calc(100% / 2 - 0.5rem * 1 / 2);
         }
       }
+    }
 
-      .tokenSettings {
+    .tokenSettings {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
+      justify-content: start;
+      gap: 0.25rem;
+
+      .tokenSetting {
+        border: 1px solid #aaa;
+        padding: 0.5rem;
         display: flex;
-        flex-direction: row;
-        flex-wrap: wrap;
-        overflow: auto;
-        justify-content: stretch;
+        flex-direction: column;
+        flex-basis: calc(50% - 0.125rem);
+        gap: 0.5rem;
+        min-width: 0;
 
-        .tokenSetting {
-          border: 1px solid #aaa;
-          padding: 8px;
-          display: flex;
-          flex-direction: column;
-          flex: 1 0 calc(50% - 12px);
-          margin: 4px;
+        @media (min-width: 800px) {
+          flex-basis: calc(100% / 3 - 0.25rem * 2 / 3);
+        }
 
-          & > * {
-            margin-bottom: 8px;
+        @media (min-width: 1000px) {
+          flex-basis: calc(100% / 4 - 0.25rem * 3 / 4);
+        }
 
-            &:last-child {
-              margin-bottom: 0;
-            }
-          }
+        input {
+          flex-grow: 1;
+          min-width: 0;
+        }
 
-          .tokenLabel {
-            font-size: 1.2em;
-          }
+        .tokenLabel {
+          font-size: 1.2em;
         }
       }
     }
 
     .sequence {
       border: 1px solid #aaa;
-      padding: 8px;
-
-      & > * {
-        margin-bottom: 8px;
-
-        &:last-child {
-          margin-bottom: 0;
-        }
-      }
+      padding: 0.5rem;
+      gap: 0.5rem;
 
       .row {
         align-items: stretch;
@@ -286,35 +293,7 @@ button.delete {
       display: flex;
       flex-direction: row;
       align-items: center;
-
-      & > * {
-        margin-right: 8px;
-
-        &:last-child {
-          margin-right: 0;
-        }
-      }
-
-      input,
-      select,
-      .numberInput-container {
-        flex-grow: 1;
-      }
-    }
-
-    & > * {
-      margin-bottom: 8px;
-    }
-
-    .midiSelect {
-      display: flex;
-      flex-direction: column;
-      border: 1px solid #aaa;
-      padding: 4px 4px;
-
-      & > * {
-        margin: 4px;
-      }
+      gap: 0.5rem;
     }
 
     .bottomButtons {
@@ -325,7 +304,7 @@ button.delete {
   }
 }
 
-$statusBarHeight: 32px;
+$statusBarHeight: 2rem;
 
 .columns {
   display: flex;
@@ -344,11 +323,23 @@ $statusBarHeight: 32px;
   display: flex;
   flex-direction: row;
   align-items: center;
-  padding: 0 8px;
+  padding: 0 0.5rem;
+  gap: 0.25rem;
+
+  button {
+    background-color: transparent;
+    height: 100%;
+    padding: 0 0.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+  }
 
   .pulse {
-    width: 20px;
-    height: 20px;
+    margin-right: 0.5rem;
+    width: 1rem;
+    height: 1rem;
     background-color: #aaa;
     border-radius: 100%;
 
@@ -359,32 +350,27 @@ $statusBarHeight: 32px;
 }
 
 .control {
-  margin: 5px 8px;
-  padding: 4px 8px;
+  margin: 5px 0.5rem;
   display: flex;
   align-items: stretch;
   flex-direction: column;
   justify-content: stretch;
   background-color: rgba(255, 255, 255, 0.03);
   border: 1px solid #aaa;
-  padding: 8px;
-  border-radius: 4px;
-
-  & > * {
-    margin-bottom: 8px;
-
-    &:last-child {
-      margin-bottom: 0;
-    }
-  }
+  border-radius: 0.25rem;
+  gap: 0.5rem;
+  padding-bottom: 0.5rem;
 
   .labelRow {
     display: flex;
     flex-direction: row;
     align-items: center;
+    border-bottom: 1px solid #aaa;
+    padding: 0.25rem 0.5rem;
+    background-color: rgba(255, 255, 255, 0.1);
 
     .label {
-      margin-right: 16px;
+      margin-right: 1rem;
     }
 
     .valueType {
@@ -393,9 +379,13 @@ $statusBarHeight: 32px;
   }
 
   .controlRow {
+    padding: 0 0.5rem;
+
     display: flex;
     flex-direction: row;
     justify-content: stretch;
+    align-items: center;
+    gap: 0.5rem;
 
     input,
     .numberInput-container,
@@ -404,8 +394,47 @@ $statusBarHeight: 32px;
     }
   }
 
+  .sequence {
+    border: 1px solid #aaa;
+    padding: 0.5rem;
+
+    .row {
+      align-items: stretch;
+    }
+  }
+
+  .midiSelect {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #aaa;
+    padding: 0.25rem 0.25rem;
+
+    & > * {
+      margin: 0.25rem;
+    }
+  }
+
+  .lfoVisualizer {
+    position: relative;
+    margin: 0 0.5rem;
+    display: flex;
+
+    canvas {
+      &:first-child {
+        position: relative;
+      }
+
+      width: 100%;
+
+      border: 1px solid #aaa;
+      position: absolute;
+      left: 0;
+      top: 0;
+    }
+  }
+
   .readonly {
-    padding: 4px 0;
+    padding: 0.25rem 0;
   }
 
   .triadRow,
@@ -415,9 +444,9 @@ $statusBarHeight: 32px;
     width: 100%;
 
     button {
-      min-width: 32px;
+      min-width: 2rem;
+      height: 2.25rem;
       flex-grow: 1;
-      height: 36px;
       margin: 0;
       background-color: transparent;
       background-position: center;
@@ -456,7 +485,6 @@ $statusBarHeight: 32px;
 }
 
 .leftColumn {
-  width: 256px;
   height: 100%;
   border-right: 1px solid #aaa;
   display: flex;
@@ -464,124 +492,57 @@ $statusBarHeight: 32px;
 }
 
 .middleColumn {
-  margin-left: 32px;
-  margin-right: 32px;
   display: flex;
   flex-direction: column;
   flex-grow: 1;
-  gap: 1rem;
   height: 100%;
-  justify-content: space-between;
   align-content: stretch;
-  padding: 16px 0;
+  min-width: 0;
 
-  .layerSelectRow {
-    display: flex;
-    flex-direction: row;
-    align-items: stretch;
-
-    & > * {
-      margin-right: 8px;
-      font-size: 1em;
-    }
-
-    label {
-      flex-grow: 1;
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-
-      input,
-      select,
-      .numberInput-container {
-        flex-grow: 1;
-        margin-left: 8px;
-      }
-    }
-  }
-}
-
-.elysiumControls {
-  display: flex;
-  flex-direction: row;
-  align-items: stretch;
-  border-radius: 12px;
-  background-color: rgba(255, 255, 255, 0);
-  padding: 8px 8px;
-  border: 1px solid #aaa;
-
-  & > * {
-    margin-right: 8px;
+  &.single-layer {
+    margin-left: 2rem;
+    margin-right: 2rem;
+    padding: 1rem 0;
+    gap: 1rem;
   }
 
-  span {
+  &.multilayer {
+  }
+
+  .multilayerSizeContainer {
     display: flex;
     flex-direction: row;
     align-items: center;
-  }
-}
-
-.hexGrid {
-  display: inline-block;
-  position: relative;
-  flex-grow: 1;
-
-  canvas {
-    max-height: 100%;
-    max-width: 100%;
-    min-height: 0;
-    min-width: 0;
-    user-select: none;
-    position: absolute;
-    z-index: 1;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-
-    &:focus {
-      outline: none;
-    }
-  }
-}
-
-.multilayer-view {
-  position: relative;
-  width: 100%;
-  height: 100%;
-
-  .cols {
-    position: absolute;
-    top: 0;
-    height: calc(100% - 88px);
-    width: 100%;
-
-    display: flex;
-    flex-direction: row;
-    align-items: stretch;
+    gap: 0.5rem;
+    padding: 0.5rem 1.5rem;
   }
 
   .multilayer {
-    flex-grow: 1;
     overflow-y: auto;
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
-    padding: 16px;
-    padding-right: 0;
+    padding: 1rem 1.5rem;
+    gap: 1rem;
 
     .layerContainer {
       display: flex;
       flex-direction: column;
       align-items: center;
+      min-width: 0;
+
+      flex-basis: calc(
+        100% / var(--multilayer-cols) - (1rem - 1rem / var(--multilayer-cols))
+      );
 
       .layerName {
-        margin-bottom: 4px;
+        margin-bottom: 0.5rem;
 
         display: flex;
         flex-direction: row;
         align-items: center;
         justify-content: center;
-        gap: 4px;
+        gap: 0.5rem;
 
         span {
           margin-top: 3px;
@@ -596,35 +557,95 @@ $statusBarHeight: 32px;
 
       .hexGrid {
         canvas {
-          width: 600px;
-          height: auto;
+          width: 100%;
         }
       }
-
-      margin-right: 16px;
-      margin-bottom: 16px;
     }
   }
 
-  .inspector {
-    flex-grow: 0;
-    margin: 0;
-    border-bottom: 1px solid #aaa;
-    border-bottom-left-radius: 12px;
+  .layerSelectRow {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+
+    & > * {
+      margin-right: 0.5rem;
+      font-size: 1em;
+    }
+
+    label {
+      flex-grow: 1;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+
+      input,
+      select,
+      .numberInput-container {
+        flex-grow: 1;
+        margin-left: 0.5rem;
+      }
+    }
+  }
+}
+
+.elysiumControls {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  border-radius: 0.75rem;
+  background-color: rgba(255, 255, 255, 0);
+  padding: 0.5rem 0.5rem;
+  border: 1px solid #aaa;
+
+  & > * {
+    margin-right: 0.5rem;
   }
 
-  .leftColumn {
-    flex-grow: 0;
-    margin: 0;
-    border-bottom: 1px solid #aaa;
-    border-bottom-right-radius: 12px;
+  span {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
   }
+}
 
-  .elysiumControls {
+.hexGrid {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+
+  canvas {
+    user-select: none;
     position: absolute;
-    bottom: 16px;
-    left: 16px;
-    right: 16px;
+    z-index: 1;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+
+    &:focus {
+      outline: none;
+    }
+
+    &:first-of-type {
+      position: relative;
+      left: 0;
+      top: 0;
+      transform: unset;
+    }
+  }
+}
+
+.middleColumn > .hexGrid {
+  flex-grow: 1;
+  min-height: 0;
+  min-width: 0;
+
+  canvas {
+    max-height: 100%;
+    max-width: 100%;
+    min-height: 0;
+    min-width: 0;
   }
 }
 
@@ -645,7 +666,8 @@ $statusBarHeight: 32px;
 }
 
 .playerSettings,
-.layerSettings {
+.layerSettings,
+.layerSettingsInner {
   flex-grow: 1;
   display: flex;
   flex-direction: column;
@@ -654,16 +676,12 @@ $statusBarHeight: 32px;
 
   .layerHeader {
     text-align: center;
-    padding-top: 4px;
-    padding-bottom: 4px;
+    padding-top: 0.25rem;
+    padding-bottom: 0.25rem;
     border: 1px solid #aaa;
     border-left: 0;
     border-right: 0;
     font-weight: bold;
-  }
-
-  .scrolly {
-    overflow: auto;
   }
 
   &.layerSettings .header {
@@ -677,12 +695,12 @@ $statusBarHeight: 32px;
   border: 1px solid #aaa;
   border-left: 0;
   border-right: 0;
-  padding: 4px 8px;
+  padding: 0.25rem 0.5rem;
   background: #525;
-  margin-bottom: 4px;
+  margin-bottom: 0.25rem;
 
   &:not(:first-of-type) {
-    margin-top: 4px;
+    margin-top: 0.25rem;
   }
 }
 
@@ -696,11 +714,11 @@ $statusBarHeight: 32px;
   border-left: 1px solid #aaa;
 
   & > * {
-    margin-top: 8px;
+    margin-top: 0.5rem;
   }
 
   .selectedHexLabel {
-    padding: 0 8px;
+    padding: 0 0.5rem;
   }
 
   .tokens {
@@ -715,7 +733,7 @@ $statusBarHeight: 32px;
       justify-content: stretch;
 
       .control:last-child {
-        margin-bottom: 8px;
+        margin-bottom: 0.5rem;
       }
 
       .header {
@@ -747,7 +765,7 @@ $statusBarHeight: 32px;
     display: flex;
     flex-direction: column;
     justify-content: stretch;
-    padding: 0px 8px;
+    padding: 0px 0.5rem;
 
     .addButton {
       &.expanded {

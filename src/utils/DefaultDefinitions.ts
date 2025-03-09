@@ -4,10 +4,12 @@ import {
   Lfo,
   SelectOption,
   ControlDataType,
-  NumMIDIChannels,
+  TokenUID,
+  TokenInstanceId,
 } from "../Types";
 import { v4 as uuidv4 } from "uuid";
 import { getInheritParts } from "./elysiumutils";
+import { NumMIDIChannels } from "../constants";
 
 // ----------------------------------------------------------------
 // PLAYER
@@ -245,7 +247,7 @@ function layerControlDefs(): Record<LayerControlKey, ControlDefinition> {
   };
 }
 
-export function DefaultLayerControls(): Record<string, ControlState> {
+export function DefaultLayerControls(): Record<TokenInstanceId, ControlState> {
   return buildFromDefs(layerControlDefs());
 }
 
@@ -401,14 +403,15 @@ export function buildLfo(
 ) {
   const { min, max } = getMinMaxForType(type, n_min, n_max, options);
 
+  // add an extra 1 for ints cuz 0-5 is actually 6 items
   const lfo: Lfo = {
-    period: 2,
+    period: max - min + +(type !== "decimal"),
     hiPeriod: 1,
     lowPeriod: 1,
-    max,
+    max: max + +(type !== "decimal"),
     min,
     sequence: [],
-    type: "sine",
+    type: "sawtooth",
   };
 
   return lfo;

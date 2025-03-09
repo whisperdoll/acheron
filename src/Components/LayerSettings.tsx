@@ -45,7 +45,7 @@ export default function (props: Props) {
       <div className="layerHeader">
         {reactiveState.layers[props.layerIndex].name}
       </div>
-      <div className="scrolly">
+      <div className="layerSettingsInner">
         <div className="header">Layer</div>
         {layerControls.map(buildControl)}
         <div className="header">Notes</div>

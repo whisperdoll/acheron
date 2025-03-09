@@ -73,12 +73,11 @@ export default function NumberInput(props: Props) {
   function increment() {
     const step = props.step ?? 1;
     let value = props.value;
+    const stepDecimals = step.toString().split(".")[1]?.length || 0;
+    const valueDecimals = value.toString().split(".")[1]?.length || 0;
+    const resultingDecimals = Math.max(stepDecimals, valueDecimals);
 
-    value = props.value + step;
-
-    if (props.step) {
-      value = Math.round(value / props.step) * props.step;
-    }
+    value = parseFloat((props.value + step).toFixed(resultingDecimals));
 
     if (props.max !== undefined && value > props.max) {
       value = props.max;
@@ -89,12 +88,11 @@ export default function NumberInput(props: Props) {
   function decrement() {
     const step = props.step ?? 1;
     let value = props.value;
+    const stepDecimals = step.toString().split(".")[1]?.length || 0;
+    const valueDecimals = value.toString().split(".")[1]?.length || 0;
+    const resultingDecimals = Math.max(stepDecimals, valueDecimals);
 
-    value = props.value - step;
-
-    if (props.step) {
-      value = Math.round(value / props.step) * props.step;
-    }
+    value = parseFloat((props.value - step).toFixed(resultingDecimals));
 
     if (props.min !== undefined && value < props.min) {
       value = props.min;

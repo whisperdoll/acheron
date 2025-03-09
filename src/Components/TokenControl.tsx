@@ -1,5 +1,4 @@
 import Control from "./Control";
-import { getControlValue } from "../Types";
 import state from "../state/AppState";
 import settings from "../state/AppSettings";
 
@@ -55,11 +54,10 @@ export default function (props: Props) {
 
             if (index !== -1) {
               const bool = Boolean(
-                getControlValue(
-                  reactiveState,
-                  props.layerIndex,
-                  reactiveState.controls[token.controlIds[index]]
-                )
+                state.getControlValue(token.controlIds[index], {
+                  layer: reactiveState.layers[props.layerIndex],
+                  controls: reactiveState.controls,
+                })
               );
               return bool !== shouldNegate ? ret : undefined;
             } else {

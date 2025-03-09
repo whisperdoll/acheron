@@ -1,3 +1,4 @@
+import prand from "pure-rand";
 import { type MutableRefObject, type RefCallback } from "react";
 
 export type Nullish = null | undefined;
@@ -27,6 +28,28 @@ export function splitmix32(seed: number): () => number {
     t = Math.imul(t, 0x735a2d97);
     return ((t = t ^ (t >>> 15)) >>> 0) / 4294967296;
   };
+}
+
+export function clamp(n: number, min: number, max: number): number {
+  return n > max ? max : n < min ? min : n;
+}
+
+export function minAndMax(arr: number[]): [number, number] {
+  if (arr.length === 0) throw "bad array";
+
+  let min, max;
+  min = max = arr[0];
+
+  for (let i = 1; i < arr.length; i++) {
+    if (arr[i] < min) {
+      min = arr[i];
+    }
+    if (arr[i] > max) {
+      max = arr[i];
+    }
+  }
+
+  return [min, max];
 }
 
 export function mod(x: number, m: number): number {
@@ -84,6 +107,19 @@ export async function resolveMaybeGeneratedPromise<
   return await resolveMaybePromise(
     await resolveMaybeGenerated(value, ...generatorArgs)
   );
+}
+
+let randomFloatRng = prand.xoroshiro128plus(performance.now());
+export function randomFloat(): number {
+  const resolution = 1 << 24;
+
+  const ret =
+    prand.unsafeUniformIntDistribution(0, resolution - 1, randomFloatRng) /
+    resolution;
+
+  // randomFloatRng.next();
+
+  return ret;
 }
 
 export function distance(p1: Point, p2: Point): number;

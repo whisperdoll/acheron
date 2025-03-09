@@ -18,14 +18,21 @@ import state from "../state/AppState";
 import settings from "../state/AppSettings";
 import { pluck, sliceObject } from "../utils/utils";
 import { PlayerControlKeys } from "../utils/DefaultDefinitions";
+import LfoVisualizer from "./LfoVisualizer";
+import LfoControls from "./LfoControls";
 
 interface Props {
   controlId: string;
   layerIndex: number;
 }
 
-export default function Control(props: Props) {
-  const reactiveState = state.useState();
+export default React.memo(function Control(props: Props) {
+  const reactiveState = state.useState((s) => ({
+    controls: s.controls,
+    layers: s.layers,
+    tokens: s.tokens,
+    selectedLayer: s.selectedHex.layerIndex,
+  }));
   const [_, forceUpdate] = useReducer((x) => x + 1, 0);
   const controlState = reactiveState.controls[props.controlId];
 
@@ -45,23 +52,25 @@ export default function Control(props: Props) {
     );
 
     if (index === -1) {
-      index = reactiveState.selectedHex.layerIndex;
+      index = reactiveState.selectedLayer;
     }
 
     return index;
-  }, [props.controlId, reactiveState.selectedHex.layerIndex]);
+  }, [props.controlId, reactiveState.selectedLayer]);
   // const tempo = layerIndex === -1 ? getControlValue(reactiveState, reactiveState.controls[reactiveState.tempo]) : getControlValue(reactiveState, reactiveState.controls[reactiveState.layers[layerIndex].tempo]);
   // const bpms = 60 / tempo * 1000;
   // const now = Math.floor(Date.now() / bpms) * bpms;
 
   const controlValueDeps = [
     reactiveState.controls[props.controlId],
-    Math.floor(reactiveState.layers[layerIndex].currentBeat),
+    reactiveState.layers[layerIndex].currentBeat,
   ];
-  const controlValue = useMemo(
-    () => getControlValue(reactiveState, props.layerIndex, controlState) ?? 0,
-    controlValueDeps
-  );
+  const controlValue = useMemo(() => {
+    return state.getControlValue(controlState, {
+      layer: reactiveState.layers[props.layerIndex],
+      controls: reactiveState.controls,
+    });
+  }, controlValueDeps);
 
   function handleChange(partial: Partial<ControlState>) {
     state.set(
@@ -207,17 +216,10 @@ export default function Control(props: Props) {
       case "decimal":
       case "int":
       default:
-        controlPart = <div>{controlValue}</div>;
+        controlPart = <div>Value: {controlValue}</div>;
         break;
       case "select":
-        controlPart = (
-          <div>
-            {
-              controlState.options!.find(({ value }) => value === controlValue)!
-                .label
-            }
-          </div>
-        );
+        controlPart = <div>Value: {controlValue}</div>;
         break;
       case "direction":
         controlPart = (
@@ -283,13 +285,16 @@ export default function Control(props: Props) {
       </div>
       <div className="controlRow">{controlPart}</div>
       {controlState.currentValueType === "modulate" && (
-        <button
-          className="editLfo"
-          onClick={() => state.editLfo(props.controlId, "clicked edit lfo")}
-        >
-          ✎ Edit{" "}
-        </button>
+        <>
+          <LfoControls control={controlState} />
+          <LfoVisualizer
+            currentTimeMs={reactiveState.layers[0].currentTimeMs}
+            lfo={controlState.lfo}
+            resolutionX={300}
+            resolutionY={100}
+          />
+        </>
       )}
     </div>
   );
-}
+});

@@ -1,5 +1,5 @@
-import { useContext, useEffect, useRef } from "react";
-import { ControlState, getControlValue, KeyMap } from "../Types";
+import React, { useContext, useEffect, useRef } from "react";
+import { ControlState, KeyMap } from "../Types";
 import { Canvas } from "../utils/canvas";
 import {
   getNoteParts,
@@ -24,7 +24,7 @@ interface Props {
 
 type DragType = "copy" | "move" | "none";
 
-export default function HexGrid(props: Props) {
+export default React.memo(function HexGrid(props: Props) {
   const reactiveState = state.useState();
   const reactiveSettings = settings.useState();
   const canvasEl = useRef<HTMLCanvasElement | null>(null);
@@ -92,35 +92,35 @@ export default function HexGrid(props: Props) {
             },
             "clearing hex off of keypress"
           );
-        } else if ([...e.key].length === 1 && !e.ctrlKey && !e.shiftKey) {
-          for (const uid in reactiveSettings.tokens) {
-            if (
-              reactiveSettings.tokens[uid].shortcut.toLowerCase() ===
-              e.key.toLowerCase()
-            ) {
-              if (e.altKey) {
-                const tokenIds =
-                  reactiveState.layers[props.layerIndex].tokenIds[
-                    reactiveState.selectedHex.hexIndex
-                  ];
-                const tokenToRemove = tokenIds
-                  .slice(0)
-                  .reverse()
-                  .find((iid) => reactiveState.tokens[iid].uid === uid);
-                if (tokenToRemove) {
-                  state.removeTokenFromHex(
-                    tokenToRemove,
-                    reactiveState.selectedHex,
-                    "remove token off keyboard shortcut"
-                  );
-                }
-              } else {
-                state.addTokenToHex(
-                  uid,
+        }
+      } else if ([...e.key].length === 1 && !e.ctrlKey && !e.shiftKey) {
+        for (const uid in reactiveSettings.tokens) {
+          if (
+            reactiveSettings.tokens[uid].shortcut.toLowerCase() ===
+            e.key.toLowerCase()
+          ) {
+            if (e.altKey) {
+              const tokenIds =
+                reactiveState.layers[props.layerIndex].tokenIds[
+                  reactiveState.selectedHex.hexIndex
+                ];
+              const tokenToRemove = tokenIds
+                .slice(0)
+                .reverse()
+                .find((iid) => reactiveState.tokens[iid].uid === uid);
+              if (tokenToRemove) {
+                state.removeTokenFromHex(
+                  tokenToRemove,
                   reactiveState.selectedHex,
-                  "add token off keyboard shortcut"
+                  "remove token off keyboard shortcut"
                 );
               }
+            } else {
+              state.addTokenToHex(
+                uid,
+                reactiveState.selectedHex,
+                "add token off keyboard shortcut"
+              );
             }
           }
         }
@@ -224,11 +224,10 @@ export default function HexGrid(props: Props) {
             .filter((c) => c.type === "direction")
             .forEach((c) =>
               ret.push(
-                getControlValue(
-                  reactiveState,
-                  props.layerIndex,
-                  c as ControlState<"direction">
-                )
+                state.getControlValue(c as ControlState<"direction">, {
+                  controls: reactiveState.controls,
+                  layer: reactiveState.layers[props.layerIndex],
+                })
               )
             );
         });
@@ -236,12 +235,7 @@ export default function HexGrid(props: Props) {
         return ret;
       })
     );
-  }, [
-    reactiveState.selectedHex.layerIndex,
-    Math.floor(reactiveState.layers[props.layerIndex].currentBeat),
-    reactiveState.controls,
-    reactiveState.layers[props.layerIndex].tokenIds,
-  ]);
+  }, [reactiveState.selectedHex.layerIndex, Math.floor(reactiveState.layers[props.layerIndex].currentBeat), reactiveState.controls, reactiveState.layers[props.layerIndex].tokenIds]);
 
   ////////////////////////////////////////////////////////////////////////////////
   //////////////////////////////////// EVENTS ////////////////////////////////////
@@ -267,7 +261,8 @@ export default function HexGrid(props: Props) {
         if (destIndex !== -1) {
           (reactiveState.draggingType === "copy"
             ? state.copyHex
-            : state.moveHex)(
+            : state.moveHex
+          ).bind(state)(
             {
               srcLayerIndex: reactiveState.draggingSourceHex.layerIndex,
               destLayerIndex: reactiveState.draggingDestHex.layerIndex,
@@ -453,10 +448,12 @@ export default function HexGrid(props: Props) {
 
     // draw key //
     // console.log(state);
-    const key: keyof typeof KeyMap = getControlValue(
-      state.values,
-      props.layerIndex,
-      reactiveState.controls[reactiveState.layers[props.layerIndex].key]
+    const key: keyof typeof KeyMap = state.getControlValue(
+      { layerControl: "key" },
+      {
+        layer: reactiveState.layers[props.layerIndex],
+        controls: reactiveState.controls,
+      }
     ) as keyof typeof KeyMap;
     if (key !== "None") {
       const notes = KeyMap[key].map((ni) => noteArray[ni]);
@@ -556,14 +553,7 @@ export default function HexGrid(props: Props) {
         }
       }
     );
-  }, [
-    reactiveState.selectedHex,
-    reactiveState.layers,
-    props.layerIndex,
-    reactiveState.draggingDestHex,
-    reactiveState.isDragging,
-    reactiveState.midiNotes,
-  ]);
+  }, [reactiveState.selectedHex, reactiveState.layers, props.layerIndex, reactiveState.draggingDestHex, reactiveState.isDragging, reactiveState.midiNotes]);
 
   // useEffect(() =>
   // {
@@ -608,4 +598,4 @@ export default function HexGrid(props: Props) {
       ></canvas>
     </div>
   );
-}
+});

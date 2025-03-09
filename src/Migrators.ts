@@ -1,3 +1,4 @@
+import { NumMIDIChannels } from "./constants";
 import {
   SerializedComposition,
   SerializedCompositionLayer,
@@ -5,7 +6,7 @@ import {
 } from "./Serialization";
 import { AppSettings, TokenSettings } from "./state/AppSettings";
 import { getTokenUIDFromPath } from "./Tokens";
-import { KeyMap, NumMIDIChannels, TokenUID } from "./Types";
+import { KeyMap, TokenUID } from "./Types";
 import {
   buildLfo,
   DefaultPlayerControls,

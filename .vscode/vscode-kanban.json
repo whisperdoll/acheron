@@ -1,10 +1,28 @@
 {
   "todo": [
     {
+      "assignedTo": {
+        "name": "whisperdoll"
+      },
+      "creation_time": "2025-03-09T21:47:28.273Z",
+      "id": "2",
+      "references": [],
+      "title": "sidebar sizing"
+    },
+    {
       "creation_time": "2025-01-01T03:59:27.626Z",
       "id": "1",
       "references": [],
       "title": "write tests"
+    },
+    {
+      "assignedTo": {
+        "name": "whisperdoll"
+      },
+      "creation_time": "2025-03-09T21:47:36.007Z",
+      "id": "3",
+      "references": [],
+      "title": "keyboard shortcuts"
     }
   ],
   "in-progress": [],

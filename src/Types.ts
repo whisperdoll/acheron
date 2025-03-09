@@ -1,11 +1,23 @@
-import seedRandom from "seedrandom";
 import { v4 as uuidv4 } from "uuid";
 import {
   getControlFromInheritParts,
   getInheritParts,
   noteArray,
 } from "./utils/elysiumutils";
-import { AppState } from "./state/AppState";
+import appStateStore, { AppState, LayerState } from "./state/AppState";
+import { sliceObject } from "./utils/utils";
+import { PlayerControlKey } from "./utils/DefaultDefinitions";
+import { randomFloat } from "./lib/utils";
+
+type Entries<T> = {
+  [K in keyof T]: [K, T[K]];
+}[keyof T][];
+
+declare global {
+  interface ObjectConstructor {
+    entries<T extends object>(o: T): Entries<T>;
+  }
+}
 
 export type TokenStore = Record<string, any>;
 
@@ -15,8 +27,6 @@ export type ControlValueType =
   | "inherit"
   | "multiply"
   | "add";
-
-export const NumMIDIChannels = 16;
 
 export type TokenUID = string;
 export type TokenInstanceId = string;
@@ -184,14 +194,14 @@ export function coerceControlValueFromNumber<
       case "decimal":
         return +value;
       case "direction":
-        return Math.round(+value) % 6;
+        return Math.floor(+value) % 6;
       case "int":
-        return Math.round(+value);
+        return Math.floor(+value);
       case "select":
-        return control.options![Math.round(+value) % control.options!.length]
+        return control.options![Math.floor(+value) % control.options!.length]
           .value;
       case "triad":
-        return Math.round(+value) % 7;
+        return Math.floor(+value) % 7;
       default:
         throw "no control type..?";
     }
@@ -211,49 +221,63 @@ export function coerceControlValueToNumber<
   }
 }
 
-export function getControlValue<T extends ControlDataType = ControlDataType>(
-  appState: AppState,
-  layerIndex: number,
-  controlState: ControlState<T>
-): TypeForControlDataType<T> {
-  if (controlState.inherit) {
-    const inheritParts = getInheritParts(controlState.inherit);
+const inheritableTypes: ControlValueType[] = ["inherit", "add", "multiply"];
+export function getControlValue<
+  T extends ControlDataType = ControlDataType
+>(opts: {
+  control: ControlState<T>;
+  layer: LayerState;
+  currentBeat: number;
+  currentTimeMs: number;
+  controls: AppState["controls"];
+  playerControls: Pick<AppState, PlayerControlKey>;
+}): TypeForControlDataType<T> {
+  if (inheritableTypes.includes(opts.control.currentValueType)) {
+    const inheritParts = getInheritParts(opts.control.inherit);
     if (!inheritParts) {
-      console.error("inherit failed", { controlState, appState });
+      console.error("inherit failed", opts, appStateStore.values);
       throw "inherit fail";
     }
 
     const inheritedControl = getControlFromInheritParts(
-      appState,
-      layerIndex,
+      opts.controls,
+      opts.playerControls,
+      opts.layer,
       inheritParts
     );
     let inheritedValue = coerceControlValueToNumber(
-      getControlValue(appState, layerIndex, inheritedControl),
+      getControlValue({ ...opts, control: inheritedControl }),
       inheritedControl
     );
-    if (controlState.currentValueType === "add") {
+    if (opts.control.currentValueType === "add") {
       inheritedValue += coerceControlValueToNumber(
-        controlState.fixedValue,
-        controlState
+        opts.control.fixedValue,
+        opts.control
       );
-    } else if (controlState.currentValueType === "multiply") {
+    } else if (opts.control.currentValueType === "multiply") {
       inheritedValue *= coerceControlValueToNumber(
-        controlState.fixedValue,
-        controlState
+        opts.control.fixedValue,
+        opts.control
       );
     }
     return coerceControlValueFromNumber(
-      Math.max(Math.min(+inheritedValue, controlState.max), controlState.min),
-      controlState
+      Math.max(Math.min(+inheritedValue, opts.control.max), opts.control.min),
+      opts.control
     );
-  } else if (controlState.currentValueType === "modulate") {
-    const value = getLfoValue(appState, layerIndex, controlState.lfo);
-    return coerceControlValueFromNumber(value, controlState);
-  } else if (controlState.currentValueType === "fixed") {
-    return controlState.fixedValue;
+  } else if (opts.control.currentValueType === "modulate") {
+    const value = getLfoValue(
+      opts.control.lfo,
+      {
+        beat: opts.currentBeat,
+        ms: opts.currentTimeMs,
+      },
+      "ms"
+    );
+    return coerceControlValueFromNumber(value, opts.control);
+  } else if (opts.control.currentValueType === "fixed") {
+    return opts.control.fixedValue;
   } else {
-    console.error("invalid control value type", controlState, appState);
+    console.error("invalid control value type", opts, appStateStore.values);
     throw "invalid control value type";
   }
 }
@@ -302,19 +326,15 @@ export interface Lfo {
   sequence: number[];
 }
 
-function getLfoValue(appState: AppState, layerIndex: number, lfo: Lfo): number {
-  const tempoControl = appState.controls[appState.tempo];
-  const bpms =
-    lfo === tempoControl.lfo
-      ? 1
-      : (60 /
-          getControlValue(
-            appState,
-            layerIndex,
-            tempoControl as ControlState<"int">
-          )) *
-        1000;
-  const now = Math.floor(Date.now() / bpms) * bpms;
+export function getLfoValue(
+  lfo: Lfo,
+  currentTime: { beat: number; ms: number },
+  align: "beat" | "ms"
+): number {
+  const now =
+    align === "ms"
+      ? currentTime.ms
+      : Math.floor(currentTime.ms / currentTime.beat) * currentTime.ms;
   const lowPeriod = lfo.lowPeriod * 1000;
   const hiPeriod = lfo.hiPeriod * 1000;
   const period = lfo.period * 1000;
@@ -322,11 +342,7 @@ function getLfoValue(appState: AppState, layerIndex: number, lfo: Lfo): number {
 
   switch (lfo.type) {
     case "random": {
-      return (
-        lfo.min +
-        seedRandom((Math.floor(now / period) * period).toString())() *
-          (lfo.max - lfo.min)
-      );
+      return lfo.min + randomFloat() * (lfo.max - lfo.min);
     }
     case "sawtooth": {
       return lfo.min + (t / period) * (lfo.max - lfo.min);
@@ -335,15 +351,9 @@ function getLfoValue(appState: AppState, layerIndex: number, lfo: Lfo): number {
       return lfo.max - (t / period) * (lfo.max - lfo.min);
     }
     case "triangle": {
-      const amp = (lfo.max - lfo.min) / 2;
-      return (
-        (0 <= t && t <= period / 2
-          ? amp - ((4 * amp) / period) * Math.abs(t - period / 4)
-          : period / 2 < t && t <= period
-          ? ((4 * amp) / period) * Math.abs(t - (3 * period) / 4) - amp
-          : 0) +
-        amp * 2
-      );
+      return t / period <= 0.5
+        ? lfo.min + (t / period) * (lfo.max - lfo.min) * 2
+        : lfo.max - (t / period) * (lfo.max - lfo.min) * 2;
     }
     case "sine": {
       const amp = (lfo.max - lfo.min) / 2;

@@ -11,11 +11,7 @@ import {
   performTransfers,
   progressLayer,
 } from "./utils/driver";
-import {
-  coerceControlValueToNumber,
-  ControlState,
-  getControlValue,
-} from "./Types";
+import { coerceControlValueToNumber, ControlState } from "./Types";
 import Midi from "./utils/midi";
 import { hexNotes, transposeNote } from "./utils/elysiumutils";
 import Settings from "./Components/Settings";
@@ -37,7 +33,6 @@ import {
   faCheck,
 } from "@fortawesome/free-solid-svg-icons";
 import IconButton from "./Components/IconButton";
-import timerWorkerPath from "../assets/timerWorker.worker?url";
 import { tokenDefinitions } from "./Tokens";
 import { buildMenu } from "./Menu";
 import { invoke } from "@tauri-apps/api/core";
@@ -47,38 +42,42 @@ import { deserializeComposition } from "./Serialization";
 import state from "./state/AppState";
 import settings from "./state/AppSettings";
 import List from "./lib/list";
+import useTimer from "./Hooks/useTimer";
+import StatusBar from "./Components/StatusBar";
+import LayerSelect from "./Components/LayerSelect";
 
 export default function App() {
   const reactiveState = state.useState();
-  const reactiveSettings = settings.useState();
-  const [isShowingPlayerSettings, setIsShowingPlayerSettings] = useState(true);
-  const [isEditingLayerName, setIsEditingLayerName] = useState(false);
-  const [isShowingSettings, setIsShowingSettings] = useState(false);
-  const [isShowingInspector, setIsShowingInspector] = useState(true);
-  const [isShowingLeftColumn, setIsShowingLeftColumn] = useState(true);
-  const [isShowingTokenSettings, setIsShowingTokenSettings] = useState(false);
-  const tickCallback = useRef<(deltaMs: number) => any>(() => 0);
-  const timerWorker = useRef<Worker | null>(null);
-  const [isMultiLayerMode, setIsMultiLayerMode] = useState(false);
-  const [multiLayerSize, _setMultiLayerSize] = useState(600);
-  const multiLayerSizeMin = 100;
-  const multiLayerSizeMax = 1000;
   const notePlayedAsCache = useRef<
     Record<string, { note: string; channel: number }>
   >({});
+  const lastTick = useRef(0);
+
+  const [startTimer, stopTimer] = useTimer({
+    onTick: (deltaMs: number) => {
+      // console.time("tick");
+      const now = performance.now();
+      if (state.values.isPlaying) {
+        const deltaMs = now - lastTick.current;
+        let newState = { ...state.values };
+        for (let i = 0; i < state.values.layers.length; i++) {
+          newState = progressLayer(newState, deltaMs, i);
+        }
+        for (let i = 0; i < state.values.layers.length; i++) {
+          newState = performTransfers(newState, i);
+        }
+        state.set(newState, "tick");
+      }
+      lastTick.current = now;
+      // console.timeEnd("tick");
+    },
+  });
 
   useEffect(() => {
-    timerWorker.current = new Worker(timerWorkerPath);
-    timerWorker.current.postMessage("start");
+    lastTick.current = performance.now();
+    startTimer();
 
-    timerWorker.current.addEventListener("message", (e) =>
-      tickCallback.current(e.data)
-    );
-
-    return () => {
-      timerWorker.current!.terminate();
-      timerWorker.current = null;
-    };
+    return () => stopTimer();
   }, []);
 
   useEffect(() => {
@@ -107,48 +106,48 @@ export default function App() {
         invoke("plugin:webview|internal_toggle_devtools");
       },
       toggleInspector() {
-        setIsShowingInspector((value) => !value);
+        state.set(
+          (s) => ({ isShowingInspector: !s.isShowingInspector }),
+          "toggle showing inspector"
+        );
       },
       toggleLeftColumn() {
-        setIsShowingLeftColumn((value) => !value);
+        state.set(
+          (s) => ({ isShowingLeftColumn: !s.isShowingLeftColumn }),
+          "toggle showing left col"
+        );
       },
       toggleMultilayer() {
-        setIsMultiLayerMode((value) => !value);
+        state.set(
+          (s) => ({ isMultiLayerMode: !s.isMultiLayerMode }),
+          "toggle multilayer"
+        );
       },
     });
   }, []);
 
   state.useSubscription(
-    (prevState, newState) => {
-      newState.midiNotes.forEach((note, i) => {
+    (prevState) => {
+      state.values.midiNotes.forEach((note, i) => {
         const index = prevState.midiNotes.findIndex(
           (n) => n.number === note.number
         );
 
         // check to see if we should play //
         if (note.isOn && (index === -1 || !prevState.midiNotes[index].isOn)) {
-          const transposeControl = newState.controls[
-            newState.layers[newState.selectedHex.layerIndex].transpose
-          ] as ControlState<"int">;
+          const transposeControl = state.layerControl("transpose");
           const playedAs = transposeNote(
             note.name,
             coerceControlValueToNumber(
-              getControlValue(
-                newState,
-                newState.selectedHex.layerIndex,
-                transposeControl
-              ),
+              state.getControlValue(transposeControl),
               transposeControl
             )
           );
 
-          const channel = getControlValue(
-            newState,
-            newState.selectedHex.layerIndex,
-            newState.controls[
-              newState.layers[newState.selectedHex.layerIndex].midiChannel
-            ] as ControlState<"int">
-          );
+          const channel = state.getControlValue<"int">({
+            layerControl: "midiChannel",
+            layer: "current",
+          });
 
           Midi.noteOn([playedAs], settings.values.midiOutputs, channel, {
             velocity: note.velocity,
@@ -156,7 +155,7 @@ export default function App() {
 
           notePlayedAsCache.current[note.name] = { note: playedAs, channel };
 
-          if (newState.isPlaying) {
+          if (state.values.isPlaying) {
             state.bufferMidi(
               (state) => ({ layerIndex: state.selectedHex.layerIndex, note }),
               "playing notes lol"
@@ -183,57 +182,6 @@ export default function App() {
     [],
     (s) => s.midiNotes
   );
-
-  useEffect(() => {
-    tickCallback.current = (deltaMs: number) => {
-      state.set((state) => {
-        if (!state.isPlaying) return state;
-
-        let newState = { ...state };
-        state.layers.forEach((layer, layerIndex) => {
-          newState = progressLayer(newState, deltaMs, layerIndex);
-        });
-        state.layers.forEach((layer, layerIndex) => {
-          newState = performTransfers(newState, layerIndex);
-        });
-
-        return newState;
-      }, "tick");
-    };
-
-    function toggleLeftColumn() {
-      setIsShowingLeftColumn(!isShowingLeftColumn);
-    }
-
-    function toggleInspector() {
-      setIsShowingInspector(!isShowingInspector);
-    }
-
-    function toggleMultilayer() {
-      setIsMultiLayerMode(!isMultiLayerMode);
-    }
-
-    function addLayer() {
-      state.addLayer(!isMultiLayerMode, "add layer");
-    }
-
-    // TODO
-    // ipcRenderer.addListener("open", loadComposition);
-    // ipcRenderer.addListener("saveAs", saveComposition);
-    // ipcRenderer.addListener("toggleLeftColumn", toggleLeftColumn);
-    // ipcRenderer.addListener("toggleInspector", toggleInspector);
-    // ipcRenderer.addListener("toggleMultilayer", toggleMultilayer);
-    // ipcRenderer.addListener("addLayer", addLayer);
-
-    // return () => {
-    //   ipcRenderer.removeListener("open", loadComposition);
-    //   ipcRenderer.removeListener("saveAs", saveComposition);
-    //   ipcRenderer.removeListener("toggleLeftColumn", toggleLeftColumn);
-    //   ipcRenderer.removeListener("toggleInspector", toggleInspector);
-    //   ipcRenderer.removeListener("toggleMultilayer", toggleMultilayer);
-    //   ipcRenderer.removeListener("addLayer", addLayer);
-    // };
-  });
 
   state.useSubscription(
     (prevState, newState) => {
@@ -330,45 +278,31 @@ export default function App() {
   );
 
   state.useSubscription(
-    (_, state) => {
-      if (state.selectedHex.hexIndex === -1 || !settings.values.playNoteOnClick)
+    () => {
+      if (
+        state.values.selectedHex.hexIndex === -1 ||
+        !settings.values.playNoteOnClick
+      )
         return;
 
-      const transposeControl = state.controls[
-        state.layers[state.selectedHex.layerIndex].transpose
-      ] as ControlState<"int">;
+      const transposeControl = state.layerControl<"int">("transpose");
 
       Midi.playNotes(
         [
           transposeNote(
-            hexNotes[state.selectedHex.hexIndex],
-            getControlValue(
-              state,
-              state.selectedHex.layerIndex,
-              transposeControl
-            ) + 12
+            hexNotes[state.values.selectedHex.hexIndex],
+            state.getControlValue(transposeControl) + 12
           ),
         ],
         settings.values.midiOutputs,
-        getControlValue(
-          state,
-          state.selectedHex.layerIndex,
-          state.controls[
-            state.layers[state.selectedHex.layerIndex].midiChannel
-          ] as ControlState<"int">
-        ),
+        state.getControlValue<"int">({ layerControl: "midiChannel" }),
         {
-          velocity: getControlValue(
-            state,
-            state.selectedHex.layerIndex,
-            state.controls[state.velocity] as ControlState<"decimal">
-          )!,
+          velocity: state.getControlValue<"decimal">({
+            layerControl: "velocity",
+          }),
           durationMs:
-            getControlValue(
-              state,
-              state.selectedHex.layerIndex,
-              state.controls[state.noteLength] as ControlState<"decimal">
-            )! * 1000,
+            state.getControlValue<"decimal">({ layerControl: "noteLength" }) *
+            1000,
         }
       );
     },
@@ -406,7 +340,7 @@ export default function App() {
   }
 
   function showSettings() {
-    setIsShowingSettings(true);
+    state.set({ isShowingSettings: true }, "show settings");
   }
 
   async function saveComposition() {
@@ -435,12 +369,15 @@ export default function App() {
     // }
   }
 
-  function setMultiLayerSize(n: any) {
+  function setMultiLayerSize(n: string) {
     const size = parseInt(n);
     if (isNaN(size)) return;
 
-    _setMultiLayerSize(
-      Math.max(Math.min(size, multiLayerSizeMax), multiLayerSizeMin)
+    state.set(
+      {
+        multiLayerSize: size,
+      },
+      "set multilayer size"
     );
   }
 
@@ -454,92 +391,46 @@ export default function App() {
     open("https://www.patreon.com/whisperdoll");
   }
 
-  function handleTokenManagerHide() {
-    setIsShowingTokenSettings(false);
-    // loadTokensFromSearchPaths(state.settings.tokenSearchPaths);
-  }
-
-  const elysiumControls = (
-    <div className="elysiumControls">
-      <IconButton
-        icon={reactiveState.isPlaying ? faPause : faPlay}
-        onClick={() => state.togglePlaying("toggle play button")}
-      >
-        {reactiveState.isPlaying ? "Pause" : "Play"}
-      </IconButton>
-      {/* <button onClick={reloadScripts}>↻ Refresh Tokens</button> */}
-      <IconButton onClick={showSettings} icon={faCog}>
-        Settings
-      </IconButton>
-      <IconButton
-        onClick={() => setIsShowingTokenSettings(true)}
-        icon={faToolbox}
-      >
-        Manage Tokens
-      </IconButton>
-      {/* <button onClick={loadComposition}>📂 Open Composition</button>
-            <button onClick={saveComposition}>💾 Save Composition</button> */}
-      {/* <IconButton
-                onClick={() => setIsShowingInspector(!isShowingInspector)}
-                icon={isShowingInspector ? faEyeSlash : faEye}
-            >
-                {isShowingInspector ? "Hide" : "Show"} Inspector
-            </IconButton> */}
-      <IconButton
-        onClick={() => setIsMultiLayerMode(!isMultiLayerMode)}
-        icon={faLayerGroup}
-      >
-        Toggle MultiLayer Mode
-      </IconButton>
-      {isMultiLayerMode && (
-        <>
-          <span>Layer Size:</span>
-          <input
-            type="range"
-            min={multiLayerSizeMin}
-            max={multiLayerSizeMax}
-            value={multiLayerSize}
-            onChange={(e) => setMultiLayerSize(e.currentTarget.value)}
-          />
-          <NumberInput
-            min={multiLayerSizeMin}
-            max={multiLayerSizeMax}
-            value={multiLayerSize}
-            onChange={(v) => setMultiLayerSize(v)}
-          />
-        </>
-      )}
-      <IconButton onClick={reportABug} icon={faBug}>
-        Report a Bug
-      </IconButton>
-      <IconButton className="patreon" icon={faDonate} onClick={openPatreon}>
-        Support on Patreon
-      </IconButton>
-    </div>
+  state.useSubscription(
+    () => {
+      document.documentElement.style.setProperty(
+        "--multilayer-cols",
+        state.values.multiLayerSize.toString()
+      );
+    },
+    [],
+    (s) => s.multiLayerSize
   );
 
-  const inspector = isShowingInspector ? (
+  const inspector = reactiveState.isShowingInspector ? (
     <Inspector layerIndex={reactiveState.selectedHex.layerIndex} />
   ) : (
     <></>
   );
-  const leftColumn = isShowingLeftColumn ? (
+  const leftColumn = reactiveState.isShowingLeftColumn ? (
     <div className="leftColumn">
       <div className="tabs">
         <button
-          onClick={() => setIsShowingPlayerSettings(true)}
-          className={isShowingPlayerSettings ? "active" : ""}
+          onClick={() =>
+            state.set(
+              { leftColumnTab: "player" },
+              "show player tab on left col"
+            )
+          }
+          className={reactiveState.leftColumnTab === "player" ? "active" : ""}
         >
           Global
         </button>
         <button
-          onClick={() => setIsShowingPlayerSettings(false)}
-          className={!isShowingPlayerSettings ? "active" : ""}
+          onClick={() =>
+            state.set({ leftColumnTab: "layer" }, "show layer tab on left col")
+          }
+          className={reactiveState.leftColumnTab === "layer" ? "active" : ""}
         >
           Layer
         </button>
       </div>
-      {isShowingPlayerSettings ? (
+      {reactiveState.leftColumnTab === "player" ? (
         <PlayerSettings />
       ) : (
         <LayerSettings
@@ -553,116 +444,34 @@ export default function App() {
 
   return (
     <div className="app">
-      {isShowingSettings && (
-        <Settings onHide={() => setIsShowingSettings(false)} />
-      )}
-      {isShowingTokenSettings && (
-        <TokenManager onHide={handleTokenManagerHide} />
+      {reactiveState.isShowingSettings && (
+        <Settings
+          onHide={() =>
+            state.set({ isShowingSettings: false }, "hide settings")
+          }
+        />
       )}
       {reactiveState.editingLfo && <LfoEditor />}
-      {isMultiLayerMode ? (
-        <div className="multilayer-view">
-          <div className="cols">
-            {leftColumn}
-            <div className="multilayer">
-              {reactiveState.layers.map((layer, layerIndex) => (
-                <div className="layerContainer" key={layerIndex}>
-                  <div className="layerName">
-                    <span>{layer.name}</span>
-                    <button
-                      className="nostyle remove"
-                      onClick={() => confirmRemoveLayer(layerIndex)}
-                    >
-                      ❌
-                    </button>
-                  </div>
-                  <HexGrid
-                    layerIndex={layerIndex}
-                    key={layerIndex}
-                    size={multiLayerSize}
-                  />
-                </div>
-              ))}
-            </div>
-            {inspector}
-          </div>
-          {elysiumControls}
-        </div>
-      ) : (
-        <>
-          <div className="columns">
-            {leftColumn}
-            <div className="middleColumn">
-              <div className="layerSelectRow">
-                <label>
-                  <span className="layerLabel">Layer: </span>
-                  {isEditingLayerName ? (
-                    <input
-                      value={
-                        reactiveState.layers[
-                          reactiveState.selectedHex.layerIndex
-                        ].name
-                      }
-                      onChange={(e) =>
-                        state.setLayer(
-                          "current",
-                          (layer) => ({
-                            ...layer,
-                            name: e.currentTarget.value,
-                          }),
-                          "change layer name"
-                        )
-                      }
-                    />
-                  ) : (
-                    <select
-                      className="layerSelect"
-                      onChange={(e) =>
-                        state.set(
-                          (state) => ({
-                            selectedHex: {
-                              ...state.selectedHex,
-                              layerIndex: parseInt(e.currentTarget.value),
-                            },
-                          }),
-                          "change layer from select"
-                        )
-                      }
-                      value={reactiveState.selectedHex.layerIndex}
-                    >
-                      {reactiveState.layers.map((layer, i) => (
-                        <option key={i} value={i}>
-                          {layer.name}
-                          {i === reactiveState.selectedHex.layerIndex || i > 9
-                            ? ""
-                            : ` (Ctrl+${(i + 1) % 10})`}
-                        </option>
-                      ))}
-                    </select>
-                  )}
-                </label>
-                {isEditingLayerName ? (
-                  <IconButton
-                    onClick={(e) => setIsEditingLayerName(false)}
-                    icon={faCheck}
-                  >
-                    Save Name
-                  </IconButton>
-                ) : (
-                  <IconButton
-                    onClick={(e) => setIsEditingLayerName(true)}
-                    icon={faEdit}
-                  >
-                    Edit Name
-                  </IconButton>
-                )}
-                <IconButton
-                  onClick={() => confirmRemoveLayer()}
-                  className="delete"
-                  icon={faMinus}
-                >
-                  Delete Layer
-                </IconButton>
+      <div className="columns">
+        {leftColumn}
+
+        <div
+          className={`middleColumn ${
+            reactiveState.isMultiLayerMode ? "multilayer" : "single-layer"
+          }`}
+        >
+          {reactiveState.isMultiLayerMode ? (
+            <>
+              <div className="multilayerSizeContainer">
+                <span>Columns: {reactiveState.multiLayerSize}</span>
+                <input
+                  type="range"
+                  min={1}
+                  max={10}
+                  step={1}
+                  value={reactiveState.multiLayerSize}
+                  onChange={(e) => setMultiLayerSize(e.currentTarget.value)}
+                />
                 <IconButton
                   onClick={(e) => state.addLayer(true, "add layer button")}
                   icon={faPlus}
@@ -670,30 +479,34 @@ export default function App() {
                   Add New Layer
                 </IconButton>
               </div>
+              <div className="multilayer">
+                {reactiveState.layers.map((layer, layerIndex) => (
+                  <div className="layerContainer" key={layerIndex}>
+                    <div className="layerName">
+                      <span>{layer.name}</span>
+                      <button
+                        className="nostyle remove"
+                        onClick={() => confirmRemoveLayer(layerIndex)}
+                      >
+                        ❌
+                      </button>
+                    </div>
+                    <HexGrid layerIndex={layerIndex} key={layerIndex} />
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : (
+            <>
+              <LayerSelect />
               <HexGrid layerIndex={reactiveState.selectedHex.layerIndex} />
-              {elysiumControls}
-            </div>
+            </>
+          )}
+        </div>
 
-            {inspector}
-          </div>
-          <div className="statusBar">
-            <div
-              className={
-                "pulse " +
-                (reactiveState.isPlaying &&
-                Math.floor(
-                  reactiveState.layers[reactiveState.selectedHex.layerIndex]
-                    .currentBeat
-                ) %
-                  2 ===
-                  1
-                  ? "active"
-                  : "")
-              }
-            ></div>
-          </div>
-        </>
-      )}
+        {inspector}
+      </div>
+      <StatusBar />
     </div>
   );
 }

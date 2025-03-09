@@ -1,4 +1,5 @@
 import {
+  ControlDataType,
   ControlState,
   getControlValue,
   KeyMap,
@@ -27,6 +28,7 @@ import { LayerControlKey } from "./DefaultDefinitions";
 import { AppState, LayerState } from "../state/AppState";
 import state from "../state/AppState";
 import settings from "../state/AppSettings";
+import Dict from "../lib/dict";
 
 const rows = 12;
 const cols = 17;
@@ -51,32 +53,31 @@ function buildHelpers(
   hexIndex: number,
   token: Token
 ) {
+  const getControlValue = <T extends ControlDataType = ControlDataType>(
+    control: Parameters<typeof state.getControlValue<T>>[0]
+  ) =>
+    state.getControlValue<T>(control, {
+      layer: appState.layers[layerIndex],
+      controls: appState.controls,
+    });
   const helpers = {
     getControlValue(key: string) {
       const controls = token.controlIds.map((id) => appState.controls[id]);
+      const control = controls.find((c) => c.key === key);
 
-      if (controls.some((c) => c.key === key)) {
-        return getControlValue(
-          appState,
-          layerIndex,
-          controls.find((c) => c.key === key)!
-        );
+      if (control) {
+        return getControlValue(control);
       } else {
         return null;
       }
     },
     getControlValues() {
-      const ret: Record<string, any> = {};
-      token.controlIds.forEach(
-        (id) =>
-          (ret[appState.controls[id].key] = getControlValue(
-            appState,
-            layerIndex,
-            appState.controls[id]
-          ))
+      return Dict.fromArray(
+        token.controlIds.map((cid) => [
+          appState.controls[cid].key,
+          getControlValue(cid),
+        ])
       );
-
-      return ret;
     },
     getOtherTokenInstances() {
       const ret: Record<string, any>[] = [];
@@ -89,11 +90,7 @@ function buildHelpers(
               toAdd.hexIndex = hi;
               toAdd.layerIndex = li;
               t.controlIds.forEach((cid) => {
-                toAdd[appState.controls[cid].key] = getControlValue(
-                  appState,
-                  layerIndex,
-                  appState.controls[cid]
-                );
+                toAdd[appState.controls[cid].key] = getControlValue(cid);
               });
               ret.push(toAdd);
             }
@@ -221,11 +218,9 @@ function buildHelpers(
         notes.push(hexNotes[getAdjacentHex(hexIndex, triad)]);
       }
 
-      const key = getControlValue(
-        appState,
-        layerIndex,
-        appState.controls[appState.layers[layerIndex].key]
-      ) as keyof typeof KeyMap;
+      const key = getControlValue({
+        layerControl: "key",
+      }) as keyof typeof KeyMap;
       const permittedNotes = KeyMap[key].map((ni) => noteArray[ni]);
 
       notes = notes.filter((note) => {
@@ -234,21 +229,11 @@ function buildHelpers(
 
       const transposed = notes.map((note) => {
         const finalTranspose =
-          (getControlValue(
-            appState,
-            layerIndex,
-            appState.controls[appState.layers[layerIndex].transpose]
-          ) as number) + transpose;
+          getControlValue<"int">({ layerControl: "transpose" }) + transpose;
         return transposeNote(note, finalTranspose);
       });
 
-      const channel = getControlValue(
-        appState,
-        layerIndex,
-        appState.controls[
-          appState.layers[layerIndex].midiChannel
-        ] as ControlState<"int">
-      );
+      const channel = getControlValue<"int">({ layerControl: "midiChannel" });
 
       Midi.noteOn(transposed, settings.values.midiOutputs, channel, {
         velocity,
@@ -270,30 +255,14 @@ function buildHelpers(
     getCurrentBeat(withinBar: boolean = true): number {
       return withinBar
         ? Math.floor(currentBeat) %
-            getControlValue(
-              appState,
-              layerIndex,
-              appState.controls[
-                appState.layers[layerIndex].barLength
-              ] as ControlState<"int">
-            )
+            getControlValue<"int">({ layerControl: "barLength" })
         : Math.floor(currentBeat);
     },
     getBarLength(): number {
-      return getControlValue(
-        appState,
-        layerIndex,
-        appState.controls[
-          appState.layers[layerIndex].barLength
-        ] as ControlState<"int">
-      );
+      return getControlValue<"int">({ layerControl: "barLength" });
     },
     getLayerValue(key: LayerControlKey) {
-      return getControlValue(
-        appState,
-        layerIndex,
-        appState.controls[appState.layers[layerIndex][key]]
-      );
+      return getControlValue({ layerControl: key });
     },
     getLayer(): number {
       return layerIndex;
@@ -441,28 +410,34 @@ export function progressLayer(
   deltaMs: number,
   layerIndex: number
 ): AppState {
-  console.log(deltaMs);
   const newLayers = array_copy(appState.layers);
   let newTokens = { ...appState.tokens };
   let newPlayheads: Playhead[][] = createEmpty2dArray(NumHexes);
   const layer = appState.layers[layerIndex];
-  const beatDelta =
-    msToS(deltaMs) /
-    (60 /
-      getControlValue(
-        appState,
-        layerIndex,
-        appState.controls[layer.tempo] as ControlState<"int">
-      ));
+  const bpm = state.getControlValue<"int">(layer.tempo, {
+    layer,
+    controls: appState.controls,
+  });
+  const bps = bpm / 60;
+  const bpms = bps / 1000;
+  // console.log({
+  //   now,
+  //   currentTime: layer.currentTimeMs,
+  //   realDeltaMs,
+  //   bpms,
+  //   currentBeat: layer.currentBeat,
+  // });
   // console.log(layer.currentBeat, layer.currentBeat === 0, Math.floor(layer.currentBeat + beatDelta) > layer.currentBeat);
 
   if (appState.isPlaying) {
     let shouldClearMidiBuffer = false;
+    const newCurrentTime = layer.currentTimeMs + deltaMs;
+    const newCurrentBeat = layer.currentBeat + bpms * deltaMs;
 
     if (
       layer.enabled &&
       (layer.currentBeat === 0 ||
-        Math.floor(layer.currentBeat + beatDelta) > layer.currentBeat)
+        Math.floor(newCurrentBeat) > layer.currentBeat)
     ) {
       // move any playheads //
       layer.playheads.forEach((hex, hexIndex) => {
@@ -532,8 +507,8 @@ export function progressLayer(
               const helpers = buildHelpers(
                 appState,
                 layerIndex,
-                layer.currentBeat + beatDelta,
-                layer.currentTimeMs + deltaMs,
+                newCurrentBeat,
+                newCurrentTime,
                 newPlayheads,
                 hexIndex,
                 token
@@ -548,8 +523,8 @@ export function progressLayer(
             const helpers = buildHelpers(
               appState,
               layerIndex,
-              layer.currentBeat + beatDelta,
-              layer.currentTimeMs + deltaMs,
+              newCurrentBeat,
+              newCurrentTime,
               newPlayheads,
               hexIndex,
               token
@@ -576,17 +551,14 @@ export function progressLayer(
     const protoLayer: LayerState = {
       ...layer,
       playheads: newPlayheads,
-      currentTimeMs: layer.currentTimeMs + deltaMs,
-      currentBeat: layer.currentBeat + beatDelta,
+      currentTimeMs: newCurrentTime,
+      currentBeat: newCurrentBeat,
       playingNotes:
         layer.playingNotes === undefined
           ? notesToAdd.slice(0)
           : layer.playingNotes
               .filter((n) => {
-                const cmp =
-                  n.type === "beat"
-                    ? layer.currentBeat + beatDelta
-                    : layer.currentTimeMs + deltaMs;
+                const cmp = n.type === "beat" ? newCurrentBeat : newCurrentTime;
                 if (n.end <= cmp) {
                   Midi.noteOff(n.notes, n.outputNames, n.channel);
                   return false;
