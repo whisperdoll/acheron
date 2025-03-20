@@ -1,6 +1,11 @@
-import { useContext, useEffect, useRef, useState } from "react";
+import {
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import "./App.global.scss";
-import { confirmPrompt, makeUserDataPath } from "./utils/utils";
 import HexGrid from "./Components/HexGrid";
 import Inspector from "./Components/Inspector";
 import PlayerSettings from "./Components/PlayerSettings";
@@ -16,62 +21,175 @@ import Midi from "./utils/midi";
 import { hexNotes, transposeNote } from "./utils/elysiumutils";
 import Settings from "./Components/Settings";
 import LfoEditor from "./Components/LfoEditor";
-import TokenManager from "./Components/TokenManager";
-import NumberInput from "./Components/NumberInput";
-import usePrevious from "./Hooks/usePrevious";
-import {
-  faPlay,
-  faPause,
-  faCog,
-  faBug,
-  faLayerGroup,
-  faDonate,
-  faToolbox,
-  faEdit,
-  faMinus,
-  faPlus,
-  faCheck,
-} from "@fortawesome/free-solid-svg-icons";
-import IconButton from "./Components/IconButton";
-import { tokenDefinitions } from "./Tokens";
 import { buildMenu } from "./Menu";
-import { invoke } from "@tauri-apps/api/core";
-import * as fs from "@tauri-apps/plugin-fs";
-import * as dialog from "@tauri-apps/plugin-dialog";
 import { deserializeComposition } from "./Serialization";
 import state from "./state/AppState";
-import settings from "./state/AppSettings";
-import List from "./lib/list";
+import settings, { AppSettings } from "./state/AppSettings";
 import useTimer from "./Hooks/useTimer";
 import StatusBar from "./Components/StatusBar";
 import LayerSelect from "./Components/LayerSelect";
+import GoogleIconButton from "./Components/GoogleIconButton";
+import GoogleIcon from "./Components/GoogleIcon";
+import {
+  confirmPrompt,
+  openComposition,
+  toggleDevtools,
+} from "./utils/desktop";
+import ModalController from "./Components/ModalController";
+import { addKeyboardShortcutEventListeners } from "./lib/keyboard";
+import Dict from "./lib/dict";
 
 export default function App() {
   const reactiveState = state.useState();
+  const keyboardShortcuts = settings.useState((s) => s.keyboardShortcuts);
+  const resizing = useRef<"leftColumn" | "inspector" | null>(null);
   const notePlayedAsCache = useRef<
     Record<string, { note: string; channel: number }>
   >({});
   const lastTick = useRef(0);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const stopped = useRef(true);
+
+  useEffect(() => {
+    const triggers: Record<
+      keyof AppSettings["keyboardShortcuts"],
+      { onTrigger: () => void }
+    > = {
+      addNewLayer: {
+        onTrigger: () =>
+          state.addLayer(true, "add layer via keyboard shortcut"),
+      },
+      play: {
+        onTrigger: () =>
+          state.togglePlaying("toggle play via keyboard shortcut"),
+      },
+      settings: {
+        onTrigger: () =>
+          state.set(
+            { isShowingSettings: true },
+            "show settings via keyboard shortcut"
+          ),
+      },
+      toggleMultilayerMode: {
+        onTrigger: () =>
+          state.set(
+            (s) => ({ isMultiLayerMode: !s.isMultiLayerMode }),
+            "toggle multilayer mode via keyboard shortcut"
+          ),
+      },
+      toggleShowInspector: {
+        onTrigger: () =>
+          state.set(
+            (s) => ({ isShowingInspector: !s.isShowingInspector }),
+            "toggle showing inspector via keyboard shortcut"
+          ),
+      },
+      toggleShowLeftColumn: {
+        onTrigger: () =>
+          state.set(
+            (s) => ({ isShowingLeftColumn: !s.isShowingLeftColumn }),
+            "toggle showing left column via keyboard shortcut"
+          ),
+      },
+    };
+
+    const zipped = Dict.zip(keyboardShortcuts, triggers);
+    return addKeyboardShortcutEventListeners(Object.values(zipped));
+  }, [keyboardShortcuts]);
 
   const [startTimer, stopTimer] = useTimer({
     onTick: (deltaMs: number) => {
       // console.time("tick");
+
+      let newState = { ...state.values };
+
+      if (stopped.current && state.values.isPlaying) {
+        newState = performStartCallbacks(newState);
+        stopped.current = false;
+      }
+
       const now = performance.now();
       if (state.values.isPlaying) {
         const deltaMs = now - lastTick.current;
-        let newState = { ...state.values };
         for (let i = 0; i < state.values.layers.length; i++) {
           newState = progressLayer(newState, deltaMs, i);
         }
         for (let i = 0; i < state.values.layers.length; i++) {
           newState = performTransfers(newState, i);
         }
-        state.set(newState, "tick");
       }
+      if (!stopped.current && !state.values.isPlaying) {
+        newState = performStopCallbacks(newState);
+        stopped.current = true;
+      }
+
+      state.set(newState, "tick");
       lastTick.current = now;
+
       // console.timeEnd("tick");
     },
   });
+
+  function updateInspectorWidth() {
+    document.documentElement.style.setProperty(
+      "--inspectorWidth",
+      `${state.values.inspectorWidth}px`
+    );
+  }
+
+  function updateLeftColumnWidth() {
+    document.documentElement.style.setProperty(
+      "--leftColumnWidth",
+      `${state.values.leftColumnWidth}px`
+    );
+  }
+
+  state.useSubscription(
+    updateInspectorWidth,
+    [],
+    state.filters.deepEqual((s) => s.inspectorWidth)
+  );
+  state.useSubscription(
+    updateLeftColumnWidth,
+    [],
+    state.filters.deepEqual((s) => s.leftColumnWidth)
+  );
+
+  useLayoutEffect(() => {
+    updateInspectorWidth();
+    updateLeftColumnWidth();
+
+    function move(e: PointerEvent) {
+      if (resizing.current === "leftColumn") {
+        state.set(
+          (s) => ({
+            leftColumnWidth: Math.max(s.leftColumnWidth + e.movementX, 100),
+          }),
+          "resize left col"
+        );
+      } else if (resizing.current === "inspector") {
+        state.set(
+          (s) => ({
+            inspectorWidth: Math.max(s.inspectorWidth - e.movementX, 100),
+          }),
+          "resize inspector"
+        );
+      }
+    }
+
+    function up(e: PointerEvent) {
+      resizing.current = null;
+      document.documentElement.style.cursor = "";
+    }
+
+    document.addEventListener("pointermove", move);
+    document.addEventListener("pointerup", up);
+
+    return () => {
+      document.removeEventListener("pointermove", move);
+      document.removeEventListener("pointerup", up);
+    };
+  }, []);
 
   useEffect(() => {
     lastTick.current = performance.now();
@@ -80,20 +198,19 @@ export default function App() {
     return () => stopTimer();
   }, []);
 
+  function toggleLeftColumn() {
+    state.set(
+      (s) => ({ isShowingLeftColumn: !s.isShowingLeftColumn }),
+      "toggle showing left col"
+    );
+  }
+
   useEffect(() => {
     buildMenu({
       async open() {
-        const filepath = await dialog.open({
-          title: "Open Composition...",
-          filters: [{ name: "Acheron Composition", extensions: ["ache"] }],
-          canCreateDirectories: true,
-          directory: false,
-          multiple: false,
-        });
+        const serialized = await openComposition();
+        if (!serialized) return;
 
-        if (!filepath) return;
-
-        const serialized = JSON.parse(await fs.readTextFile(filepath));
         state.set((state) => {
           return deserializeComposition(state, serialized);
         }, "open composition from menu");
@@ -102,8 +219,8 @@ export default function App() {
       addLayer() {
         state.addLayer(true, "add layer from menu");
       },
-      devtools() {
-        invoke("plugin:webview|internal_toggle_devtools");
+      async devtools() {
+        await toggleDevtools();
       },
       toggleInspector() {
         state.set(
@@ -111,12 +228,7 @@ export default function App() {
           "toggle showing inspector"
         );
       },
-      toggleLeftColumn() {
-        state.set(
-          (s) => ({ isShowingLeftColumn: !s.isShowingLeftColumn }),
-          "toggle showing left col"
-        );
-      },
+      toggleLeftColumn,
       toggleMultilayer() {
         state.set(
           (s) => ({ isMultiLayerMode: !s.isMultiLayerMode }),
@@ -129,12 +241,12 @@ export default function App() {
   state.useSubscription(
     (prevState) => {
       state.values.midiNotes.forEach((note, i) => {
-        const index = prevState.midiNotes.findIndex(
-          (n) => n.number === note.number
-        );
+        const index = prevState
+          ? prevState.midiNotes.findIndex((n) => n.number === note.number)
+          : -1;
 
         // check to see if we should play //
-        if (note.isOn && (index === -1 || !prevState.midiNotes[index].isOn)) {
+        if (note.isOn && (index === -1 || !prevState?.midiNotes[index].isOn)) {
           const transposeControl = state.layerControl("transpose");
           const playedAs = transposeNote(
             note.name,
@@ -166,7 +278,7 @@ export default function App() {
         else if (
           !note.isOn &&
           index !== -1 &&
-          prevState.midiNotes[index].isOn
+          prevState?.midiNotes[index].isOn
         ) {
           Midi.noteOff(
             [notePlayedAsCache.current[note.name].note],
@@ -180,20 +292,7 @@ export default function App() {
       });
     },
     [],
-    (s) => s.midiNotes
-  );
-
-  state.useSubscription(
-    (prevState, newState) => {
-      if (newState.isPlaying) {
-        state.set((state) => performStartCallbacks(state), "start callbacks");
-      } else {
-        state.set((state) => performStopCallbacks(state), "{start callbacks}");
-        Midi.allNotesOff();
-      }
-    },
-    [],
-    (s) => s.isPlaying
+    state.filters.deepEqual((s) => s.midiNotes)
   );
 
   useEffect(() => {
@@ -218,16 +317,6 @@ export default function App() {
     };
 
     function keyDown(e: KeyboardEvent) {
-      if (
-        e.key === "Enter" &&
-        (!document.activeElement ||
-          !["input", "button", "select", "textarea"].includes(
-            document.activeElement?.tagName.toLowerCase()
-          ))
-      ) {
-        state.togglePlaying("toggle play cuz enter pressed");
-      }
-
       //   if ((e.key === "+" || e.key === "=") && e.ctrlKey) {
       //     webFrame.setZoomLevel(webFrame.getZoomLevel() + 0.5);
       //   }
@@ -266,7 +355,7 @@ export default function App() {
       Midi.setEnabledInputs(settings.midiInputs);
     },
     [],
-    (s) => s.midiInputs
+    settings.filters.deepEqual((s) => s.midiInputs)
   );
 
   settings.useSubscription(
@@ -274,7 +363,7 @@ export default function App() {
       Midi.setEnabledOutputs(settings.midiOutputs);
     },
     [],
-    (s) => s.midiOutputs
+    settings.filters.deepEqual((s) => s.midiOutputs)
   );
 
   state.useSubscription(
@@ -307,7 +396,7 @@ export default function App() {
       );
     },
     [],
-    (s) => s.selectedHex.hexIndex
+    state.filters.deepEqual((s) => s.selectedHex.hexIndex)
   );
 
   async function confirmRemoveLayer(layerIndex?: number) {
@@ -399,47 +488,113 @@ export default function App() {
       );
     },
     [],
-    (s) => s.multiLayerSize
+    state.filters.deepEqual((s) => s.multiLayerSize)
   );
 
   const inspector = reactiveState.isShowingInspector ? (
-    <Inspector layerIndex={reactiveState.selectedHex.layerIndex} />
+    <>
+      <div
+        className="resizeHandle"
+        onPointerDown={(e) => {
+          e.preventDefault();
+          document.documentElement.style.cursor = "ew-resize";
+          resizing.current = "inspector";
+        }}
+      ></div>
+      <Inspector layerIndex={reactiveState.selectedHex.layerIndex} />
+    </>
   ) : (
-    <></>
+    <>
+      <GoogleIconButton
+        className="showInspector"
+        icon="frame_inspect"
+        buttonStyle="rounded"
+        fill
+        onClick={() =>
+          state.set(
+            (s) => ({ isShowingInspector: !s.isShowingInspector }),
+            "toggle showing inspector"
+          )
+        }
+        opticalSize={20}
+        title="Show Inspector"
+      />
+    </>
   );
   const leftColumn = reactiveState.isShowingLeftColumn ? (
-    <div className="leftColumn">
-      <div className="tabs">
-        <button
-          onClick={() =>
-            state.set(
-              { leftColumnTab: "player" },
-              "show player tab on left col"
-            )
-          }
-          className={reactiveState.leftColumnTab === "player" ? "active" : ""}
-        >
-          Global
-        </button>
-        <button
-          onClick={() =>
-            state.set({ leftColumnTab: "layer" }, "show layer tab on left col")
-          }
-          className={reactiveState.leftColumnTab === "layer" ? "active" : ""}
-        >
-          Layer
-        </button>
+    <>
+      <div className="leftColumn">
+        <div className="mainHeader">
+          <GoogleIcon
+            icon="globe"
+            buttonStyle="rounded"
+            fill
+            opticalSize={20}
+          />
+          <span className="label">Player Properties</span>
+          <GoogleIconButton
+            className="pin"
+            icon="keep_off"
+            fill
+            buttonStyle="rounded"
+            onClick={toggleLeftColumn}
+            opticalSize={20}
+            title="Unpin Player Properties"
+          />
+        </div>
+        <div className="tabs">
+          <button
+            onClick={() =>
+              state.set(
+                { leftColumnTab: "player" },
+                "show player tab on left col"
+              )
+            }
+            className={reactiveState.leftColumnTab === "player" ? "active" : ""}
+          >
+            Global
+          </button>
+          <button
+            onClick={() =>
+              state.set(
+                { leftColumnTab: "layer" },
+                "show layer tab on left col"
+              )
+            }
+            className={reactiveState.leftColumnTab === "layer" ? "active" : ""}
+          >
+            Layer
+          </button>
+        </div>
+        {reactiveState.leftColumnTab === "player" ? (
+          <PlayerSettings />
+        ) : (
+          <LayerSettings
+            layerIndex={reactiveState.selectedHex.layerIndex}
+          ></LayerSettings>
+        )}
       </div>
-      {reactiveState.leftColumnTab === "player" ? (
-        <PlayerSettings />
-      ) : (
-        <LayerSettings
-          layerIndex={reactiveState.selectedHex.layerIndex}
-        ></LayerSettings>
-      )}
-    </div>
+      <div
+        className="resizeHandle"
+        onPointerDown={(e) => {
+          e.preventDefault();
+          document.documentElement.style.cursor = "ew-resize";
+          resizing.current = "leftColumn";
+        }}
+      ></div>
+    </>
   ) : (
-    <></>
+    <>
+      <GoogleIconButton
+        className="showLeftColumn"
+        icon="globe"
+        buttonStyle="rounded"
+        fill
+        opticalSize={20}
+        onClick={toggleLeftColumn}
+        title="Show Player Properties"
+      />
+    </>
   );
 
   return (
@@ -463,7 +618,9 @@ export default function App() {
           {reactiveState.isMultiLayerMode ? (
             <>
               <div className="multilayerSizeContainer">
-                <span>Columns: {reactiveState.multiLayerSize}</span>
+                <span className="columnsLabel">
+                  Columns: {reactiveState.multiLayerSize}
+                </span>
                 <input
                   type="range"
                   min={1}
@@ -472,24 +629,30 @@ export default function App() {
                   value={reactiveState.multiLayerSize}
                   onChange={(e) => setMultiLayerSize(e.currentTarget.value)}
                 />
-                <IconButton
+                <GoogleIconButton
+                  icon="add"
+                  buttonStyle="rounded"
+                  fill
                   onClick={(e) => state.addLayer(true, "add layer button")}
-                  icon={faPlus}
+                  title="Add Layer"
                 >
-                  Add New Layer
-                </IconButton>
+                  Add Layer
+                </GoogleIconButton>
               </div>
               <div className="multilayer">
                 {reactiveState.layers.map((layer, layerIndex) => (
                   <div className="layerContainer" key={layerIndex}>
                     <div className="layerName">
                       <span>{layer.name}</span>
-                      <button
-                        className="nostyle remove"
+                      <GoogleIconButton
+                        buttonStyle="rounded"
+                        icon="close"
+                        fill
+                        opticalSize={20}
+                        title="Remove Layer"
                         onClick={() => confirmRemoveLayer(layerIndex)}
-                      >
-                        ❌
-                      </button>
+                        className="nostyle remove"
+                      />
                     </div>
                     <HexGrid layerIndex={layerIndex} key={layerIndex} />
                   </div>
@@ -507,6 +670,7 @@ export default function App() {
         {inspector}
       </div>
       <StatusBar />
+      <ModalController />
     </div>
   );
 }

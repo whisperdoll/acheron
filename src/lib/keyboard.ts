@@ -1,0 +1,58 @@
+import Dict from "./dict";
+
+const mods = ["ctrl", "alt", "shift"] as const;
+type Mod = (typeof mods)[number];
+
+export type KeyboardShortcut = { [key in Mod]?: boolean } & {
+  key: string;
+};
+
+export function shortcutsEqual(k1: KeyboardShortcut, k2: KeyboardShortcut) {
+  return (
+    k1.key.toLowerCase() === k2.key.toLowerCase() &&
+    mods.every((m) => k1[m] == k2[m])
+  );
+}
+
+export function keyboardShortcutString(shortcut: KeyboardShortcut) {
+  const modPart = mods
+    .filter((m) => shortcut[m])
+    .map((m) => m.substr(0, 1).toUpperCase() + m.substr(1) + "+")
+    .join("");
+
+  return `${modPart}${shortcut.key}`;
+}
+
+export function keyboardShortcutTriggered<T extends KeyboardShortcut>(
+  e: KeyboardEvent,
+  ...shortcuts: T[]
+) {
+  // console.log(
+  //   e.key.toLowerCase(),
+  //   shortcuts,
+  //   Dict.fromArray(mods.map((m) => [m, e[`${m}Key`]])),
+  //   shortcuts.find(
+  //     (s) =>
+  //       e.key.toLowerCase() === s.key.toLowerCase() &&
+  //       mods.every((m) => !!s[m] === !!e[`${m}Key`])
+  //   )
+  // );
+  return shortcuts.find(
+    (s) =>
+      e.key.toLowerCase() === s.key.toLowerCase() &&
+      mods.every((m) => !!s[m] === !!e[`${m}Key`])
+  );
+}
+
+export function addKeyboardShortcutEventListeners(
+  shortcuts: (KeyboardShortcut & { onTrigger: () => void })[]
+) {
+  const listener = (e: KeyboardEvent) => {
+    const triggered = keyboardShortcutTriggered(e, ...shortcuts);
+    triggered && triggered.onTrigger();
+  };
+
+  document.addEventListener("keydown", listener);
+
+  return () => document.removeEventListener("keydown", listener);
+}

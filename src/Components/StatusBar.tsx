@@ -1,22 +1,8 @@
 import React from "react";
 import state from "../state/AppState";
-import {
-  faPlay,
-  faPause,
-  faCog,
-  faBug,
-  faLayerGroup,
-  faDonate,
-  faToolbox,
-  faEdit,
-  faMinus,
-  faPlus,
-  faCheck,
-} from "@fortawesome/free-solid-svg-icons";
-import IconButton from "./IconButton";
 import GoogleIconButton from "./GoogleIconButton";
 import { Props as GoogleIconProps } from "./GoogleIcon";
-import { openUrl } from "@tauri-apps/plugin-opener";
+import { openUrl } from "../utils/desktop";
 
 interface Props {}
 

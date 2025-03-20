@@ -4,10 +4,19 @@
       "assignedTo": {
         "name": "whisperdoll"
       },
-      "creation_time": "2025-03-09T21:47:28.273Z",
-      "id": "2",
+      "creation_time": "2025-03-10T13:51:23.332Z",
+      "id": "5",
       "references": [],
-      "title": "sidebar sizing"
+      "title": "allow decimals and negatives for add/multiply"
+    },
+    {
+      "assignedTo": {
+        "name": "whisperdoll"
+      },
+      "creation_time": "2025-03-10T13:51:29.522Z",
+      "id": "6",
+      "references": [],
+      "title": "undo/redo"
     },
     {
       "creation_time": "2025-01-01T03:59:27.626Z",
@@ -19,13 +28,69 @@
       "assignedTo": {
         "name": "whisperdoll"
       },
+      "creation_time": "2025-03-15T17:40:46.658Z",
+      "id": "10",
+      "references": [],
+      "title": "mobile layout"
+    }
+  ],
+  "in-progress": [
+    {
+      "assignedTo": {
+        "name": "whisperdoll"
+      },
       "creation_time": "2025-03-09T21:47:36.007Z",
       "id": "3",
       "references": [],
       "title": "keyboard shortcuts"
     }
   ],
-  "in-progress": [],
   "testing": [],
-  "done": []
+  "done": [
+    {
+      "assignedTo": {
+        "name": "whisperdoll"
+      },
+      "creation_time": "2025-03-10T13:51:37.755Z",
+      "id": "7",
+      "references": [],
+      "title": "allow decimal tempo"
+    },
+    {
+      "assignedTo": {
+        "name": "whisperdoll"
+      },
+      "creation_time": "2025-03-13T04:39:38.021Z",
+      "id": "9",
+      "references": [],
+      "title": "dark scrollbars"
+    },
+    {
+      "assignedTo": {
+        "name": "whisperdoll"
+      },
+      "creation_time": "2025-03-13T04:39:29.835Z",
+      "id": "8",
+      "references": [],
+      "title": "direction control should be 2 rows"
+    },
+    {
+      "assignedTo": {
+        "name": "whisperdoll"
+      },
+      "creation_time": "2025-03-10T13:50:59.058Z",
+      "id": "4",
+      "references": [],
+      "title": "fix dropping hex into void"
+    },
+    {
+      "assignedTo": {
+        "name": "whisperdoll"
+      },
+      "creation_time": "2025-03-09T21:47:28.273Z",
+      "id": "2",
+      "references": [],
+      "title": "sidebar sizing"
+    }
+  ]
 }

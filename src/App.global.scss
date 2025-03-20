@@ -2,6 +2,43 @@
 
 :root {
   --multilayer-cols: 3;
+  --leftColumnWidth: 280px;
+  --inspectorWidth: 280px;
+
+  --background-color: linear-gradient(
+    18deg,
+    rgb(68, 21, 52) 0%,
+    rgb(23, 24, 100) 100%
+  );
+  --button-background-color-active: rgba(0, 0, 0, 0.2);
+  --button-background-color-hover: rgba(255, 255, 255, 0.2);
+  --button-background-color: rgba(255, 255, 255, 0.1);
+  --control-header-background-color: rgba(255, 255, 255, 0.1);
+  --dangerous-button-background-color-active: rgba(100, 0, 0, 0.4);
+  --dangerous-button-background-color-hover: rgba(255, 100, 100, 0.3);
+  --dangerous-button-background-color: rgba(255, 0, 0, 0.2);
+  --header-background-color: rgba(0, 0, 0, 0.5);
+  --outline-color: rgba(255, 255, 255, 0.15);
+  --pulse-color-active: rgba(100, 255, 100, 0.5);
+  --pulse-color: rgba(255, 255, 255, 0.3);
+  --scrollbar-background-color: rgba(0, 0, 0, 0.1);
+  --scrollbar-foreground-color: rgba(255, 255, 255, 0.2);
+  --status-bar-background-color: var(--header-background-color);
+  --status-bar-foreground-color: var(--text-color);
+  --sub-header-background-color: rgba(0, 0, 0, 0.3);
+  --text-color: rgb(255, 255, 255);
+  --hex-text-color: var(--text-color);
+  --hex-text-color-selected: var(--hex-text-color);
+  --hex-token-text-color: var(--text-color);
+  --hex-token-text-color-selected: var(--hex-text-color-selected);
+  --hex-background-color: transparent;
+  --hex-background-color-selected: rgba(255, 255, 255, 0.2);
+  --hex-playhead-background-color: rgba(255, 0, 0, 0.3);
+  --hex-playhead-background-color-dying: rgba(255, 0, 0, 0.2);
+  --hex-playhead-text-color: var(--hex-text-color);
+  --hex-outline-color: var(--outline-color);
+  --hex-key-background-color: rgba(0, 197, 197, 0.2);
+  --hex-background-color-drop: var(--hex-background-color-selected);
 }
 
 * {
@@ -20,6 +57,10 @@
 
 .noselect {
   user-select: none;
+}
+
+.hide {
+  display: none;
 }
 
 .numberInput-container {
@@ -52,15 +93,6 @@
       padding: 2px 0.25rem;
       font-size: 0.6em;
       flex-grow: 1;
-
-      &:hover {
-        background-color: white;
-        color: black;
-      }
-
-      &:active {
-        background-color: #ddd;
-      }
     }
   }
 }
@@ -68,22 +100,25 @@
 html,
 body,
 #root {
+  font-size: 14px;
   padding: 0;
   margin: 0;
   width: 100%;
   height: 100%;
   position: relative;
-  color: white;
-  background-color: #221922;
+  color: var(--text-color);
+  background: var(--background-color);
+  scrollbar-color: var(--scrollbar-foreground-color)
+    var(--scrollbar-background-color);
 }
 
 input,
 select {
   font-size: 1em;
   background-color: rgba(255, 255, 255, 0.1);
-  color: white;
+  color: var(--text-color);
   border: 0;
-  border-bottom: 1px solid #aaa;
+  border-bottom: 1px solid var(--outline-color);
   padding: 0.25rem 0.5rem;
 
   &:hover {
@@ -113,19 +148,19 @@ input[type="checkbox"] {
 
 button:not(.nostyle) {
   user-select: none;
-  background-color: rgba(255, 255, 255, 0.1);
-  color: white;
-  border: 0px solid #555;
+  background-color: var(--button-background-color);
+  color: var(--text-color);
+  border: 0;
   font-size: 1em;
   cursor: pointer;
   padding: 0.5rem;
 
   &:hover {
-    background-color: rgba(255, 255, 255, 0.2);
+    background-color: var(--button-background-color-hover);
   }
 
   &:active {
-    background-color: #222;
+    background-color: var(--button-background-color-active);
   }
 
   &.iconButton {
@@ -142,6 +177,7 @@ button:not(.nostyle) {
 }
 
 button.nostyle {
+  color: var(--text-color);
   font-size: 1em;
   user-select: none;
   background-color: transparent;
@@ -149,29 +185,25 @@ button.nostyle {
   cursor: pointer;
   padding: 0;
   margin: 0;
-}
-
-button.patreon {
-  background-color: darken(#e85b46, 5);
 
   &:hover {
-    background-color: lighten(#e85b46, 2);
+    background-color: var(--button-background-color-hover);
   }
 
   &:active {
-    background-color: darken(#e85b46, 12);
+    background-color: var(--button-background-color-active);
   }
 }
 
 button.delete {
-  background-color: #9c2020;
+  background-color: var(--dangerous-button-background-color);
 
   &:hover {
-    background-color: color.adjust(#9c2020, $lightness: 7%);
+    background-color: var(--dangerous-button-background-color-hover);
   }
 
   &:active {
-    background-color: color.adjust(#9c2020, $lightness: -7%);
+    background-color: var(--dangerous-button-background-color-active);
   }
 }
 
@@ -183,6 +215,7 @@ button.delete {
   position: relative;
 }
 
+.modal-backdrop,
 .settings-backdrop,
 .lfoEditor-backdrop,
 .tokenSettings-backdrop {
@@ -190,6 +223,8 @@ button.delete {
   height: 100%;
   padding: 0;
   margin: 0;
+  left: 0;
+  top: 0;
   position: absolute;
   background-color: rgba(0, 0, 0, 0.7);
   z-index: 100;
@@ -198,6 +233,7 @@ button.delete {
   justify-content: center;
   align-items: center;
 
+  .modal-content,
   .settings-content,
   .lfoEditor-content {
     min-width: 20%;
@@ -217,8 +253,8 @@ button.delete {
     }
 
     h2 {
-      margin-top: 0.5rem;
-      margin-bottom: 0.5rem;
+      margin-top: 1rem;
+      margin-bottom: 0.25rem;
     }
 
     .midiSelects {
@@ -233,7 +269,7 @@ button.delete {
         display: flex;
         flex-direction: column;
         gap: 0.25rem;
-        border: 1px solid #aaa;
+        border: 1px solid var(--outline-color);
         padding: 0.25rem 0.25rem;
 
         flex-basis: 100%;
@@ -252,7 +288,7 @@ button.delete {
       gap: 0.25rem;
 
       .tokenSetting {
-        border: 1px solid #aaa;
+        border: 1px solid var(--outline-color);
         padding: 0.5rem;
         display: flex;
         flex-direction: column;
@@ -280,7 +316,7 @@ button.delete {
     }
 
     .sequence {
-      border: 1px solid #aaa;
+      border: 1px solid var(--outline-color);
       padding: 0.5rem;
       gap: 0.5rem;
 
@@ -297,9 +333,11 @@ button.delete {
     }
 
     .bottomButtons {
-      text-align: right;
       margin-top: auto;
       margin-bottom: 0;
+      display: flex;
+      gap: 0.5rem;
+      justify-content: flex-end;
     }
   }
 }
@@ -319,7 +357,7 @@ $statusBarHeight: 2rem;
 
 .statusBar {
   height: $statusBarHeight;
-  background-color: #101;
+  background-color: var(--status-bar-background-color);
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -334,17 +372,18 @@ $statusBarHeight: 2rem;
     align-items: center;
     justify-content: center;
     font-size: 1.25rem;
+    color: var(--status-bar-foreground-color);
   }
 
   .pulse {
     margin-right: 0.5rem;
     width: 1rem;
     height: 1rem;
-    background-color: #aaa;
+    background-color: var(--pulse-color);
     border-radius: 100%;
 
     &.active {
-      background-color: #afa;
+      background-color: var(--pulse-color-active);
     }
   }
 }
@@ -356,7 +395,7 @@ $statusBarHeight: 2rem;
   flex-direction: column;
   justify-content: stretch;
   background-color: rgba(255, 255, 255, 0.03);
-  border: 1px solid #aaa;
+  border: 1px solid var(--outline-color);
   border-radius: 0.25rem;
   gap: 0.5rem;
   padding-bottom: 0.5rem;
@@ -365,13 +404,11 @@ $statusBarHeight: 2rem;
     display: flex;
     flex-direction: row;
     align-items: center;
-    border-bottom: 1px solid #aaa;
+    border-bottom: 1px solid var(--outline-color);
     padding: 0.25rem 0.5rem;
-    background-color: rgba(255, 255, 255, 0.1);
-
-    .label {
-      margin-right: 1rem;
-    }
+    background-color: var(--control-header-background-color);
+    gap: 0.5rem;
+    flex-wrap: wrap;
 
     .valueType {
       margin-left: auto;
@@ -391,11 +428,12 @@ $statusBarHeight: 2rem;
     .numberInput-container,
     select {
       flex-grow: 1;
+      min-width: 0;
     }
   }
 
   .sequence {
-    border: 1px solid #aaa;
+    border: 1px solid var(--outline-color);
     padding: 0.5rem;
 
     .row {
@@ -406,7 +444,7 @@ $statusBarHeight: 2rem;
   .midiSelect {
     display: flex;
     flex-direction: column;
-    border: 1px solid #aaa;
+    border: 1px solid var(--outline-color);
     padding: 0.25rem 0.25rem;
 
     & > * {
@@ -426,7 +464,7 @@ $statusBarHeight: 2rem;
 
       width: 100%;
 
-      border: 1px solid #aaa;
+      border: 1px solid var(--outline-color);
       position: absolute;
       left: 0;
       top: 0;
@@ -437,11 +475,51 @@ $statusBarHeight: 2rem;
     padding: 0.25rem 0;
   }
 
-  .triadRow,
   .directionRow {
     display: flex;
     flex-direction: row;
     width: 100%;
+    flex-wrap: wrap;
+    border: 1px solid var(--outline-color);
+    border-radius: 5px;
+    overflow: hidden;
+
+    button {
+      flex-basis: 33%;
+      min-width: 2rem;
+      height: 2.25rem;
+      flex-grow: 1;
+      margin: 0;
+      background-color: transparent;
+      background-position: center;
+      background-repeat: no-repeat;
+      border-left-width: 0;
+      border-right-width: 0;
+
+      &:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+      }
+
+      &.selected {
+        background-color: rgba(200, 50, 200, 0.5);
+      }
+    }
+
+    &.disabled button {
+      &:hover:not(.selected) {
+        background-color: transparent;
+      }
+    }
+  }
+
+  .triadRow {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    flex-wrap: wrap;
+    border: 1px solid var(--outline-color);
+    border-radius: 5px;
+    overflow: hidden;
 
     button {
       min-width: 2rem;
@@ -451,21 +529,9 @@ $statusBarHeight: 2rem;
       background-color: transparent;
       background-position: center;
       background-repeat: no-repeat;
-      border: 1px solid #aaa;
+      background-size: 2rem;
       border-left-width: 0;
       border-right-width: 0;
-
-      &:first-of-type {
-        border-left-width: 1px;
-        border-top-left-radius: 5px;
-        border-bottom-left-radius: 5px;
-      }
-
-      &:last-of-type {
-        border-right-width: 1px;
-        border-top-right-radius: 5px;
-        border-bottom-right-radius: 5px;
-      }
 
       &:hover {
         background-color: rgba(255, 255, 255, 0.1);
@@ -484,11 +550,85 @@ $statusBarHeight: 2rem;
   }
 }
 
+button.googleIconButton {
+  display: flex;
+  gap: 0.25rem;
+  align-items: center;
+  justify-content: center;
+}
+
+button.showLeftColumn {
+  border-radius: 4px;
+  align-self: flex-start;
+  margin-left: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+button.showInspector {
+  border-radius: 4px;
+  align-self: flex-start;
+  margin-right: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.resizeHandle {
+  max-width: 1rem;
+  min-width: 1rem;
+  height: 100%;
+  cursor: ew-resize;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+  }
+}
+
+.leftColumn + * {
+  border-left: 1px solid var(--outline-color);
+}
+
+.leftColumn,
+.inspector {
+  box-sizing: content-box;
+
+  .mainHeader {
+    border-bottom: 1px solid var(--outline-color);
+    display: flex;
+    flex-direction: row;
+    gap: 0.25rem;
+    align-items: center;
+    padding: 0 0.25rem;
+    padding-right: 0rem;
+    background-color: var(--header-background-color);
+
+    .pin {
+      margin-left: auto;
+
+      &:not(:hover) {
+        background-color: transparent;
+      }
+    }
+  }
+
+  .header {
+    border: 1px solid var(--outline-color);
+    border-left: 0;
+    border-right: 0;
+    padding: 0.25rem 0.5rem;
+    background-color: var(--sub-header-background-color);
+    margin-bottom: 0.25rem;
+
+    &:not(:first-of-type) {
+      margin-top: 0.25rem;
+    }
+  }
+}
+
 .leftColumn {
   height: 100%;
-  border-right: 1px solid #aaa;
   display: flex;
   flex-direction: column;
+  min-width: var(--leftColumnWidth);
+  max-width: var(--leftColumnWidth);
 }
 
 .middleColumn {
@@ -500,8 +640,8 @@ $statusBarHeight: 2rem;
   min-width: 0;
 
   &.single-layer {
-    margin-left: 2rem;
-    margin-right: 2rem;
+    margin-left: 0.5rem;
+    margin-right: 0.5rem;
     padding: 1rem 0;
     gap: 1rem;
   }
@@ -513,8 +653,13 @@ $statusBarHeight: 2rem;
     display: flex;
     flex-direction: row;
     align-items: center;
+    flex-wrap: wrap;
     gap: 0.5rem;
     padding: 0.5rem 1.5rem;
+
+    .columnsLabel {
+      width: 6rem;
+    }
   }
 
   .multilayer {
@@ -544,14 +689,7 @@ $statusBarHeight: 2rem;
         justify-content: center;
         gap: 0.5rem;
 
-        span {
-          margin-top: 3px;
-        }
-
         .remove {
-          &:hover {
-            background-color: rgba(255, 255, 255, 0.5);
-          }
         }
       }
 
@@ -567,9 +705,10 @@ $statusBarHeight: 2rem;
     display: flex;
     flex-direction: row;
     align-items: stretch;
+    flex-wrap: wrap;
+    gap: 0.5rem;
 
     & > * {
-      margin-right: 0.5rem;
       font-size: 1em;
     }
 
@@ -578,12 +717,14 @@ $statusBarHeight: 2rem;
       display: flex;
       flex-direction: row;
       align-items: center;
+      min-width: 0;
 
       input,
       select,
       .numberInput-container {
         flex-grow: 1;
         margin-left: 0.5rem;
+        min-width: 0;
       }
     }
   }
@@ -596,7 +737,7 @@ $statusBarHeight: 2rem;
   border-radius: 0.75rem;
   background-color: rgba(255, 255, 255, 0);
   padding: 0.5rem 0.5rem;
-  border: 1px solid #aaa;
+  border: 1px solid var(--outline-color);
 
   & > * {
     margin-right: 0.5rem;
@@ -671,17 +812,19 @@ $statusBarHeight: 2rem;
   flex-grow: 1;
   display: flex;
   flex-direction: column;
-  justify-content: stretch;
+  justify-content: start;
   overflow: auto;
+  overflow-x: hidden;
 
   .layerHeader {
     text-align: center;
     padding-top: 0.25rem;
     padding-bottom: 0.25rem;
-    border: 1px solid #aaa;
+    border: 1px solid var(--outline-color);
     border-left: 0;
     border-right: 0;
     font-weight: bold;
+    background-color: var(--sub-header-background-color);
   }
 
   &.layerSettings .header {
@@ -691,31 +834,16 @@ $statusBarHeight: 2rem;
   }
 }
 
-.header {
-  border: 1px solid #aaa;
-  border-left: 0;
-  border-right: 0;
-  padding: 0.25rem 0.5rem;
-  background: #525;
-  margin-bottom: 0.25rem;
-
-  &:not(:first-of-type) {
-    margin-top: 0.25rem;
-  }
-}
-
 .inspector {
   height: 100%;
-  flex-basis: 300px;
+  min-width: var(--inspectorWidth);
+  max-width: var(--inspectorWidth);
 
   display: flex;
   flex-direction: column;
+  gap: 0.5rem;
 
-  border-left: 1px solid #aaa;
-
-  & > * {
-    margin-top: 0.5rem;
-  }
+  border-left: 1px solid var(--outline-color);
 
   .selectedHexLabel {
     padding: 0 0.5rem;
@@ -769,7 +897,7 @@ $statusBarHeight: 2rem;
 
     .addButton {
       &.expanded {
-        border-bottom: 1px solid #aaa;
+        border-bottom: 1px solid var(--outline-color);
       }
     }
 

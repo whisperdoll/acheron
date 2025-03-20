@@ -1,6 +1,39 @@
 import Point from "./point";
 import Rectangle from "./rectangle";
 
+interface FillHexagonCellOpts {
+  gridLocation: Point;
+  cellCoordinate: Point;
+  hexRadius: number;
+  gridStartsHigh: boolean;
+  color: string;
+}
+
+interface DrawHexagonGridOpts {
+  location: Point;
+  size: Point;
+  hexRadius: number;
+  startHigh: boolean;
+  outlineColor: string;
+  outlineWidth: number;
+  textColor: string;
+  tokenTextColor: string;
+  backgroundColor: string;
+  labels?: string[];
+  directions?: number[][];
+}
+
+interface DrawHexagonGridDecorationOpts {
+  location: Point;
+  hexRadius: number;
+  size: Point;
+  startHigh: boolean;
+  textColor: string;
+  tokenTextColor: string;
+  labels: string[];
+  directions: number[][];
+}
+
 export type CanvasOptions = {
   canvasElement?: HTMLCanvasElement;
   size?: Point;
@@ -59,25 +92,9 @@ export class Canvas {
   mouse: CanvasMouse;
   offset: Point = new Point(0);
   public readonly context: CanvasRenderingContext2D;
-  private static triangleCanvas: HTMLCanvasElement | null = null;
+  private static cache: Map<string, HTMLCanvasElement> = new Map();
 
   constructor(options: CanvasOptions = {}) {
-    if (Canvas.triangleCanvas === null) {
-      Canvas.triangleCanvas = document.createElement("canvas");
-      Canvas.triangleCanvas.width = 12;
-      Canvas.triangleCanvas.height = 12;
-
-      var ctx = Canvas.triangleCanvas.getContext("2d")!;
-      ctx.fillStyle = "White";
-
-      ctx.beginPath();
-      ctx.moveTo(6, 0);
-      ctx.lineTo(11, 8);
-      ctx.lineTo(0, 8);
-      ctx.lineTo(6, 0);
-      ctx.fill();
-    }
-
     options = options || {};
 
     if (!options.canvasElement) {
@@ -729,155 +746,101 @@ export class Canvas {
     this.context.stroke();
   }
 
-  public drawHexagon(
-    position: Point,
-    radius: number,
-    color: string,
-    lineWidth: number
-  ): void {
-    const a = (2 * Math.PI) / 6;
-
-    this.color = color;
-    this.lineWidth = lineWidth;
-
-    this.context.beginPath();
-    for (let i = 0; i < 6; i++) {
-      this.context.lineTo(
-        position.x + radius * Math.cos(a * i),
-        position.y + radius * Math.sin(a * i)
-      );
-    }
-    this.context.closePath();
-    this.context.stroke();
-  }
-
-  public drawHexagonCell(
-    startPosition: Point,
-    cellCoordinate: Point,
-    radius: number,
-    startHigh: boolean,
-    color: string,
-    lineWidth: number,
-    label?: string,
-    directions?: number[]
-  ) {
+  public fillHexagonCell({
+    gridLocation,
+    cellCoordinate,
+    hexRadius,
+    gridStartsHigh,
+    color,
+  }: FillHexagonCellOpts) {
     const { x, y } = cellCoordinate;
     const a = (2 * Math.PI) / 6;
 
-    this.color = color;
-    this.lineWidth = lineWidth;
-
-    const shouldStartHigh = startHigh ? x % 2 === 0 : x % 2 === 1;
+    const shouldStartHigh = gridStartsHigh ? x % 2 === 0 : x % 2 === 1;
     const startY = shouldStartHigh
-      ? startPosition.y
-      : startPosition.y + radius * Math.sin(a);
+      ? gridLocation.y
+      : gridLocation.y + hexRadius * Math.sin(a);
 
     this.context.beginPath();
     for (let i = 0; i < 6; i++) {
       this.context.lineTo(
-        startPosition.x +
-          radius * (1 + Math.cos(a)) * x +
-          radius * Math.cos(a * i) +
+        gridLocation.x +
+          hexRadius * (1 + Math.cos(a)) * x +
+          hexRadius * Math.cos(a * i) +
           0.5,
-        startY + radius * 2 * Math.sin(a) * y + radius * Math.sin(a * i) + 0.5
+        startY +
+          hexRadius * 2 * Math.sin(a) * y +
+          hexRadius * Math.sin(a * i) +
+          0.5
       );
     }
     this.context.closePath();
-    this.context.stroke();
-    const centerPt = new Point(
-      startPosition.x + radius * (1 + Math.cos(a)) * x,
-      startY + radius * 2 * Math.sin(a) * y + 5
-    );
-
-    if (label) {
-      const fontSize = 12;
-      const lines = label.split("\n");
-      const start = (-1 / 2) * fontSize * (lines.length - 1);
-
-      lines.forEach((line, i) => {
-        this.fillText(
-          line,
-          centerPt.plus(new Point(0, start + (fontSize + 4) * i)),
-          i === 0 ? color : "#FFFFFF",
-          undefined,
-          "center",
-          fontSize * 1.225 + "px sans-serif"
-        );
-      });
-    }
-
-    if (directions) {
-      directions.forEach((direction) => {
-        const angle = (direction / 6) * Math.PI * 2 - Math.PI / 2;
-        this.drawRotatedImage(
-          Canvas.triangleCanvas!,
-          angle + Math.PI / 2,
-          centerPt
-            .minus(new Point(0, 5))
-            .plus(
-              new Point(Math.cos(angle), Math.sin(angle)).times(radius - 16)
-            )
-            .minus(Point.fromSizeLike(Canvas.triangleCanvas!).dividedBy(2))
-        );
-      });
-    }
-  }
-
-  public fillHexagonCell(
-    startPosition: Point,
-    cellCoordinate: Point,
-    radius: number,
-    startHigh: boolean,
-    color: string
-  ) {
-    const { x, y } = cellCoordinate;
-    const a = (2 * Math.PI) / 6;
-
+    // this.color = "white";
+    // this.blendMode = "destination-out";
+    // this.context.fill();
     this.color = color;
-
-    const shouldStartHigh = startHigh ? x % 2 === 0 : x % 2 === 1;
-    const startY = shouldStartHigh
-      ? startPosition.y
-      : startPosition.y + radius * Math.sin(a);
-
-    this.context.beginPath();
-    for (let i = 0; i < 6; i++) {
-      this.context.lineTo(
-        startPosition.x +
-          radius * (1 + Math.cos(a)) * x +
-          radius * Math.cos(a * i) +
-          0.5,
-        startY + radius * 2 * Math.sin(a) * y + radius * Math.sin(a * i) + 0.5
-      );
-    }
-    this.context.closePath();
+    this.blendMode = "source-over";
     this.context.fill();
   }
 
-  public drawHexagonGridDecorations(
-    startPosition: Point,
-    radius: number,
-    gridDims: Point,
-    startHigh: boolean,
-    color: string,
-    labels: string[],
-    directions: number[][]
-  ) {
+  private triangleCanvas(color: string): HTMLCanvasElement {
+    const cacheKey = `triangle-${color}`;
+    if (Canvas.cache.has(cacheKey)) {
+      return Canvas.cache.get(cacheKey)!;
+    }
+
+    const triangleCanvas = document.createElement("canvas");
+    triangleCanvas.width = 12;
+    triangleCanvas.height = 12;
+
+    var ctx = triangleCanvas.getContext("2d")!;
+    ctx.fillStyle = color;
+
+    ctx.beginPath();
+    ctx.moveTo(6, 0);
+    ctx.lineTo(11, 8);
+    ctx.lineTo(0, 8);
+    ctx.lineTo(6, 0);
+    ctx.fill();
+
+    Canvas.cache.set(cacheKey, triangleCanvas);
+    return triangleCanvas;
+  }
+
+  public drawHexagonGridDecorations({
+    location,
+    size,
+    hexRadius,
+    startHigh,
+    textColor,
+    tokenTextColor,
+    directions,
+    labels,
+  }: DrawHexagonGridDecorationOpts) {
+    // console.log({
+    //   location,
+    //   size,
+    //   hexRadius,
+    //   startHigh,
+    //   textColor,
+    //   tokenTextColor,
+    //   directions,
+    //   labels,
+    // });
     const a = (2 * Math.PI) / 6;
+    const triangle = this.triangleCanvas(textColor);
 
-    this.color = color;
-
-    for (let y = 0; y < gridDims.y; y++) {
-      for (let x = 0; x < gridDims.x; x++) {
+    for (let y = 0; y < size.y; y++) {
+      for (let x = 0; x < size.x; x++) {
         const shouldStartHigh = startHigh ? x % 2 === 0 : x % 2 === 1;
         const startY = shouldStartHigh
-          ? startPosition.y
-          : startPosition.y + radius * Math.sin(a);
+          ? location.y
+          : location.y + hexRadius * Math.sin(a);
 
-        const index = x * gridDims.y + y;
+        const index = x * size.y + y;
         const centerPt = new Point(
-          startPosition.x + radius * (1 + Math.cos(a)) * x,
-          startY + radius * 2 * Math.sin(a) * y + 5
+          location.x + hexRadius * (1 + Math.cos(a)) * x,
+          startY + hexRadius * 2 * Math.sin(a) * y + 5
         );
 
         if (labels[index]) {
@@ -889,7 +852,7 @@ export class Canvas {
             this.fillText(
               line,
               centerPt.plus(new Point(0, start + (fontSize + 4) * i)),
-              i === 0 ? color : "#FFFFFF",
+              i === 0 ? textColor : tokenTextColor,
               undefined,
               "center",
               i != 0
@@ -897,77 +860,87 @@ export class Canvas {
                 : fontSize * 0.95 + "px sans-serif"
             );
           });
-
-          this.color = color;
         }
 
         directions[index].forEach((direction) => {
           const angle = (direction / 6) * Math.PI * 2 - Math.PI / 2;
           this.drawRotatedImage(
-            Canvas.triangleCanvas!,
+            triangle,
             angle + Math.PI / 2,
             centerPt
               .minus(new Point(0, 5))
               .plus(
-                new Point(Math.cos(angle), Math.sin(angle)).times(radius - 16)
+                new Point(Math.cos(angle), Math.sin(angle)).times(
+                  hexRadius - 16
+                )
               )
-              .minus(Point.fromSizeLike(Canvas.triangleCanvas!).dividedBy(2))
+              .minus(Point.fromSizeLike(triangle).dividedBy(2))
           );
         });
       }
     }
   }
 
-  public drawHexagonGrid(
-    startPosition: Point,
-    radius: number,
-    gridDims: Point,
-    startHigh: boolean,
-    color: string,
-    lineWidth: number,
-    labels?: string[],
-    directions?: number[][]
-  ): Point[] {
+  public drawHexagonGrid({
+    location,
+    size,
+    hexRadius,
+    startHigh,
+    outlineColor,
+    outlineWidth,
+    textColor,
+    tokenTextColor,
+    backgroundColor,
+    labels,
+    directions,
+  }: DrawHexagonGridOpts): Point[] {
     const a = (2 * Math.PI) / 6;
+    const triangle = this.triangleCanvas(textColor);
 
-    this.color = color;
-    this.lineWidth = lineWidth;
+    this.lineWidth = outlineWidth;
 
     const pts = [];
 
-    for (let y = 0; y < gridDims.y; y++) {
-      for (let x = 0; x < gridDims.x; x++) {
+    for (let y = 0; y < size.y; y++) {
+      for (let x = 0; x < size.x; x++) {
         const shouldStartHigh = startHigh ? x % 2 === 0 : x % 2 === 1;
         const startY = shouldStartHigh
-          ? startPosition.y
-          : startPosition.y + radius * Math.sin(a);
+          ? location.y
+          : location.y + hexRadius * Math.sin(a);
 
         this.context.beginPath();
         for (let i = 0; i < 6; i++) {
           this.context.lineTo(
-            startPosition.x +
-              radius * (1 + Math.cos(a)) * x +
-              radius * Math.cos(a * i) +
+            location.x +
+              hexRadius * (1 + Math.cos(a)) * x +
+              hexRadius * Math.cos(a * i) +
               0.5,
             startY +
-              radius * 2 * Math.sin(a) * y +
-              radius * Math.sin(a * i) +
+              hexRadius * 2 * Math.sin(a) * y +
+              hexRadius * Math.sin(a * i) +
               0.5
           );
         }
         this.context.closePath();
+        this.color = backgroundColor;
+        this.context.fill();
+        this.color = "white";
+        this.blendMode = "destination-out";
+        this.context.stroke();
+        this.blendMode = "source-over";
+        this.color = outlineColor;
         this.context.stroke();
 
-        const index = x * gridDims.y + y;
+        const index = x * size.y + y;
 
         pts[index] = new Point(
-          startPosition.x + radius * (1 + Math.cos(a)) * x,
-          startY + radius * 2 * Math.sin(a) * y
+          location.x + hexRadius * (1 + Math.cos(a)) * x,
+          startY + hexRadius * 2 * Math.sin(a) * y
         );
 
         const centerPt = new Point(
-          startPosition.x + radius * (1 + Math.cos(a)) * x,
-          startY + radius * 2 * Math.sin(a) * y + 5
+          location.x + hexRadius * (1 + Math.cos(a)) * x,
+          startY + hexRadius * 2 * Math.sin(a) * y + 5
         );
 
         if (labels && labels[index]) {
@@ -979,28 +952,28 @@ export class Canvas {
             this.fillText(
               line,
               centerPt.plus(new Point(0, start + (fontSize + 4) * i)),
-              i === 0 ? color : "#FFFFFF",
+              i === 0 ? textColor : tokenTextColor,
               undefined,
               "center",
               fontSize * 1.225 + "px sans-serif"
             );
           });
-
-          this.color = color;
         }
 
         if (directions && directions[index]) {
           directions[index].forEach((direction) => {
             const angle = (direction / 6) * Math.PI * 2 - Math.PI / 2;
             this.drawRotatedImage(
-              Canvas.triangleCanvas!,
+              triangle,
               angle + Math.PI / 2,
               centerPt
                 .minus(new Point(0, 5))
                 .plus(
-                  new Point(Math.cos(angle), Math.sin(angle)).times(radius - 16)
+                  new Point(Math.cos(angle), Math.sin(angle)).times(
+                    hexRadius - 16
+                  )
                 )
-                .minus(Point.fromSizeLike(Canvas.triangleCanvas!).dividedBy(2))
+                .minus(Point.fromSizeLike(triangle).dividedBy(2))
             );
           });
         }

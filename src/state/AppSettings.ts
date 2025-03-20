@@ -1,10 +1,11 @@
 import StateStore from "./state";
-import * as fs from "@tauri-apps/plugin-fs";
-import * as path from "@tauri-apps/api/path";
 import { TokenUID } from "../Types";
 import { MaybeGeneratedPromise } from "../lib/utils";
 import Dict from "../lib/dict";
 import { tokenDefinitions } from "../Tokens";
+import { isOnDesktop } from "../utils/desktop";
+import { KeyboardShortcut } from "../lib/keyboard";
+import { migrateSettings } from "../Migrators";
 
 export interface TokenSettings {
   shortcut: string;
@@ -20,6 +21,14 @@ export interface AppSettings {
   confirmDelete: boolean;
   midiInputs: string[];
   midiOutputs: string[];
+  keyboardShortcuts: {
+    play: KeyboardShortcut;
+    settings: KeyboardShortcut;
+    toggleMultilayerMode: KeyboardShortcut;
+    addNewLayer: KeyboardShortcut;
+    toggleShowLeftColumn: KeyboardShortcut;
+    toggleShowInspector: KeyboardShortcut;
+  };
 }
 
 export const defaultSettings: AppSettings = {
@@ -36,14 +45,34 @@ export const defaultSettings: AppSettings = {
   confirmDelete: true,
   midiInputs: [],
   midiOutputs: [],
+  keyboardShortcuts: {
+    play: {
+      key: "Enter",
+      ctrl: true,
+    },
+    settings: {
+      key: ".",
+      ctrl: true,
+    },
+    toggleMultilayerMode: {
+      key: "M",
+      ctrl: true,
+    },
+    addNewLayer: {
+      key: "N",
+      ctrl: true,
+      shift: true,
+    },
+    toggleShowLeftColumn: {
+      key: "L",
+      ctrl: true,
+    },
+    toggleShowInspector: {
+      key: "I",
+      ctrl: true,
+    },
+  },
 };
-
-const dir = await path.appConfigDir();
-const filepath = await path.join(dir, "settings.json");
-
-if (!(await fs.exists(dir))) {
-  await fs.mkdir(dir);
-}
 
 class SettingsStore extends StateStore<AppSettings> {
   debouncedTimer: number = 0;
@@ -52,17 +81,46 @@ class SettingsStore extends StateStore<AppSettings> {
 
   constructor() {
     super(async () => {
-      try {
-        const fileContents = await fs.readTextFile(filepath);
-        const newSettings: AppSettings = JSON.parse(fileContents);
-        return {
-          ...defaultSettings,
-          ...newSettings,
-          tokens: { ...defaultSettings.tokens, ...newSettings.tokens },
-        };
-      } catch {
-        await fs.writeTextFile(filepath, JSON.stringify(defaultSettings));
-        return defaultSettings;
+      if (isOnDesktop()) {
+        const fs = await import("@tauri-apps/plugin-fs");
+        const path = await import("@tauri-apps/api/path");
+
+        const dir = await path.appConfigDir();
+        const filepath = await path.join(dir, "settings.json");
+
+        if (!(await fs.exists(dir))) {
+          await fs.mkdir(dir);
+        }
+
+        try {
+          const fileContents = await fs.readTextFile(filepath);
+          const newSettings: Partial<AppSettings> = await migrateSettings(
+            JSON.parse(fileContents)
+          );
+          return {
+            ...defaultSettings,
+            ...newSettings,
+            tokens: { ...defaultSettings.tokens, ...newSettings.tokens },
+          };
+        } catch {
+          await fs.writeTextFile(filepath, JSON.stringify(defaultSettings));
+          return defaultSettings;
+        }
+      } else {
+        const fileContents = localStorage.getItem("settings");
+        if (fileContents) {
+          const newSettings: Partial<AppSettings> = await migrateSettings(
+            JSON.parse(fileContents)
+          );
+          return {
+            ...defaultSettings,
+            ...newSettings,
+            tokens: { ...defaultSettings.tokens, ...newSettings.tokens },
+          };
+        } else {
+          localStorage.setItem("settings", JSON.stringify(defaultSettings));
+          return defaultSettings;
+        }
       }
     });
   }
@@ -78,7 +136,18 @@ class SettingsStore extends StateStore<AppSettings> {
 
   async save(why: string) {
     console.log(`saving settings bc ${why}`, this.values);
-    await fs.writeTextFile(filepath, JSON.stringify(this.values));
+
+    if (isOnDesktop()) {
+      const fs = await import("@tauri-apps/plugin-fs");
+      const path = await import("@tauri-apps/api/path");
+
+      const dir = await path.appConfigDir();
+      const filepath = await path.join(dir, "settings.json");
+
+      await fs.writeTextFile(filepath, JSON.stringify(this.values));
+    } else {
+      localStorage.setItem("settings", JSON.stringify(this.values));
+    }
   }
 
   async saveSettingsDebounced(ms: number, why: string) {

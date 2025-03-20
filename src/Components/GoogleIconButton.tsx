@@ -19,11 +19,12 @@ const GoogleIconButton: React.FC<
     opticalSize,
     weight,
     iconElementProps,
+    className,
     ...rest
   } = props;
 
   return (
-    <button {...rest}>
+    <button className={`${className || ""} googleIconButton`} {...rest}>
       <GoogleIcon
         {...{
           icon,

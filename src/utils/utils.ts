@@ -1,17 +1,3 @@
-import * as path from "@tauri-apps/api/path";
-import { ask } from "@tauri-apps/plugin-dialog";
-import * as fs from "@tauri-apps/plugin-fs";
-
-export async function confirmPrompt(
-  prompt: string,
-  title: string
-): Promise<boolean> {
-  return await ask(prompt, {
-    title,
-    kind: "info",
-  });
-}
-
 export function msToS(ms: number): number {
   return ms / 1000;
 }
@@ -53,19 +39,6 @@ export function pluck<T, K extends (keyof T)[]>(
   keys: [...K]
 ): { [I in keyof K]: T[K[I]] } {
   return keys.map((key) => obj[key]) as { [I in keyof K]: T[K[I]] };
-}
-
-export async function makeUserDataPath() {
-  try {
-    await fs.mkdir(await getUserDataPath());
-  } catch {
-    // already exists
-  }
-}
-
-export async function getUserDataPath(): Promise<string> {
-  const upath = await path.dataDir();
-  return path.join(upath, "acheron/");
 }
 
 export function emptyFn() {}

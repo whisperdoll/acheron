@@ -2,10 +2,12 @@ import { useContext, useEffect, useRef, useState } from "react";
 import { hexNotes } from "../utils/elysiumutils";
 import TokenAdder from "../Components/TokenAdder";
 import TokenControl from "./TokenControl";
-import { confirmPrompt } from "../utils/utils";
 
 import state from "../state/AppState";
 import settings from "../state/AppSettings";
+import GoogleIconButton from "./GoogleIconButton";
+import GoogleIcon from "./GoogleIcon";
+import { confirmPrompt } from "../utils/desktop";
 
 interface Props {
   layerIndex: number;
@@ -63,6 +65,28 @@ export default function (props: Props) {
 
   return (
     <div className="inspector">
+      <div className="mainHeader">
+        <GoogleIcon
+          icon="frame_inspect"
+          buttonStyle="rounded"
+          fill
+          opticalSize={20}
+        />
+        <span className="label">Inspector</span>
+        <GoogleIconButton
+          className="pin"
+          icon="keep_off"
+          buttonStyle="rounded"
+          fill
+          onClick={() =>
+            state.set(
+              (s) => ({ isShowingInspector: !s.isShowingInspector }),
+              "toggle showing inspector"
+            )
+          }
+          opticalSize={20}
+        />
+      </div>
       {reactiveState.selectedHex.hexIndex === -1 ? (
         <div className="selectedHexLabel">No hex selected.</div>
       ) : (

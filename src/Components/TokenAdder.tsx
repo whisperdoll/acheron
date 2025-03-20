@@ -1,12 +1,9 @@
-import { useContext, useState } from "react";
-import { faBan, faPlus } from "@fortawesome/free-solid-svg-icons";
-import IconButton from "./IconButton";
+import { useState } from "react";
 import state from "../state/AppState";
-import settings from "../state/AppSettings";
+import GoogleIconButton from "./GoogleIconButton";
 
 export default function TokenAdder() {
   const reactiveState = state.useState();
-  const reactiveSettings = settings.useState();
   const [isShowingTokens, setIsShowingTokens] = useState(false);
 
   if (reactiveState.selectedHex.hexIndex === -1) return <></>;
@@ -21,13 +18,15 @@ export default function TokenAdder() {
 
   return (
     <div className="tokenAdder">
-      <IconButton
+      <GoogleIconButton
         onClick={toggleTokens}
         className={"addButton " + (isShowingTokens ? "expanded" : "collapsed")}
-        icon={isShowingTokens ? faBan : faPlus}
+        icon={isShowingTokens ? "cancel" : "add"}
+        buttonStyle="rounded"
+        fill
       >
         {isShowingTokens ? "Cancel Adding Token" : "Add Token"}
-      </IconButton>
+      </GoogleIconButton>
       {isShowingTokens && (
         <div className="tokenAdderList">
           {Object.entries(reactiveState.tokenDefinitions).map(

@@ -414,7 +414,7 @@ export function progressLayer(
   let newTokens = { ...appState.tokens };
   let newPlayheads: Playhead[][] = createEmpty2dArray(NumHexes);
   const layer = appState.layers[layerIndex];
-  const bpm = state.getControlValue<"int">(layer.tempo, {
+  const bpm = state.getControlValue<"decimal">(layer.tempo, {
     layer,
     controls: appState.controls,
   });
@@ -428,7 +428,6 @@ export function progressLayer(
   //   currentBeat: layer.currentBeat,
   // });
   // console.log(layer.currentBeat, layer.currentBeat === 0, Math.floor(layer.currentBeat + beatDelta) > layer.currentBeat);
-
   if (appState.isPlaying) {
     let shouldClearMidiBuffer = false;
     const newCurrentTime = layer.currentTimeMs + deltaMs;

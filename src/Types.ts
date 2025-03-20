@@ -16,6 +16,7 @@ type Entries<T> = {
 declare global {
   interface ObjectConstructor {
     entries<T extends object>(o: T): Entries<T>;
+    keys<T extends object>(o: T): (keyof T)[];
   }
 }
 
@@ -351,9 +352,12 @@ export function getLfoValue(
       return lfo.max - (t / period) * (lfo.max - lfo.min);
     }
     case "triangle": {
-      return t / period <= 0.5
-        ? lfo.min + (t / period) * (lfo.max - lfo.min) * 2
-        : lfo.max - (t / period) * (lfo.max - lfo.min) * 2;
+      return (
+        2 *
+        (t / period <= 0.5
+          ? lfo.min + (t / period) * (lfo.max - lfo.min)
+          : lfo.max - (t / period) * (lfo.max - lfo.min))
+      );
     }
     case "sine": {
       const amp = (lfo.max - lfo.min) / 2;

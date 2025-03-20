@@ -1,13 +1,7 @@
 import StateStore from "./state.ts";
 import App from "../App";
 import React, { useReducer, FunctionComponent } from "react";
-import {
-  getUserDataPath,
-  objectWithoutKeys,
-  sliceObject,
-} from "../utils/utils";
-import * as path from "@tauri-apps/api/path";
-import * as fs from "@tauri-apps/plugin-fs";
+import { objectWithoutKeys, sliceObject } from "../utils/utils";
 import { buildLayer } from "../Layers";
 import {
   ControlState,
@@ -32,7 +26,6 @@ import {
 } from "../utils/DefaultDefinitions";
 import { MidiDevice, MidiNote } from "../utils/midi";
 import { buildToken, copyToken, tokenDefinitions } from "../Tokens";
-import { migrateSettings } from "../Migrators";
 import List from "../lib/list.ts";
 import {
   resolveMaybeGenerated,
@@ -78,6 +71,8 @@ export interface AppState {
   isEditingLayerName: boolean;
   isShowingSettings: boolean;
   isMultiLayerMode: boolean;
+  leftColumnWidth: number;
+  inspectorWidth: number;
   multiLayerSize: number;
 }
 
@@ -153,11 +148,13 @@ const initialState: AppState = {
   isDragging: false,
   isEditingLayerName: false,
   isMultiLayerMode: false,
-  isShowingInspector: true,
-  isShowingLeftColumn: true,
+  isShowingInspector: false,
+  isShowingLeftColumn: false,
   isShowingSettings: false,
   leftColumnTab: "player",
   multiLayerSize: 2,
+  inspectorWidth: 300,
+  leftColumnWidth: 300,
 };
 
 const initialLayer = buildLayer(initialState);

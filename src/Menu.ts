@@ -1,7 +1,5 @@
-import { getVersion } from "@tauri-apps/api/app";
-import { Menu, PredefinedMenuItem, Submenu } from "@tauri-apps/api/menu";
-import { openUrl } from "@tauri-apps/plugin-opener";
-import * as os from "@tauri-apps/plugin-os";
+import { KeyboardShortcut } from "./lib/keyboard";
+import { isOnDesktop } from "./utils/desktop";
 
 interface Listeners {
   open: () => void;
@@ -14,6 +12,11 @@ interface Listeners {
 }
 
 async function buildDefaultMenu(listeners: Listeners) {
+  if (!isOnDesktop()) return;
+
+  const { Menu, Submenu } = await import("@tauri-apps/api/menu");
+  const { openUrl } = await import("@tauri-apps/plugin-opener");
+
   const menu = await Menu.new({
     items: [
       await Submenu.new({
@@ -122,7 +125,19 @@ async function buildDefaultMenu(listeners: Listeners) {
   return menu;
 }
 
-async function buildMacMenu(listeners: Listeners) {
+async function buildMacMenu(listeners: Listeners): Promise<KeyboardShortcut[]> {
+  if (!isOnDesktop()) return [];
+
+  const { Menu, Submenu } = await import("@tauri-apps/api/menu");
+  const { openUrl } = await import("@tauri-apps/plugin-opener");
+  const { getVersion } = await import("@tauri-apps/api/app");
+
+  const shortcuts: KeyboardShortcut[] = [];
+  const s = (shortcut: KeyboardShortcut): KeyboardShortcut => {
+    shortcuts.push(shortcut);
+    return shortcut;
+  };
+
   const subMenuAbout = await Submenu.new({
     text: "Acheron",
     items: [
@@ -310,7 +325,12 @@ async function buildMacMenu(listeners: Listeners) {
   return menu;
 }
 
-export async function buildMenu(listeners: Listeners) {
+export async function buildMenu(
+  listeners: Listeners
+): Promise<KeyboardShortcut[]> {
+  if (!isOnDesktop()) return [];
+
+  const os = await import("@tauri-apps/plugin-os");
   if (os.type() === "macos") {
     return await buildMacMenu(listeners);
   } else {
