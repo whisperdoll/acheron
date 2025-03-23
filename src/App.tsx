@@ -2,6 +2,7 @@ import {
   useContext,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -31,7 +32,10 @@ import {
   toggleDevtools,
 } from "./utils/desktop";
 import ModalController from "./Components/ModalController";
-import { addKeyboardShortcutEventListeners } from "./lib/keyboard";
+import {
+  addKeyboardShortcutEventListeners,
+  keyboardShortcutString,
+} from "./lib/keyboard";
 import Dict from "./lib/dict";
 import useLazyRef from "./useLazyRef";
 import SimpleAppState from "./state/SimpleAppState";
@@ -39,6 +43,10 @@ import SimpleAppState from "./state/SimpleAppState";
 export default function App() {
   const reactiveState = state.useState();
   const keyboardShortcuts = settings.useState((s) => s.keyboardShortcuts);
+  const keyboardShortcutStrings = useMemo(
+    () => Dict.transformedValues(keyboardShortcuts, keyboardShortcutString),
+    [keyboardShortcuts]
+  );
   const resizing = useRef<"leftColumn" | "inspector" | null>(null);
   const lastTick = useRef(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -265,6 +273,7 @@ export default function App() {
         }
 
         if (layerIndex < state.values.layers.length) {
+          e.preventDefault();
           state.set(
             (state) => ({ selectedHex: { ...state.selectedHex, layerIndex } }),
             "changing layer from keyboard shortcut"
@@ -417,7 +426,7 @@ export default function App() {
           )
         }
         opticalSize={20}
-        title="Show Inspector"
+        title={`Show Inspector (${keyboardShortcutStrings.toggleShowInspector})`}
       />
     </>
   );
@@ -439,7 +448,7 @@ export default function App() {
             buttonStyle="rounded"
             onClick={toggleLeftColumn}
             opticalSize={20}
-            title="Unpin Player Properties"
+            title={`Unpin Player Properties (${keyboardShortcutStrings.toggleShowLeftColumn})`}
           />
         </div>
         <div className="tabs">
@@ -492,7 +501,7 @@ export default function App() {
         fill
         opticalSize={20}
         onClick={toggleLeftColumn}
-        title="Show Player Properties"
+        title={`Show Player Properties (${keyboardShortcutStrings.toggleShowLeftColumn})`}
       />
     </>
   );
@@ -534,9 +543,9 @@ export default function App() {
                   buttonStyle="rounded"
                   fill
                   onClick={(e) => state.addLayer(true, "add layer button")}
-                  title="Add Layer"
                 >
-                  Add Layer
+                  Add Layer (
+                  {keyboardShortcutString(keyboardShortcuts.addNewLayer)})
                 </GoogleIconButton>
               </div>
               <div className="multilayer">

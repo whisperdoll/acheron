@@ -3,6 +3,7 @@ import state from "../state/AppState";
 import settings from "../state/AppSettings";
 import GoogleIconButton from "./GoogleIconButton";
 import { confirmPrompt } from "../utils/desktop";
+import useKeyboardShortcutStrings from "../Hooks/useKeyboardShortcutStrings";
 
 interface Props {}
 
@@ -13,6 +14,7 @@ const LayerSelect: React.FC<Props> = React.memo(() => {
     currentLayerIndex: s.selectedHex.layerIndex,
     layerNames: s.layers.map((l) => l.name),
   }));
+  const keyboardShortcutStrings = useKeyboardShortcutStrings();
 
   async function confirmRemoveLayer(layerIndex?: number) {
     if (layerIndex === undefined) {
@@ -122,7 +124,7 @@ const LayerSelect: React.FC<Props> = React.memo(() => {
         buttonStyle="rounded"
         fill
       >
-        Add New Layer
+        Add Layer ({keyboardShortcutStrings.addNewLayer})
       </GoogleIconButton>
     </div>
   );

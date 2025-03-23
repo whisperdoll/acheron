@@ -59,12 +59,11 @@ export const defaultSettings: AppSettings = {
       ctrl: true,
     },
     addNewLayer: {
-      key: "N",
+      key: "L",
       ctrl: true,
-      shift: true,
     },
     toggleShowLeftColumn: {
-      key: "L",
+      key: "P",
       ctrl: true,
     },
     toggleShowInspector: {

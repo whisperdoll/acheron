@@ -8,6 +8,7 @@ import settings from "../state/AppSettings";
 import GoogleIconButton from "./GoogleIconButton";
 import GoogleIcon from "./GoogleIcon";
 import { confirmPrompt } from "../utils/desktop";
+import useKeyboardShortcutStrings from "../Hooks/useKeyboardShortcutStrings";
 
 interface Props {
   layerIndex: number;
@@ -18,6 +19,7 @@ export default function (props: Props) {
   const reactiveSettings = settings.useState();
   const [toggledToken, setToggledToken] = useState("");
   const oldTokenIds = useRef<string[]>([]);
+  const keyboardShortcutStrings = useKeyboardShortcutStrings();
 
   const tokenIds =
     reactiveState.layers[props.layerIndex].tokenIds[
@@ -85,6 +87,7 @@ export default function (props: Props) {
             )
           }
           opticalSize={20}
+          title={`Unpin Inspector (${keyboardShortcutStrings.toggleShowInspector})`}
         />
       </div>
       {reactiveState.selectedHex.hexIndex === -1 ? (

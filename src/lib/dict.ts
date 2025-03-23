@@ -1,5 +1,7 @@
+type Key = string | number | symbol;
+
 export default class Dict {
-  static fromArray<KeyType extends string | number | symbol, ValueType>(
+  static fromArray<KeyType extends Key, ValueType>(
     arr: [KeyType, ValueType][]
   ): Record<KeyType, ValueType> {
     const ret: Record<KeyType, ValueType> = {} as Record<KeyType, ValueType>;
@@ -22,14 +24,25 @@ export default class Dict {
     return Dict.fromArray(allKeys.map((k) => [k, { ...o1[k], ...o2[k] }]));
   }
 
-  static map<
-    K extends string | number | symbol,
-    V,
-    K2 extends string | number | symbol,
-    V2
-  >(o: Record<K, V>, fn: (key: K, value: V) => [K2, V2]) {
+  static map<K extends Key, V, K2 extends Key, V2>(
+    o: Record<K, V>,
+    fn: (key: K, value: V) => [K2, V2]
+  ) {
     return Dict.fromArray(
       Object.entries(o).map(([key, value]) => fn(key, value))
     );
+  }
+
+  static transformedValues<K extends Key, OriginalValue, TransformedValue>(
+    o: Record<K, OriginalValue>,
+    fn: (value: OriginalValue, key: K) => TransformedValue
+  ): Record<K, TransformedValue> {
+    const ret = {} as Record<K, TransformedValue>;
+
+    Object.entries(o).forEach(([key, value]) => {
+      ret[key] = fn(value, key);
+    });
+
+    return ret;
   }
 }

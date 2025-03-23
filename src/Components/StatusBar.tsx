@@ -1,8 +1,12 @@
 import React from "react";
 import state from "../state/AppState";
+import settings from "../state/AppSettings";
 import GoogleIconButton from "./GoogleIconButton";
 import { Props as GoogleIconProps } from "./GoogleIcon";
 import { openUrl } from "../utils/desktop";
+import { keyboardShortcutString } from "../lib/keyboard";
+import Dict from "../lib/dict";
+import useKeyboardShortcutStrings from "../Hooks/useKeyboardShortcutStrings";
 
 interface Props {}
 
@@ -11,6 +15,7 @@ export default React.memo(function StatusBar(props: Props) {
     isPlaying: s.isPlaying,
     currentBeat: Math.floor(s.layers[s.selectedHex.layerIndex].currentBeat),
   }));
+  const keyboardShortcutStrings = useKeyboardShortcutStrings();
 
   function showSettings() {}
 
@@ -33,7 +38,9 @@ export default React.memo(function StatusBar(props: Props) {
       <GoogleIconButton
         icon={reactiveState.isPlaying ? "stop" : "play_arrow"}
         onClick={() => state.togglePlaying("toggle play button")}
-        title={reactiveState.isPlaying ? "Stop" : "Play"}
+        title={`${reactiveState.isPlaying ? "Stop" : "Play"} (${
+          keyboardShortcutStrings.play
+        })`}
         iconElementProps={{
           style: {
             transform: `scale(${reactiveState.isPlaying ? 1.2 : 1.28})`,
@@ -44,7 +51,7 @@ export default React.memo(function StatusBar(props: Props) {
       <GoogleIconButton
         onClick={() => state.set({ isShowingSettings: true }, "show settings")}
         icon="settings"
-        title="Settings"
+        title={`Settings (${keyboardShortcutStrings.settings})`}
         iconElementProps={{
           style: {
             transform: "scale(0.9)",
@@ -54,7 +61,7 @@ export default React.memo(function StatusBar(props: Props) {
       />
       <GoogleIconButton
         icon="layers"
-        title="Toggle MultiLayer Mode"
+        title={`Toggle MultiLayer Mode (${keyboardShortcutStrings.toggleMultilayerMode})`}
         onClick={() =>
           state.set(
             (s) => ({ isMultiLayerMode: !s.isMultiLayerMode }),
