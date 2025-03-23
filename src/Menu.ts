@@ -125,7 +125,7 @@ async function buildDefaultMenu(listeners: Listeners) {
   return menu;
 }
 
-async function buildMacMenu(listeners: Listeners): Promise<KeyboardShortcut[]> {
+async function buildMacMenu(listeners: Listeners) {
   if (!isOnDesktop()) return [];
 
   const { Menu, Submenu } = await import("@tauri-apps/api/menu");
@@ -325,9 +325,7 @@ async function buildMacMenu(listeners: Listeners): Promise<KeyboardShortcut[]> {
   return menu;
 }
 
-export async function buildMenu(
-  listeners: Listeners
-): Promise<KeyboardShortcut[]> {
+export async function buildMenu(listeners: Listeners) {
   if (!isOnDesktop()) return [];
 
   const os = await import("@tauri-apps/plugin-os");

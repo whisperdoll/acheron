@@ -62,6 +62,11 @@ export function mod(x: number, m: number): number {
 
 export const isFunction = (x: unknown) => typeof x === "function";
 export const isNullOrUndefined = (x: unknown) => x === undefined || x === null;
+export const isPromise = <T = unknown>(x: unknown): x is Promise<T> =>
+  !!x &&
+  (typeof x === "object" || typeof x === "function") &&
+  "then" in x &&
+  typeof x.then === "function";
 
 export const tryParseInt = (value: number | string, fallback: number) => {
   const parsed = parseInt(value as string);
@@ -73,7 +78,7 @@ export const normalizeIndex = (i: number, array: any[]) =>
 
 export type MaybeGenerated<
   ReturnType,
-  GeneratorArgsType extends Array<any> = [ReturnType]
+  GeneratorArgsType extends Array<any> = []
 > = ReturnType | ((...prev: GeneratorArgsType) => ReturnType);
 
 export const resolveMaybeGenerated = <

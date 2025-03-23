@@ -6,6 +6,7 @@ import {
   MaybePromise,
   MaybeGeneratedPromise,
   resolveMaybeGeneratedPromise,
+  isPromise,
 } from "../lib/utils";
 import equal from "fast-deep-equal/es6";
 import rfdc from "rfdc";
@@ -23,7 +24,7 @@ type StateStoreSubscriptionFilter<T> = (prevState: T, newState: T) => boolean;
 export default class StateStore<StateType extends Record<string, any>> {
   private _values: StateType | null = null;
   private _prevValues: StateType | null = null;
-  private generator: StateType | (() => StateType) | (() => Promise<StateType>);
+  private generator: MaybeGeneratedPromise<StateType, []>;
   private initialized = false;
   private subscriptions: StateStoreSubscription<StateType>[] = [];
   private queue: {
@@ -50,14 +51,37 @@ export default class StateStore<StateType extends Record<string, any>> {
     this.generator = defaults;
   }
 
-  async initialize() {
-    if (isFunction(this.generator)) {
-      this._values = await Promise.resolve(this.generator());
+  initializeSync(): this {
+    let g = this.generator;
+    if (isFunction(g)) {
+      g = g();
+    }
+
+    if (isPromise(g)) {
+      throw new Error("generator returned a promise");
+    }
+
+    return this;
+  }
+
+  async initialize(): Promise<this> {
+    let g = this.generator;
+    if (isFunction(g)) {
+      g = g();
+    }
+
+    if (isPromise(g)) {
+      this._values = await g;
     } else {
-      this._values = this.generator;
+      this._values = g;
     }
 
     this.initialized = true;
+    return this;
+  }
+
+  dangerouslyReplaceValues(values: StateType) {
+    this._values = values;
   }
 
   get values(): StateType {

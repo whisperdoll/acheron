@@ -10,12 +10,7 @@ import HexGrid from "./Components/HexGrid";
 import Inspector from "./Components/Inspector";
 import PlayerSettings from "./Components/PlayerSettings";
 import LayerSettings from "./Components/LayerSettings";
-import {
-  performStartCallbacks,
-  performStopCallbacks,
-  performTransfers,
-  progressLayer,
-} from "./utils/driver";
+import { Driver } from "./utils/driver";
 import { coerceControlValueToNumber, ControlState } from "./Types";
 import Midi from "./utils/midi";
 import { hexNotes, transposeNote } from "./utils/elysiumutils";
@@ -38,14 +33,13 @@ import {
 import ModalController from "./Components/ModalController";
 import { addKeyboardShortcutEventListeners } from "./lib/keyboard";
 import Dict from "./lib/dict";
+import useLazyRef from "./useLazyRef";
+import SimpleAppState from "./state/SimpleAppState";
 
 export default function App() {
   const reactiveState = state.useState();
   const keyboardShortcuts = settings.useState((s) => s.keyboardShortcuts);
   const resizing = useRef<"leftColumn" | "inspector" | null>(null);
-  const notePlayedAsCache = useRef<
-    Record<string, { note: string; channel: number }>
-  >({});
   const lastTick = useRef(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const stopped = useRef(true);
@@ -101,29 +95,28 @@ export default function App() {
     onTick: (deltaMs: number) => {
       // console.time("tick");
 
-      let newState = { ...state.values };
+      const driver = new Driver(new SimpleAppState(state.values));
 
       if (stopped.current && state.values.isPlaying) {
-        newState = performStartCallbacks(newState);
+        driver.start();
         stopped.current = false;
       }
 
       const now = performance.now();
-      if (state.values.isPlaying) {
-        const deltaMs = now - lastTick.current;
-        for (let i = 0; i < state.values.layers.length; i++) {
-          newState = progressLayer(newState, deltaMs, i);
-        }
-        for (let i = 0; i < state.values.layers.length; i++) {
-          newState = performTransfers(newState, i);
-        }
+      let delta = now - lastTick.current;
+      const step = 2;
+
+      while (delta > 0) {
+        driver.step(Math.min(step, delta));
+        delta = Math.max(delta - step, 0);
       }
+
       if (!stopped.current && !state.values.isPlaying) {
-        newState = performStopCallbacks(newState);
+        driver.stop();
         stopped.current = true;
       }
 
-      state.set(newState, "tick");
+      state.set(driver.state.values, "tick");
       lastTick.current = now;
 
       // console.timeEnd("tick");
@@ -238,63 +231,6 @@ export default function App() {
     });
   }, []);
 
-  state.useSubscription(
-    (prevState) => {
-      state.values.midiNotes.forEach((note, i) => {
-        const index = prevState
-          ? prevState.midiNotes.findIndex((n) => n.number === note.number)
-          : -1;
-
-        // check to see if we should play //
-        if (note.isOn && (index === -1 || !prevState?.midiNotes[index].isOn)) {
-          const transposeControl = state.layerControl("transpose");
-          const playedAs = transposeNote(
-            note.name,
-            coerceControlValueToNumber(
-              state.getControlValue(transposeControl),
-              transposeControl
-            )
-          );
-
-          const channel = state.getControlValue<"int">({
-            layerControl: "midiChannel",
-            layer: "current",
-          });
-
-          Midi.noteOn([playedAs], settings.values.midiOutputs, channel, {
-            velocity: note.velocity,
-          });
-
-          notePlayedAsCache.current[note.name] = { note: playedAs, channel };
-
-          if (state.values.isPlaying) {
-            state.bufferMidi(
-              (state) => ({ layerIndex: state.selectedHex.layerIndex, note }),
-              "playing notes lol"
-            );
-          }
-        }
-        // check to see if we should stop //
-        else if (
-          !note.isOn &&
-          index !== -1 &&
-          prevState?.midiNotes[index].isOn
-        ) {
-          Midi.noteOff(
-            [notePlayedAsCache.current[note.name].note],
-            settings.values.midiOutputs,
-            notePlayedAsCache.current[note.name].channel,
-            {
-              release: note.release,
-            }
-          );
-        }
-      });
-    },
-    [],
-    state.filters.deepEqual((s) => s.midiNotes)
-  );
-
   useEffect(() => {
     (async () => {
       if (settings.values.isFirstRun) {
@@ -311,9 +247,6 @@ export default function App() {
     };
     Midi.onInputsChanged = (inputs) => {
       state.set({ allowedInputs: inputs }, "allowed midi inputs changed");
-    };
-    Midi.onNotesChanged = (notes) => {
-      state.set({ midiNotes: notes }, "midi notes changed");
     };
 
     function keyDown(e: KeyboardEvent) {
@@ -364,39 +297,6 @@ export default function App() {
     },
     [],
     settings.filters.deepEqual((s) => s.midiOutputs)
-  );
-
-  state.useSubscription(
-    () => {
-      if (
-        state.values.selectedHex.hexIndex === -1 ||
-        !settings.values.playNoteOnClick
-      )
-        return;
-
-      const transposeControl = state.layerControl<"int">("transpose");
-
-      Midi.playNotes(
-        [
-          transposeNote(
-            hexNotes[state.values.selectedHex.hexIndex],
-            state.getControlValue(transposeControl) + 12
-          ),
-        ],
-        settings.values.midiOutputs,
-        state.getControlValue<"int">({ layerControl: "midiChannel" }),
-        {
-          velocity: state.getControlValue<"decimal">({
-            layerControl: "velocity",
-          }),
-          durationMs:
-            state.getControlValue<"decimal">({ layerControl: "noteLength" }) *
-            1000,
-        }
-      );
-    },
-    [],
-    state.filters.deepEqual((s) => s.selectedHex.hexIndex)
   );
 
   async function confirmRemoveLayer(layerIndex?: number) {

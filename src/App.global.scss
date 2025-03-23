@@ -215,6 +215,16 @@ button.delete {
   position: relative;
 }
 
+.mono {
+  font-family: monospace;
+}
+
+.tokenMenuItem {
+  display: flex;
+  flex-direction: row;
+  gap: 1rem;
+}
+
 .modal-backdrop,
 .settings-backdrop,
 .lfoEditor-backdrop,

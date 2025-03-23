@@ -55,6 +55,7 @@ export interface AppState {
   layers: LayerState[];
   isPlaying: boolean;
   startTime: number;
+  currentTime: number;
   allowedOutputs: MidiDevice[];
   allowedInputs: MidiDevice[];
   currentBeat: number;
@@ -135,6 +136,7 @@ const initialState: AppState = {
   layers: [], // appended to after layer contruction
   isPlaying: false,
   startTime: 0,
+  currentTime: 0,
   allowedOutputs: [],
   allowedInputs: [],
   currentBeat: 0,

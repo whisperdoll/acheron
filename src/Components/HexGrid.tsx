@@ -17,6 +17,10 @@ import state, { AppState } from "../state/AppState";
 import settings from "../state/AppSettings";
 import Dict from "../lib/dict";
 import { confirmPrompt } from "../utils/desktop";
+import useContextMenu, {
+  ContextMenuItem,
+  SeparatorItem,
+} from "../Hooks/useContextMenu";
 
 interface Props {
   layerIndex: number;
@@ -281,6 +285,49 @@ export default function HexGrid(props: Props) {
     ])
   );
 
+  const [contextMenuNode, showContextMenu] = useContextMenu(() => {
+    const defs = Object.entries(state.values.tokenDefinitions);
+    const addItems: ContextMenuItem[] = defs.map(([uid, def]) => {
+      return {
+        contents: (
+          <div className="tokenMenuItem">
+            <span className="mono">{def.symbol}</span>
+            <span>{def.label}</span>
+          </div>
+        ),
+        handler() {
+          state.addTokenToSelected(uid, "context menu");
+        },
+      };
+    });
+
+    const removeItems: ContextMenuItem[] = state.values.layers[
+      props.layerIndex
+    ].tokenIds[state.values.selectedHex.hexIndex].map((tokenId) => {
+      return {
+        contents: "Remove " + state.values.tokens[tokenId].label,
+        handler() {
+          state.removeTokenFromHex(
+            tokenId,
+            state.values.selectedHex,
+            "remove token via context menu"
+          );
+        },
+      };
+    });
+
+    const ret: ContextMenuItem[] = [...addItems];
+    if (removeItems.length) {
+      ret.push(SeparatorItem);
+      ret.push(...removeItems);
+    }
+
+    return ret;
+  }, [
+    state.values.tokenDefinitions,
+    state.values.layers[props.layerIndex]?.tokenIds,
+  ]);
+
   ////////////////////////////////////////////////////////////////////////////////
   //////////////////////////////////// EVENTS ////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////
@@ -429,41 +476,44 @@ export default function HexGrid(props: Props) {
       e.preventDefault();
       if (!hexIsSelected(state.values)) return;
 
-      const defs = Object.entries(state.values.tokenDefinitions);
-      const addItems: MenuItemOptions[] = defs.map(([uid, def]) => {
-        return {
-          text: `Add ${def.label}`,
-          action() {
-            state.addTokenToSelected(uid, "context menu");
-          },
-        };
-      });
+      showContextMenu(e);
 
-      const removeItems: MenuItemOptions[] = state.values.layers[
-        props.layerIndex
-      ].tokenIds[state.values.selectedHex.hexIndex].map((tokenId) => {
-        return {
-          text: "Remove " + state.values.tokens[tokenId].label,
-          action() {
-            state.removeTokenFromHex(
-              tokenId,
-              state.values.selectedHex,
-              "remove token via context menu"
-            );
-          },
-        };
-      });
+      //   const defs = Object.entries(state.values.tokenDefinitions);
+      //   const addItems: MenuItemOptions[] = defs.map(([uid, def]) => {
+      //     return {
+      //       text: `Add ${def.label}`,
+      //       action() {
+      //         state.addTokenToSelected(uid, "context menu");
+      //       },
+      //     };
+      //   });
 
-      const menu = await Menu.new({
-        items: [
-          ...addItems,
-          await PredefinedMenuItem.new({
-            item: "Separator",
-          }),
-          ...removeItems,
-        ],
-      });
-      await menu.popup();
+      //   const removeItems: MenuItemOptions[] = state.values.layers[
+      //     props.layerIndex
+      //   ].tokenIds[state.values.selectedHex.hexIndex].map((tokenId) => {
+      //     return {
+      //       text: "Remove " + state.values.tokens[tokenId].label,
+      //       action() {
+      //         state.removeTokenFromHex(
+      //           tokenId,
+      //           state.values.selectedHex,
+      //           "remove token via context menu"
+      //         );
+      //       },
+      //     };
+      //   });
+
+      //   const menu = await Menu.new({
+      //     items: [
+      //       ...addItems,
+      //       await PredefinedMenuItem.new({
+      //         item: "Separator",
+      //       }),
+      //       ...removeItems,
+      //     ],
+      //   });
+      //   await menu.popup();
+      // }
     }
 
     canvas.current?.addEventListener("mousemove", mouseMove);
@@ -656,6 +706,7 @@ export default function HexGrid(props: Props) {
         draggable={false}
         style={style}
       ></canvas>
+      {contextMenuNode}
     </div>
   );
 }

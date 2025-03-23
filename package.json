@@ -8,7 +8,9 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "electron-dev": "electron-install && cross-env NODE_ENV=development electron src/main-electron.js",
+    "electron-install": "node node_modules/electron/install.js"
   },
   "lint-staged": {},
   "build": {
@@ -120,6 +122,8 @@
     "@types/seedrandom": "^3.0.8",
     "@types/uuid": "^10.0.0",
     "@vitejs/plugin-react": "^4.3.4",
+    "cross-env": "^7.0.3",
+    "electron": "^35.0.2",
     "sass-embedded": "^1.85.1",
     "vite": "^6.2.1"
   },

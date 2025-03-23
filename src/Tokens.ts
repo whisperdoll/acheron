@@ -21,16 +21,16 @@ import WormholeToken from "./tokens/wormhole.ts";
 import { AppState } from "./state/AppState.ts";
 
 export const tokenDefinitions: TokenDefinition[] = [
-  AbsorbToken,
   GenerateToken,
-  LifespanToken,
   NoteToken,
   RandomizeToken,
   ReboundToken,
-  SkipToken,
   SplitToken,
+  SkipToken,
   TwistToken,
   WormholeToken,
+  AbsorbToken,
+  LifespanToken,
 ] as TokenDefinition[];
 
 function compareOptions(o1?: SelectOption[], o2?: SelectOption[]) {

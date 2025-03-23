@@ -93,7 +93,7 @@ function buildTokenFromSerialized(
     store: {},
     symbol: def.symbol,
     callbacks: { ...appState.tokens[serialized.uid].callbacks },
-    controlIds: Object.keys(controls),
+    controlIds: Object.keys(controls as Record<string, ControlState>),
     controls,
   };
 

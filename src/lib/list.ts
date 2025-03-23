@@ -152,4 +152,36 @@ export default class List {
   static without<T>(source: T[], without: T): T[] {
     return source.filter((v) => v !== without);
   }
+
+  static partition<T, U extends T>(
+    source: T[],
+    fn: (el: T) => el is U
+  ): [U[], Exclude<T, U>[]] {
+    const left: U[] = [];
+    const right: Exclude<T, U>[] = [];
+
+    source.forEach((value) => {
+      if (fn(value)) {
+        left.push(value);
+      } else {
+        right.push(value as Exclude<T, U>);
+      }
+    });
+
+    return [left, right];
+  }
+
+  static partitionBy<ValueType, KeyType extends string | symbol | number>(
+    source: ValueType[],
+    keyGenerator: (value: ValueType) => KeyType
+  ): Record<KeyType, ValueType[] | undefined> {
+    const ret = {} as Record<KeyType, ValueType[]>;
+
+    source.forEach((value) => {
+      const key = keyGenerator(value);
+      (ret[key] ||= []).push(value);
+    });
+
+    return ret;
+  }
 }

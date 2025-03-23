@@ -1,0 +1,40 @@
+.context-menu {
+  z-index: 10;
+  position: fixed;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  background-color: rgba(15, 15, 15, 0.3);
+  border: 1px solid var(--outline-color);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 0 10px 1px rgba(0, 0, 0, 0.1);
+  border-radius: 2px;
+  min-width: 10rem;
+  overflow: hidden;
+  padding: 0.25rem;
+
+  .context-menu-item {
+    padding: 0.25rem 1rem;
+    border-radius: inherit;
+
+    &.has-handler {
+      cursor: pointer;
+      &:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+      }
+    }
+  }
+
+  .context-menu-separator {
+    padding: 0.25rem 0rem;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: center;
+
+    &::after {
+      content: "";
+      border-bottom: 1px solid var(--outline-color);
+    }
+  }
+}

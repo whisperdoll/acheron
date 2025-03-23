@@ -8,6 +8,7 @@ import appStateStore, { AppState, LayerState } from "./state/AppState";
 import { sliceObject } from "./utils/utils";
 import { PlayerControlKey } from "./utils/DefaultDefinitions";
 import { randomFloat } from "./lib/utils";
+import * as WebMidi from "webmidi";
 
 type Entries<T> = {
   [K in keyof T]: [K, T[K]];
@@ -18,6 +19,18 @@ declare global {
     entries<T extends object>(o: T): Entries<T>;
     keys<T extends object>(o: T): (keyof T)[];
   }
+}
+
+export interface WebMidiInput extends WebMidi.Input {
+  type: "input";
+}
+
+export interface WebMidiOutput extends WebMidi.Output {
+  type: "output";
+}
+
+export interface WebMidiPortEvent extends WebMidi.Event {
+  port: WebMidiInput | WebMidiOutput;
 }
 
 export type TokenStore = Record<string, any>;
@@ -377,8 +390,8 @@ export function getLfoValue(
 
 export interface LayerNote {
   end: number;
-  notes: string[];
+  note: string;
   type: "beat" | "ms";
-  outputNames: string[];
   channel: number;
+  id?: string;
 }
