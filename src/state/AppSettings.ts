@@ -7,6 +7,8 @@ import { isOnDesktop } from "../utils/desktop";
 import { KeyboardShortcut } from "../lib/keyboard";
 import { migrateSettings } from "../Migrators";
 
+const localStorageKey = "acheronSettings";
+
 export interface TokenSettings {
   shortcut: string;
   enabled: boolean;
@@ -106,7 +108,7 @@ class SettingsStore extends StateStore<AppSettings> {
           return defaultSettings;
         }
       } else {
-        const fileContents = localStorage.getItem("settings");
+        const fileContents = localStorage.getItem(localStorageKey);
         if (fileContents) {
           const newSettings: Partial<AppSettings> = await migrateSettings(
             JSON.parse(fileContents)
@@ -117,7 +119,10 @@ class SettingsStore extends StateStore<AppSettings> {
             tokens: { ...defaultSettings.tokens, ...newSettings.tokens },
           };
         } else {
-          localStorage.setItem("settings", JSON.stringify(defaultSettings));
+          localStorage.setItem(
+            localStorageKey,
+            JSON.stringify(defaultSettings)
+          );
           return defaultSettings;
         }
       }
@@ -145,7 +150,7 @@ class SettingsStore extends StateStore<AppSettings> {
 
       await fs.writeTextFile(filepath, JSON.stringify(this.values));
     } else {
-      localStorage.setItem("settings", JSON.stringify(this.values));
+      localStorage.setItem(localStorageKey, JSON.stringify(this.values));
     }
   }
 
