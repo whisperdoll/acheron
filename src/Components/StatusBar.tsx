@@ -94,6 +94,21 @@ export default React.memo(function StatusBar(props: Props) {
         }}
         {...iconProps}
       />
+      <GoogleIconButton
+        icon="question_mark"
+        title="Help"
+        onClick={() =>
+          openUrl(
+            "https://github.com/whisperdoll/acheron/wiki/Acheron-Documentation"
+          )
+        }
+        iconElementProps={{
+          style: {
+            transform: "scale(0.9)",
+          },
+        }}
+        {...iconProps}
+      />
     </div>
   );
 });
