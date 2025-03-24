@@ -139,7 +139,7 @@ class SettingsStore extends StateStore<AppSettings> {
   }
 
   async save(why: string) {
-    console.log(`saving settings bc ${why}`, this.values);
+    // console.log(`saving settings bc ${why}`, this.values);
 
     if (isOnDesktop()) {
       const fs = await import("@tauri-apps/plugin-fs");

@@ -15,7 +15,6 @@ export default function useTimer(props: Props) {
   }, [props.onTick]);
 
   const start = useCallback(() => {
-    console.log("start");
     if (!timerWorker.current) {
       timerWorker.current = new Worker(timerWorkerPath);
 
@@ -35,7 +34,6 @@ export default function useTimer(props: Props) {
   }, []);
 
   const stop = useCallback(() => {
-    console.log("stop");
     if (!timerWorker.current) return;
 
     timerWorker.current.postMessage("stop");

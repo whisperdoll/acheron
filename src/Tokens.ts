@@ -58,7 +58,7 @@ function reportError(path: string, msg: string) {
 }
 
 export function buildToken(appState: AppState, uid: string) {
-  console.log(appState, uid);
+  // console.log(appState, uid);
   const def = appState.tokenDefinitions[uid];
   const controls = buildFromDefs(def.controls);
 

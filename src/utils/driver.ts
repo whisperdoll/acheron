@@ -301,14 +301,14 @@ export class Driver {
           channel,
         }));
 
-        notesToAdd.forEach((note) => {
-          console.log("add", {
-            startBeat: currentBeat,
-            startTime: currentMs,
-            end: note.end,
-            note,
-          });
-        });
+        // notesToAdd.forEach((note) => {
+        //   console.log("add", {
+        //     startBeat: currentBeat,
+        //     startTime: currentMs,
+        //     end: note.end,
+        //     note,
+        //   });
+        // });
         self.notesToAdd.push(...notesToAdd);
       },
       getCurrentBeat(withinBar: boolean = true): number {

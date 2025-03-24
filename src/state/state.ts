@@ -12,7 +12,7 @@ import equal from "fast-deep-equal/es6";
 import rfdc from "rfdc";
 import { detailedDiff } from "deep-object-diff";
 
-const DEBUG = true;
+const DEBUG = false;
 
 export type StateStoreSubscription<T> = (
   prevState: T | null,

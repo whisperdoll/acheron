@@ -51,16 +51,16 @@ export function keyboardShortcutTriggered<T extends KeyboardShortcut>(
   e: KeyboardEvent,
   ...shortcuts: T[]
 ) {
-  console.log(
-    e.key.toLowerCase(),
-    shortcuts,
-    Dict.fromArray(mods.map((m) => [m, e[`${m}Key`]])),
-    shortcuts.find(
-      (s) =>
-        e.key.toLowerCase() === s.key.toLowerCase() &&
-        mods.every((m) => !!s[m] === !!e[`${m}Key`])
-    )
-  );
+  // console.log(
+  //   e.key.toLowerCase(),
+  //   shortcuts,
+  //   Dict.fromArray(mods.map((m) => [m, e[`${m}Key`]])),
+  //   shortcuts.find(
+  //     (s) =>
+  //       e.key.toLowerCase() === s.key.toLowerCase() &&
+  //       mods.every((m) => !!s[m] === !!e[`${m}Key`])
+  //   )
+  // );
   return shortcuts.find(
     (s) =>
       e.key.toLowerCase() === s.key.toLowerCase() &&

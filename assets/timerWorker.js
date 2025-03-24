@@ -7,7 +7,7 @@ self.addEventListener("message", (e) => {
     case "start":
       if (interval !== null) return;
       lastTime = performance.now();
-      console.log("starting fr");
+      // console.log("starting fr");
       interval = setInterval(() => {
         if (interval === null) return;
         const now = performance.now();
@@ -16,7 +16,7 @@ self.addEventListener("message", (e) => {
       }, 10);
       break;
     case "stop":
-      console.log("stopping fr");
+      // console.log("stopping fr");
       clearInterval(interval);
       interval = null;
       break;

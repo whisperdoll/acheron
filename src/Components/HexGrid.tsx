@@ -97,7 +97,7 @@ export default function HexGrid(props: Props) {
   useEffect(() => {
     const keyDown = async (e: KeyboardEvent) => {
       if (!hexIsSelected(state.values)) {
-        console.log("hex not selected");
+        // console.log("hex not selected");
         return;
       }
 
