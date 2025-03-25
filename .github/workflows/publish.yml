@@ -43,6 +43,7 @@ jobs:
         run: pnpm run build
         env:
           VITE_BASE: /acheron/
+          VITE_GIT_HASH: ${{ github.sha }}
       - name: Setup Pages
         uses: actions/configure-pages@v4
       - name: Upload artifact
