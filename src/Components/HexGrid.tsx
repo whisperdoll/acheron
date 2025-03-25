@@ -21,6 +21,9 @@ import useContextMenu, {
   ContextMenuItem,
   SeparatorItem,
 } from "../Hooks/useContextMenu";
+import { Driver } from "../utils/driver";
+import SimpleAppState from "../state/SimpleAppState";
+import { msPerBeat } from "../lib/utils";
 
 interface Props {
   layerIndex: number;
@@ -387,34 +390,50 @@ export default function HexGrid(props: Props) {
       document.body.style.cursor = "default";
     }
 
-    function mouseDown(pos: Point, e: MouseEvent | TouchEvent) {
+    function mouseDown(pos: Point, e: MouseEvent | TouchEvent | PointerEvent) {
       const hexIndex = closestHexIndex(pos);
-      if (hexIndex !== -1) {
-        state.set(
-          {
-            selectedHex: {
-              hexIndex,
-              layerIndex: props.layerIndex,
-            },
-          },
-          "mouse down"
-        );
+      if (hexIndex === -1) return;
 
-        if (!state.values.layers[props.layerIndex].tokenIds[hexIndex]?.length)
-          return;
+      const isPrimary = e instanceof TouchEvent || e.button === 0;
 
-        state.set(
-          {
-            draggingSourceHex: {
-              hexIndex,
-              layerIndex: props.layerIndex,
-            },
-            isDragging: true,
-            draggingType: e.shiftKey ? "copy" : "move",
-          },
-          "mouse down on token"
-        );
+      if (settings.values.playNoteOnClick && isPrimary) {
+        Driver.playTriad({
+          state: new SimpleAppState(state.values),
+          hexIndex,
+          triad: 0,
+          durationMs: msPerBeat({
+            bpm: state.getControlValue<"decimal">({
+              layerControl: "tempo",
+              layer: props.layerIndex,
+            }),
+          }),
+        });
       }
+
+      state.set(
+        {
+          selectedHex: {
+            hexIndex,
+            layerIndex: props.layerIndex,
+          },
+        },
+        "mouse down"
+      );
+
+      if (!state.values.layers[props.layerIndex].tokenIds[hexIndex]?.length)
+        return;
+
+      state.set(
+        {
+          draggingSourceHex: {
+            hexIndex,
+            layerIndex: props.layerIndex,
+          },
+          isDragging: true,
+          draggingType: e.shiftKey ? "copy" : "move",
+        },
+        "mouse down on token"
+      );
     }
 
     function mouseMove(
@@ -477,43 +496,6 @@ export default function HexGrid(props: Props) {
       if (!hexIsSelected(state.values)) return;
 
       showContextMenu(e);
-
-      //   const defs = Object.entries(state.values.tokenDefinitions);
-      //   const addItems: MenuItemOptions[] = defs.map(([uid, def]) => {
-      //     return {
-      //       text: `Add ${def.label}`,
-      //       action() {
-      //         state.addTokenToSelected(uid, "context menu");
-      //       },
-      //     };
-      //   });
-
-      //   const removeItems: MenuItemOptions[] = state.values.layers[
-      //     props.layerIndex
-      //   ].tokenIds[state.values.selectedHex.hexIndex].map((tokenId) => {
-      //     return {
-      //       text: "Remove " + state.values.tokens[tokenId].label,
-      //       action() {
-      //         state.removeTokenFromHex(
-      //           tokenId,
-      //           state.values.selectedHex,
-      //           "remove token via context menu"
-      //         );
-      //       },
-      //     };
-      //   });
-
-      //   const menu = await Menu.new({
-      //     items: [
-      //       ...addItems,
-      //       await PredefinedMenuItem.new({
-      //         item: "Separator",
-      //       }),
-      //       ...removeItems,
-      //     ],
-      //   });
-      //   await menu.popup();
-      // }
     }
 
     canvas.current?.addEventListener("mousemove", mouseMove);

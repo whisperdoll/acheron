@@ -393,5 +393,6 @@ export interface LayerNote {
   note: string;
   type: "beat" | "ms";
   channel: number;
+  velocity: number;
   id?: string;
 }

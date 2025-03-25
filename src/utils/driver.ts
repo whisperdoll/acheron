@@ -97,6 +97,84 @@ export class Driver {
     };
   }
 
+  public static playTriad(opts: {
+    state: SimpleAppState;
+    hexIndex: number;
+    triad: number;
+    durationMs: number;
+    velocity?: number;
+    additionalTranspose?: number;
+    layerIndex?: number;
+  }) {
+    let {
+      state,
+      hexIndex,
+      triad,
+      durationMs,
+      velocity,
+      additionalTranspose,
+      layerIndex,
+    } = opts;
+    let notes: string[] = [hexNotes[hexIndex]];
+    triad = mod(triad, 7);
+
+    if (velocity === undefined) {
+      velocity = state.getControlValue<"int">({
+        layerControl: "velocity",
+        layer: layerIndex || "current",
+      });
+    }
+
+    if (triad > 0) {
+      notes.push(hexNotes[getAdjacentHex(hexIndex, triad - 1)]);
+      notes.push(hexNotes[getAdjacentHex(hexIndex, triad)]);
+    }
+
+    const key = state.getControlValue({
+      layerControl: "key",
+      layer: layerIndex || "current",
+    }) as keyof typeof KeyMap;
+    const permittedNotes = KeyMap[key].map((ni) => noteArray[ni]);
+
+    notes = notes.filter((note) => {
+      return permittedNotes.includes(getNoteParts(note).name);
+    });
+
+    const transposed = notes.map((note) => {
+      const finalTranspose =
+        state.getControlValue<"int">({
+          layerControl: "transpose",
+          layer: layerIndex || "current",
+        }) + (additionalTranspose || 0);
+      return transposeNote(note, finalTranspose);
+    });
+
+    const channel = state.getControlValue<"int">({
+      layerControl: "midiChannel",
+      layer: layerIndex || "current",
+    });
+
+    const deviceName = settings.values.midiOutputs;
+
+    Midi.noteOn(
+      transposed.map((note) => ({
+        channel,
+        deviceName,
+        note,
+        velocity,
+      }))
+    );
+
+    Midi.noteOff(
+      transposed.map((note) => ({
+        channel,
+        deviceName,
+        note,
+        time: `+${durationMs}`,
+      }))
+    );
+  }
+
   private buildHelpers(
     state: SimpleAppState,
     layerIndex: number,
@@ -108,10 +186,6 @@ export class Driver {
   ) {
     const self = this;
 
-    const getControlValue = <T extends ControlDataType = ControlDataType>(
-      control: Parameters<typeof this.state.getControlValue<T>>[0]
-    ) => this.state.getControlValue<T>(control);
-
     const helpers = {
       getControlValue(key: string) {
         const controls = token.controlIds.map(
@@ -120,7 +194,7 @@ export class Driver {
         const control = controls.find((c) => c.key === key);
 
         if (control) {
-          return getControlValue(control);
+          return state.getControlValue(control);
         } else {
           return null;
         }
@@ -129,7 +203,7 @@ export class Driver {
         return Dict.fromArray(
           token.controlIds.map((cid) => [
             state.values.controls[cid].key,
-            getControlValue(cid),
+            state.getControlValue(cid),
           ])
         );
       },
@@ -144,7 +218,8 @@ export class Driver {
                 toAdd.hexIndex = hi;
                 toAdd.layerIndex = li;
                 t.controlIds.forEach((cid) => {
-                  toAdd[state.values.controls[cid].key] = getControlValue(cid);
+                  toAdd[state.values.controls[cid].key] =
+                    state.getControlValue(cid);
                 });
                 ret.push(toAdd);
               }
@@ -275,8 +350,9 @@ export class Driver {
           notes.push(hexNotes[getAdjacentHex(hexIndex, triad)]);
         }
 
-        const key = getControlValue({
+        const key = state.getControlValue({
           layerControl: "key",
+          layer: layerIndex,
         }) as keyof typeof KeyMap;
         const permittedNotes = KeyMap[key].map((ni) => noteArray[ni]);
 
@@ -286,11 +362,17 @@ export class Driver {
 
         const transposed = notes.map((note) => {
           const finalTranspose =
-            getControlValue<"int">({ layerControl: "transpose" }) + transpose;
+            state.getControlValue<"int">({
+              layerControl: "transpose",
+              layer: layerIndex,
+            }) + transpose;
           return transposeNote(note, finalTranspose);
         });
 
-        const channel = getControlValue<"int">({ layerControl: "midiChannel" });
+        const channel = state.getControlValue<"int">({
+          layerControl: "midiChannel",
+          layer: layerIndex,
+        });
         const notesToAdd = transposed.map((note) => ({
           end:
             durationType === "beat"
@@ -299,6 +381,7 @@ export class Driver {
           note,
           type: durationType,
           channel,
+          velocity,
         }));
 
         // notesToAdd.forEach((note) => {
@@ -314,14 +397,20 @@ export class Driver {
       getCurrentBeat(withinBar: boolean = true): number {
         return withinBar
           ? Math.floor(currentBeat) %
-              getControlValue<"int">({ layerControl: "barLength" })
+              state.getControlValue<"int">({
+                layerControl: "barLength",
+                layer: layerIndex,
+              })
           : Math.floor(currentBeat);
       },
       getBarLength(): number {
-        return getControlValue<"int">({ layerControl: "barLength" });
+        return state.getControlValue<"int">({
+          layerControl: "barLength",
+          layer: layerIndex,
+        });
       },
       getLayerValue(key: LayerControlKey) {
-        return getControlValue({ layerControl: key });
+        return state.getControlValue({ layerControl: key, layer: layerIndex });
       },
       getLayer(): number {
         return layerIndex;
@@ -639,6 +728,7 @@ export class Driver {
         deviceName: () => settings.values.midiOutputs,
         note: note.note,
         time: performance.now(),
+        velocity: note.velocity,
       });
     });
     notesStopped.forEach((note) => {

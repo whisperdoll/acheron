@@ -7,6 +7,7 @@ import { openUrl } from "../utils/desktop";
 import { keyboardShortcutString } from "../lib/keyboard";
 import Dict from "../lib/dict";
 import useKeyboardShortcutStrings from "../Hooks/useKeyboardShortcutStrings";
+import env from "../lib/env";
 
 interface Props {}
 
@@ -109,6 +110,18 @@ export default React.memo(function StatusBar(props: Props) {
         }}
         {...iconProps}
       />
+      <div className="version">
+        {env("gitHash") && (
+          <a
+            href={`https://github.com/whisperdoll/acheron/commit/${env(
+              "gitHash"
+            )}`}
+            target="_blank"
+          >
+            {env("gitHash")}
+          </a>
+        )}
+      </div>
     </div>
   );
 });

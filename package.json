@@ -5,7 +5,7 @@
   "description": "Hex-based MIDI sequencer",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "tsx bin/dev.ts",
     "build": "tsc && vite build",
     "preview": "vite preview",
     "tauri": "tauri",

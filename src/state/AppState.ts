@@ -36,6 +36,7 @@ import {
 import appSettingsStore from "./AppSettings.ts";
 import AbsorbToken from "../tokens/absorb.ts";
 import Dict from "../lib/dict.ts";
+import env from "../lib/env.ts";
 
 export interface AppState {
   selectedHex: { hexIndex: number; layerIndex: number };
@@ -150,8 +151,8 @@ const initialState: AppState = {
   isDragging: false,
   isEditingLayerName: false,
   isMultiLayerMode: false,
-  isShowingInspector: true,
-  isShowingLeftColumn: true,
+  isShowingInspector: !env("debug"),
+  isShowingLeftColumn: !env("debug"),
   isShowingSettings: false,
   leftColumnTab: "player",
   multiLayerSize: 2,

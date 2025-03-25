@@ -20,9 +20,13 @@ export default function (props: Props) {
   const [toggledToken, setToggledToken] = useState("");
   const oldTokenIds = useRef<string[]>([]);
   const keyboardShortcutStrings = useKeyboardShortcutStrings();
+  const layerIndex =
+    reactiveState.selectedHex.layerIndex !== -1
+      ? reactiveState.selectedHex.layerIndex
+      : props.layerIndex;
 
   const tokenIds =
-    reactiveState.layers[props.layerIndex].tokenIds[
+    reactiveState.layers[layerIndex].tokenIds[
       reactiveState.selectedHex.hexIndex
     ];
 
@@ -44,26 +48,19 @@ export default function (props: Props) {
   }
 
   useEffect(() => {
-    if (reactiveState.selectedHex.hexIndex === -1 || tokenIds.length === 0)
+    if (reactiveState.selectedHex.hexIndex === -1 || tokenIds.length === 0) {
+      oldTokenIds.current = tokenIds;
       return;
+    }
 
-    setToggledToken(tokenIds[0]);
-    oldTokenIds.current = tokenIds;
-  }, [reactiveState.selectedHex, props.layerIndex]);
-
-  useEffect(() => {
-    if (reactiveState.selectedHex.hexIndex === -1 || tokenIds.length === 0)
-      return;
-
-    if (
-      !tokenIds.includes(toggledToken) ||
-      tokenIds.length > oldTokenIds.current.length
-    ) {
+    if (!tokenIds.includes(toggledToken)) {
+      setToggledToken(tokenIds[0]);
+    } else if (tokenIds.length > oldTokenIds.current.length) {
       setToggledToken(tokenIds[tokenIds.length - 1]);
     }
 
     oldTokenIds.current = tokenIds;
-  }, [reactiveState.tokens]);
+  }, [tokenIds]);
 
   return (
     <div className="inspector">
@@ -95,7 +92,8 @@ export default function (props: Props) {
       ) : (
         <>
           <div className="selectedHexLabel">
-            Selected: {hexNotes[reactiveState.selectedHex.hexIndex]}
+            Selected: L{layerIndex + 1}H{reactiveState.selectedHex.hexIndex + 1}{" "}
+            ({hexNotes[reactiveState.selectedHex.hexIndex]})
           </div>
           <TokenAdder />
           <div className="tokens">
@@ -104,7 +102,7 @@ export default function (props: Props) {
                 tokenId={tokenId}
                 onRemove={() => handleRemove(i)}
                 key={tokenId}
-                layerIndex={props.layerIndex}
+                layerIndex={layerIndex}
                 isCollapsed={tokenId !== toggledToken}
                 onToggleCollapse={() =>
                   toggledToken === tokenId

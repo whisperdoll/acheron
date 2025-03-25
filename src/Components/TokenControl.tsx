@@ -1,6 +1,7 @@
 import Control from "./Control";
 import state from "../state/AppState";
 import settings from "../state/AppSettings";
+import GoogleIconButton from "./GoogleIconButton";
 
 interface Props {
   tokenId: string;
@@ -20,17 +21,20 @@ export default function (props: Props) {
     <div className="tokenControl">
       <div className="header" onClick={() => props.onToggleCollapse()}>
         <span className="noselect">
-          {token.label} [click to {props.isCollapsed ? "expand" : "collapse"}]
+          {props.isCollapsed ? "▸" : "▾"} {token.label}
         </span>
-        <button
-          className="nostyle remove"
+        <GoogleIconButton
+          buttonStyle="rounded"
+          icon="close"
+          fill
+          opticalSize={20}
+          title="Remove Layer"
           onClick={(e) => {
             e.stopPropagation();
             props.onRemove();
           }}
-        >
-          ❌
-        </button>
+          className="nostyle remove"
+        />
       </div>
       {!props.isCollapsed &&
         token.controlIds.map((controlId) => {

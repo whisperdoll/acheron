@@ -73,6 +73,11 @@ export const tryParseInt = (value: number | string, fallback: number) => {
   return isNaN(parsed) ? fallback : parsed;
 };
 
+export const tryParseFloat = (value: number | string, fallback: number) => {
+  const parsed = parseFloat(value as string);
+  return isNaN(parsed) ? fallback : parsed;
+};
+
 export const normalizeIndex = (i: number, array: any[]) =>
   i >= 0 ? i : array.length + i;
 
@@ -386,4 +391,11 @@ export function arrayWithModifiedIndexes<T, E extends T = T>(
     copy[i] = updateFn(copy[i] as E);
   }
   return copy;
+}
+
+export function msPerBeat(opts: { bpm: number }): number {
+  const { bpm } = opts;
+  const bpms = bpm / 60 / 1000;
+  const mspb = 1 / bpms;
+  return mspb;
 }
