@@ -125,6 +125,7 @@
     "cross-env": "^7.0.3",
     "electron": "^35.0.2",
     "sass-embedded": "^1.85.1",
+    "tsx": "^4.19.3",
     "vite": "^6.2.1"
   },
   "engines": {
