@@ -104,6 +104,17 @@ export default function HexGrid(props: Props) {
         return;
       }
 
+      if (document.activeElement instanceof HTMLInputElement) {
+        // dont add if we're typing in an input
+        const type = document.activeElement.type;
+        if (!["checkbox", "range"].includes(type)) {
+          return;
+        }
+      }
+      if (document.activeElement instanceof HTMLTextAreaElement) {
+        return;
+      }
+
       if (
         e.key === "Delete" &&
         state.values.layers[props.layerIndex].tokenIds[
@@ -159,11 +170,10 @@ export default function HexGrid(props: Props) {
       }
     };
 
-    const canvasElRef = canvasEl.current;
-    canvasElRef && canvasElRef.addEventListener("keydown", keyDown);
+    document.addEventListener("keydown", keyDown);
 
     return () => {
-      canvasElRef && canvasElRef.removeEventListener("keydown", keyDown);
+      document.removeEventListener("keydown", keyDown);
     };
   }, [props.layerIndex]);
 
