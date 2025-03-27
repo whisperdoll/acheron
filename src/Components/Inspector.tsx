@@ -91,11 +91,14 @@ export default function (props: Props) {
         <div className="selectedHexLabel">No hex selected.</div>
       ) : (
         <>
-          <div className="selectedHexLabel">
-            Selected: L{layerIndex + 1}H{reactiveState.selectedHex.hexIndex + 1}{" "}
-            ({hexNotes[reactiveState.selectedHex.hexIndex]})
+          <div className="headerSection">
+            <div className="selectedHexLabel">
+              Selected: L{layerIndex + 1}H
+              {reactiveState.selectedHex.hexIndex + 1} (
+              {hexNotes[reactiveState.selectedHex.hexIndex]})
+            </div>
+            <TokenAdder />
           </div>
-          <TokenAdder />
           <div className="tokens">
             {tokenIds.map((tokenId, i) => (
               <TokenControl

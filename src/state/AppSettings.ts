@@ -102,6 +102,10 @@ class SettingsStore extends StateStore<AppSettings> {
             ...defaultSettings,
             ...newSettings,
             tokens: { ...defaultSettings.tokens, ...newSettings.tokens },
+            keyboardShortcuts: {
+              ...defaultSettings.keyboardShortcuts,
+              ...newSettings.keyboardShortcuts,
+            },
           };
         } catch {
           await fs.writeTextFile(filepath, JSON.stringify(defaultSettings));
@@ -117,6 +121,10 @@ class SettingsStore extends StateStore<AppSettings> {
             ...defaultSettings,
             ...newSettings,
             tokens: { ...defaultSettings.tokens, ...newSettings.tokens },
+            keyboardShortcuts: {
+              ...defaultSettings.keyboardShortcuts,
+              ...newSettings.keyboardShortcuts,
+            },
           };
         } else {
           localStorage.setItem(

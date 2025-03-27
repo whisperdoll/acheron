@@ -3,6 +3,9 @@ import state from "../state/AppState";
 import settings, { AppSettings } from "../state/AppSettings";
 import List from "../lib/list";
 import TokenManager from "./TokenManager";
+import { keyboardShortcutString } from "../lib/keyboard";
+import { camelCaseToSentence } from "../lib/utils";
+import KeyboardShortcutInput from "./KeyboardShortcutInput";
 
 interface Props {
   onHide: () => any;
@@ -129,6 +132,33 @@ export default function Settings(props: Props) {
           </div>
         </div>
         <TokenManager onHide={props.onHide} />
+        <h2>Keyboard Shortcuts</h2>
+        <div className="keyboardShortcuts">
+          {Object.entries(reactiveSettings.keyboardShortcuts).map(
+            ([key, shortcut]) => {
+              return (
+                <div key={key} className="keyboardShortcut row">
+                  <div>{camelCaseToSentence(key)}</div>
+                  <KeyboardShortcutInput
+                    shortcut={shortcut}
+                    onChange={(newShortcut) =>
+                      settings.set(
+                        (s) => ({
+                          ...s,
+                          keyboardShortcuts: {
+                            ...s.keyboardShortcuts,
+                            [key]: (newShortcut && newShortcut) || { key: "" },
+                          },
+                        }),
+                        `set keyboard shortcut for ${key}`
+                      )
+                    }
+                  />
+                </div>
+              );
+            }
+          )}
+        </div>
         <div className="bottomButtons">
           <button onClick={() => props.onHide()}>OK</button>
         </div>

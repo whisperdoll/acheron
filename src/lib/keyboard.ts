@@ -44,7 +44,7 @@ export function keyboardShortcutString(shortcut: KeyboardShortcut) {
     : usedMods;
   const modString = mappedToPlatform.map(capitalize).join("+");
 
-  return `${modString}+${shortcut.key}`;
+  return `${modString && modString + "+"}${shortcut.key}`;
 }
 
 export function keyboardShortcutTriggered<T extends KeyboardShortcut>(

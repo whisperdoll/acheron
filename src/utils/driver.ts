@@ -59,6 +59,7 @@ export class Driver {
     this.state.set(
       this.performStopCallbacks(new SimpleAppState(this.state.values))
     );
+    Midi.allNotesOff();
   }
 
   public step(ms: number) {

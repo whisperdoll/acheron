@@ -1,0 +1,19 @@
+TODO
+- midi channel selection is messed up in some weird kind of way
+- add/multiply
+- undo/redo
+- builtin synth
+- mobile layout
+- swing
+- time signature
+- write tests
+
+DONE
+- direction control should be 2 rows
+- fix dropping hex into void
+- sidebar sizing
+- dark scrollbars
+- allow decimal tempo
+- move stuff to the status bar
+- inherit from layer on generators isn't working, it just inherits from global instead...
+- keyboard shortcuts

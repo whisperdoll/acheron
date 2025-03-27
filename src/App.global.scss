@@ -328,6 +328,41 @@ button.delete {
       }
     }
 
+    .keyboardShortcuts {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
+      justify-content: start;
+      gap: 0.25rem;
+
+      .keyboardShortcut {
+        border: 1px solid var(--outline-color);
+        padding: 0.5rem;
+        display: flex;
+        flex-direction: row;
+        flex-basis: calc(100% / 1 - 0.25rem * 0 / 1);
+        gap: 0.5rem;
+        min-width: 0;
+
+        @media (min-width: 800px) {
+          flex-basis: calc(100% / 2 - 0.25rem * 1 / 2);
+        }
+
+        @media (min-width: 1000px) {
+          flex-basis: calc(100% / 3 - 0.25rem * 2 / 3);
+        }
+
+        input {
+          flex-grow: 1;
+          min-width: 0;
+        }
+
+        .tokenLabel {
+          font-size: 1.2em;
+        }
+      }
+    }
+
     .sequence {
       border: 1px solid var(--outline-color);
       padding: 0.5rem;
@@ -367,6 +402,10 @@ $statusBarHeight: 2rem;
   flex-grow: 1;
   height: calc(100% - #{$statusBarHeight});
   overflow: auto;
+
+  @media only screen and (max-width: 768px) {
+    flex-direction: column;
+  }
 }
 
 .statusBar {
@@ -412,6 +451,13 @@ $statusBarHeight: 2rem;
     justify-content: center;
     font-size: calc($statusBarHeight * 0.625);
     color: var(--status-bar-foreground-color);
+
+    &.inactive {
+      color: hsl(from var(--status-bar-foreground-color) h s calc(l - 50));
+    }
+
+    &.active {
+    }
   }
 
   .pulse {
@@ -611,26 +657,50 @@ button.showInspector {
 }
 
 .resizeHandle {
-  max-width: 1rem;
-  min-width: 1rem;
-  height: 100%;
-  cursor: ew-resize;
+  @media only screen and (min-width: 768px) {
+    max-width: 1rem;
+    min-width: 1rem;
+    height: 100%;
+    cursor: ew-resize;
 
-  &:hover {
-    background-color: rgba(255, 255, 255, 0.2);
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.2);
+    }
+  }
+
+  @media only screen and (max-width: 768px) {
+    max-height: 0;
+    min-height: 0;
+    width: 100%;
+    cursor: ns-resize;
   }
 }
 
 .leftColumn + * {
-  border-left: 1px solid var(--outline-color);
+  @media only screen and (min-width: 768px) {
+    border-left: 1px solid var(--outline-color);
+  }
+
+  @media only screen and (max-width: 768px) {
+    border-top: 1px solid var(--outline-color);
+  }
 }
 
 .leftColumn,
 .inspector {
   box-sizing: content-box;
+  display: flex;
+  flex-direction: column;
+
+  @media only screen and (max-width: 768px) {
+    flex-direction: row;
+  }
 
   .mainHeader {
-    border-bottom: 1px solid var(--outline-color);
+    border: 1px solid var(--outline-color);
+    border-top-width: 0;
+    border-left-width: 0;
+    border-right-width: 0;
     display: flex;
     flex-direction: row;
     gap: 0.25rem;
@@ -646,12 +716,29 @@ button.showInspector {
         background-color: transparent;
       }
     }
+
+    @media only screen and (max-width: 768px) {
+      border-bottom-width: 0;
+      border-top-width: 0;
+      border-left-width: 1px;
+      border-right-width: 1px;
+      padding: 0.25rem 0.25rem;
+      padding-top: 0rem;
+
+      .pin {
+        margin-left: auto;
+
+        &:not(:hover) {
+          background-color: transparent;
+        }
+      }
+    }
   }
 
   .header {
     border: 1px solid var(--outline-color);
-    border-left: 0;
-    border-right: 0;
+    border-left-width: 0;
+    border-right-width: 0;
     padding: 0.25rem 0.5rem;
     background-color: var(--sub-header-background-color);
     margin-bottom: 0.25rem;
@@ -659,15 +746,103 @@ button.showInspector {
     &:not(:first-of-type) {
       margin-top: 0.25rem;
     }
+
+    @media only screen and (max-width: 768px) {
+      border-top-width: 0;
+      border-bottom-width: 0;
+      border-left-width: 1px;
+      border-right-width: 1px;
+      margin-bottom: 0;
+      margin-right: 0.25rem;
+      padding: 0.5rem 0.25rem;
+
+      &:not(:first-of-type) {
+        margin-top: 0;
+        margin-left: 0.25rem;
+      }
+    }
+  }
+
+  @media only screen and (max-width: 768px) {
+    .mainHeader,
+    .header,
+    .layerHeader {
+      writing-mode: sideways-lr;
+
+      &.layerHeader {
+        padding: 0.25rem;
+      }
+    }
   }
 }
 
 .leftColumn {
   height: 100%;
-  display: flex;
-  flex-direction: column;
   min-width: var(--leftColumnWidth);
   max-width: var(--leftColumnWidth);
+
+  @media only screen and (max-width: 768px) {
+    height: auto;
+    min-height: fit-content;
+    flex-direction: row;
+    max-width: unset;
+    min-width: 0;
+    overflow-x: auto;
+    width: 100%;
+  }
+
+  .tabs {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    justify-content: stretch;
+
+    button {
+      flex-grow: 1;
+
+      &.active {
+        background-color: white;
+        color: #111;
+      }
+    }
+
+    @media only screen and (max-width: 768px) {
+      flex-direction: column;
+    }
+  }
+
+  .playerSettings,
+  .layerSettings,
+  .layerSettingsInner {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: start;
+    overflow: auto;
+    overflow-x: hidden;
+
+    @media only screen and (max-width: 768px) {
+      flex-direction: row;
+      overflow-x: auto;
+    }
+
+    .layerHeader {
+      text-align: center;
+      padding-top: 0.25rem;
+      padding-bottom: 0.25rem;
+      border: 1px solid var(--outline-color);
+      border-left: 0;
+      border-right: 0;
+      font-weight: bold;
+      background-color: var(--sub-header-background-color);
+    }
+
+    &.layerSettings .header {
+      &:first-of-type {
+        border-top: 0;
+      }
+    }
+  }
 }
 
 .middleColumn {
@@ -829,60 +1004,30 @@ button.showInspector {
   }
 }
 
-.tabs {
-  display: flex;
-  flex-direction: row;
-  align-items: stretch;
-  justify-content: stretch;
-
-  button {
-    flex-grow: 1;
-
-    &.active {
-      background-color: white;
-      color: #111;
-    }
-  }
-}
-
-.playerSettings,
-.layerSettings,
-.layerSettingsInner {
-  flex-grow: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: start;
-  overflow: auto;
-  overflow-x: hidden;
-
-  .layerHeader {
-    text-align: center;
-    padding-top: 0.25rem;
-    padding-bottom: 0.25rem;
-    border: 1px solid var(--outline-color);
-    border-left: 0;
-    border-right: 0;
-    font-weight: bold;
-    background-color: var(--sub-header-background-color);
-  }
-
-  &.layerSettings .header {
-    &:first-of-type {
-      border-top: 0;
-    }
-  }
-}
-
 .inspector {
-  height: 100%;
-  min-width: var(--inspectorWidth);
-  max-width: var(--inspectorWidth);
+  gap: 0.25rem;
 
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+  @media only screen and (min-width: 768px) {
+    border-left: 1px solid var(--outline-color);
+    height: 100%;
+    min-width: var(--inspectorWidth);
+    max-width: var(--inspectorWidth);
+  }
 
-  border-left: 1px solid var(--outline-color);
+  @media only screen and (max-width: 768px) {
+    border-top: 1px solid var(--outline-color);
+    width: 100%;
+  }
+
+  .headerSection {
+    display: flex;
+    flex-direction: column;
+    gap: inherit;
+
+    @media only screen and (max-width: 768px) {
+      padding: 0.5rem 0;
+    }
+  }
 
   .selectedHexLabel {
     padding: 0 0.5rem;
@@ -894,10 +1039,18 @@ button.showInspector {
     justify-content: stretch;
     overflow: auto;
 
+    @media only screen and (max-width: 768px) {
+      flex-direction: row;
+    }
+
     .tokenControl {
       display: flex;
       flex-direction: column;
       justify-content: stretch;
+
+      @media only screen and (max-width: 768px) {
+        flex-direction: row;
+      }
 
       .control:last-child {
         margin-bottom: 0.5rem;

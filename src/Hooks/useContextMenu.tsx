@@ -112,7 +112,7 @@ export default function useContextMenu(
   });
 
   useEffect(() => {
-    function up(e: MouseEvent) {
+    function onClick(e: MouseEvent) {
       if (
         e.target instanceof Element &&
         e.target.className.includes("context-menu")
@@ -124,9 +124,9 @@ export default function useContextMenu(
       setIsShowing(false);
     }
 
-    document.addEventListener("pointerup", up);
+    document.addEventListener("click", onClick);
 
-    return () => document.removeEventListener("pointerup", up);
+    return () => document.removeEventListener("click", onClick);
   }, [setIsShowing]);
 
   const trigger = useCallback(
@@ -143,10 +143,31 @@ export default function useContextMenu(
     if (!isShowing) return;
 
     (async () => {
-      const items = await resolveMaybeGeneratedPromise(menu);
+      const items: ContextMenuItem[] = (
+        await resolveMaybeGeneratedPromise(menu)
+      ).map((item) => {
+        const isSubmenu = "items" in item;
+        const isSeparator = "type" in item;
+        const isOption = !isSubmenu && !isSeparator;
+
+        if (isOption) {
+          return {
+            ...item,
+            handler(e) {
+              if (item.handler) {
+                item.handler(e);
+              }
+
+              setIsShowing(false);
+            },
+          };
+        } else {
+          return item;
+        }
+      });
       setItems(items);
     })();
-  }, [menu, setItems]);
+  }, [menu, setItems, isShowing, setIsShowing]);
 
   useEffect(() => {
     refresh();

@@ -49,13 +49,13 @@ const NoteToken: TokenDefinition<Store> = {
       defaultValue: 0,
     },
     velocity: {
-      inherit: "global.velocity",
+      inherit: "layer.velocity",
     },
     emphasis: {
-      inherit: "global.emphasis",
+      inherit: "layer.emphasis",
     },
     noteLength: {
-      inherit: "global.noteLength",
+      inherit: "layer.noteLength",
     },
   },
   callbacks: {

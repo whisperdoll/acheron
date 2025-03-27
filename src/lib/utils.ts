@@ -399,3 +399,11 @@ export function msPerBeat(opts: { bpm: number }): number {
   const mspb = 1 / bpms;
   return mspb;
 }
+
+export function capitalize<S extends string>(s: S): Capitalize<S> {
+  return (s.substr(0, 1).toUpperCase() + s.substr(1)) as Capitalize<S>;
+}
+
+export function camelCaseToSentence(s: string): string {
+  return capitalize(s).replace(/([a-z])([A-Z])/g, "$1 $2");
+}

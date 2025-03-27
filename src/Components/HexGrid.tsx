@@ -169,9 +169,7 @@ export default function HexGrid(props: Props) {
 
   useEffect(() => {
     canvas.current = new Canvas({
-      align: { horizontal: true, vertical: true },
       canvasElement: canvasEl.current!,
-      deepCalc: true,
       opaque: false,
       pixelated: false,
       size: new Point(
@@ -352,6 +350,7 @@ export default function HexGrid(props: Props) {
         )
       ) {
         const destIndex = closestHexIndex(pos);
+        // console.log("mouseUp", { destIndex });
         if (destIndex !== -1) {
           (state.values.draggingType === "copy"
             ? state.copyHex
@@ -384,6 +383,7 @@ export default function HexGrid(props: Props) {
         {
           isDragging: false,
           draggingDestHex: { hexIndex: -1, layerIndex: -1 },
+          draggingSourceHex: { hexIndex: -1, layerIndex: -1 },
         },
         "mouse up"
       );
@@ -391,7 +391,9 @@ export default function HexGrid(props: Props) {
     }
 
     function mouseDown(pos: Point, e: MouseEvent | TouchEvent | PointerEvent) {
+      mouseLocation.current = pos;
       const hexIndex = closestHexIndex(pos);
+      // console.log("mouseDown", { hexIndex });
       if (hexIndex === -1) return;
 
       const isPrimary = e instanceof TouchEvent || e.button === 0;

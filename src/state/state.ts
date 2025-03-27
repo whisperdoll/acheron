@@ -11,8 +11,9 @@ import {
 import equal from "fast-deep-equal/es6";
 import rfdc from "rfdc";
 import { detailedDiff } from "deep-object-diff";
+import env from "../lib/env";
 
-const DEBUG = false;
+const DEBUG = env("debug");
 
 export type StateStoreSubscription<T> = (
   prevState: T | null,

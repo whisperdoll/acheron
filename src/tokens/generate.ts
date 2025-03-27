@@ -39,10 +39,10 @@ const GenerateToken: TokenDefinition<Store> = {
       defaultValue: 0,
     },
     timeToLive: {
-      inherit: "global.timeToLive",
+      inherit: "layer.timeToLive",
     },
     pulseEvery: {
-      inherit: "global.pulseEvery",
+      inherit: "layer.pulseEvery",
     },
     offset: {
       label: "Offset",
