@@ -137,18 +137,22 @@ export class Driver {
     }) as keyof typeof KeyMap;
     const permittedNotes = KeyMap[key].map((ni) => noteArray[ni]);
 
-    notes = notes.filter((note) => {
-      return permittedNotes.includes(getNoteParts(note).name);
-    });
+    let unpermitted: string[];
+    [notes, unpermitted] = List.partition2(notes, (note) =>
+      permittedNotes.includes(getNoteParts(note).name)
+    );
 
-    const transposed = notes.map((note) => {
-      const finalTranspose =
-        state.getControlValue<"int">({
-          layerControl: "transpose",
-          layer: layerIndex || "current",
-        }) + (additionalTranspose || 0);
-      return transposeNote(note, finalTranspose);
-    });
+    const [transposed, transposedUnpermitted] = [notes, unpermitted].map(
+      (notes) =>
+        notes.map((note) => {
+          const finalTranspose =
+            state.getControlValue<"int">({
+              layerControl: "transpose",
+              layer: layerIndex || "current",
+            }) + (additionalTranspose || 0);
+          return transposeNote(note, finalTranspose);
+        })
+    );
 
     const channel = state.getControlValue<"int">({
       layerControl: "midiChannel",
@@ -157,8 +161,11 @@ export class Driver {
 
     const deviceName = settings.values.midiOutputs;
 
-    Midi.noteOn(
-      transposed.map((note) => ({
+    const [finalNotes, finalNotesUnpermitted] = [
+      transposed,
+      transposedUnpermitted,
+    ].map((notes) =>
+      notes.map((note) => ({
         channel,
         deviceName,
         note,
@@ -166,14 +173,32 @@ export class Driver {
       }))
     );
 
-    Midi.noteOff(
-      transposed.map((note) => ({
-        channel,
-        deviceName,
-        note,
-        time: `+${durationMs}`,
+    Midi.noteOn(finalNotes);
+
+    if (durationMs) {
+      Midi.noteOff(
+        transposed.map((note) => ({
+          channel,
+          deviceName,
+          note,
+          time: `+${durationMs}`,
+        }))
+      );
+    }
+
+    return [finalNotes, finalNotesUnpermitted].map((notes) =>
+      notes.map<Omit<PerformanceNote, "identifier">>((n) => ({
+        note: n.note,
+        channel: n.channel,
+        layer: layerIndex ?? state.gui.hexGrid.selectedHexes.layerIndex,
+        velocity: n.velocity,
+        hexIndex,
+        device: n.deviceName,
       }))
-    );
+    ) as [
+      Omit<PerformanceNote, "identifier">[],
+      Omit<PerformanceNote, "identifier">[]
+    ];
   }
 
   private buildHelpers(

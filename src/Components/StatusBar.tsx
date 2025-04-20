@@ -1,15 +1,18 @@
 import React from "react";
 import state from "../state/AppState";
+import React, { useState } from "react";
 import settings from "../state/AppSettings";
 import GoogleIconButton from "./GoogleIconButton";
 import { Props as GoogleIconProps } from "./GoogleIcon";
-import { openUrl } from "../utils/desktop";
+import { openComposition, openUrl, saveComposition } from "../utils/desktop";
 import { keyboardShortcutString } from "../lib/keyboard";
 import Dict from "../lib/dict";
 import useKeyboardShortcutStrings from "../Hooks/useKeyboardShortcutStrings";
 import env from "../lib/env";
 import { sliceObject } from "../utils/utils";
 import { cx } from "../lib/utils";
+import TouchModeMenu, { touchModeDescriptions } from "./TouchModeMenu";
+import { deserializeComposition, serializeComposition } from "../Serialization";
 
 interface Props {}
 
@@ -22,9 +25,8 @@ export default React.memo(function StatusBar(props: Props) {
   const keyboardShortcutStrings = useKeyboardShortcutStrings();
   const reactiveSettings = settings.useState((s) =>
     sliceObject(s, ["playNoteOnClick", "wrapPlayheads"])
+    sliceObject(s, ["playNoteOnClick", "wrapPlayheads", "touchMode"])
   );
-
-  function showSettings() {}
 
   const iconProps: Pick<
     GoogleIconProps,
@@ -171,7 +173,54 @@ export default React.memo(function StatusBar(props: Props) {
             {env("gitHash")}
           </a>
         )}
+        <GoogleIconButton
+          onClick={() => saveComposition(serializeComposition(state))}
+          icon="save"
+          title={"Save"}
+          iconElementProps={{
+            style: {
+              transform: "scale(0.9)",
+            },
+          }}
+          {...iconProps}
+        />
+        <GoogleIconButton
+          onClick={async () => {
+            const composition = await openComposition();
+            if (!composition) return;
+
+            const deserialized = await deserializeComposition(
+              state,
+              composition
+            );
+            state.set(deserialized);
+          }}
+          icon="upload_file"
+          title={"Load"}
+          iconElementProps={{
+            style: {
+              transform: "scale(0.9)",
+            },
+          }}
+          {...iconProps}
+        />
+        <GoogleIconButton
+          icon={"touch_app"}
+          title={`Change touch mode`}
+          onClick={() =>
+            state.set((s) => ({
+              ...s,
+              gui: {
+                ...s.gui,
+                isShowingTouchModeMenu: !s.gui.isShowingTouchModeMenu,
+              },
+            }))
+          }
+          {...iconProps}
+          data-touch-mode-menu="1"
+        />
       </div>
     </div>
+      {state.gui.isShowingTouchModeMenu && <TouchModeMenu />}
   );
 });

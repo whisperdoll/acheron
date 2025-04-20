@@ -1,5 +1,7 @@
 import Rectangle from "./rectangle";
 
+type PointLike = { x: number; y: number };
+
 /**
  * A class to represent a two-dimensional point in space, or something that would benefit from a similar treatment.
  *
@@ -39,7 +41,7 @@ export default class Point {
     return new Point(sizeLike.width, sizeLike.height);
   }
 
-  public static fromPointLike(pointLike: { x: number; y: number }): Point {
+  public static fromPointLike(pointLike: PointLike): Point {
     return new Point(pointLike.x, pointLike.y);
   }
 
@@ -80,6 +82,13 @@ export default class Point {
    */
   public get inverted(): Point {
     return this.times(-1);
+  }
+
+  /**
+   * @returns A copy of the point with both coordinates multiplicatively inverted (x -> 1/x).
+   */
+  public get invertedM(): Point {
+    return new Point(1 / this.x, 1 / this.y);
   }
 
   /**
@@ -209,7 +218,7 @@ export default class Point {
    * @param n A number or other point to be added to the point.
    * @returns A copy of the point summed with the given value.
    */
-  public plus(n: number | Point): Point {
+  public plus(n: number | Point | PointLike): Point {
     let ret = this.copy();
     ret.add(n);
     return ret;
@@ -219,8 +228,8 @@ export default class Point {
    * Adds the given point to this point.
    * @param n A number or other point to be added to this point.
    */
-  public add(n: number | Point): void {
-    if (n instanceof Point) {
+  public add(n: number | PointLike): void {
+    if (typeof n === "object") {
       this.x += n.x;
       this.y += n.y;
     } else {
@@ -301,5 +310,19 @@ export default class Point {
    */
   public toArray(): number[] {
     return [this.x, this.y];
+  }
+
+  /**
+   * @returns An object of the form { x, y }.
+   */
+  public toJSON(): { x: number; y: number } {
+    return { x: this.x, y: this.y };
+  }
+
+  /**
+   * @returns A point with swapped x and y coordinates.
+   */
+  public get swapped() {
+    return new Point(this.y, this.x);
   }
 }

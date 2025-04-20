@@ -2,6 +2,8 @@ import { isFunction, isNullOrUndefined, splitmix32 } from "./utils";
 
 const sign = (x: number) => (x < 0 ? -1 : x > 0 ? 1 : 0);
 
+export type MaybeWrapped<T> = T | T[];
+
 export default class List {
   static fromGenerator<T>(generator: (i: number) => T, length: number) {
     if (!length) throw new Error("come onn");
@@ -122,6 +124,50 @@ export default class List {
     return copy;
   }
 
+  static withIndexesReplaced<T>(
+    source: T[],
+    replacements: Record<
+      number,
+      MaybeWrapped<T | ((oldValue: T, i: number) => T)>
+    >
+  ): T[];
+  static withIndexesReplaced<T>(
+    source: T[],
+    indexes: number[],
+    newValue: MaybeWrapped<T | ((oldValue: T, i: number) => T)>
+  ): T[];
+  static withIndexesReplaced<T>(
+    source: T[],
+    indexesOrReplacements:
+      | number[]
+      | Record<number, MaybeWrapped<T | ((oldValue: T, i: number) => T)>>,
+    newValue?: MaybeWrapped<T | ((oldValue: T, i: number) => T)>
+  ): T[] {
+    if (Array.isArray(indexesOrReplacements)) {
+      const copy = this.copy(source);
+      indexesOrReplacements.forEach((i) => {
+        const newValueForI = (
+          Array.isArray(newValue) ? newValue[i] : newValue
+        )!;
+        copy[i] = isFunction(newValueForI)
+          ? newValueForI(copy[i], i)
+          : newValueForI;
+      });
+      return copy;
+    } else {
+      const copy = this.copy(source);
+      Object.entries(indexesOrReplacements).forEach(([i, newValue]) => {
+        const newValueForI = (
+          Array.isArray(newValue) ? newValue[i] : newValue
+        )!;
+        copy[i] = isFunction(newValueForI)
+          ? newValueForI(copy[i], i)
+          : newValueForI;
+      });
+      return copy;
+    }
+  }
+
   static wrap<T>(value: T | T[]): T[] {
     return Array.isArray(value) ? value : [value];
   }
@@ -165,6 +211,21 @@ export default class List {
         left.push(value);
       } else {
         right.push(value as Exclude<T, U>);
+      }
+    });
+
+    return [left, right];
+  }
+
+  static partition2<T>(source: T[], fn: (el: T) => boolean): [T[], T[]] {
+    const left: T[] = [];
+    const right: T[] = [];
+
+    source.forEach((value) => {
+      if (fn(value)) {
+        left.push(value);
+      } else {
+        right.push(value);
       }
     });
 

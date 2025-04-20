@@ -14,6 +14,20 @@ export interface TokenSettings {
   enabled: boolean;
 }
 
+export type TouchMode = "perform" | "generate" | "edit";
+
+/*
+  - performance
+    - (multi)touch to play notes like a piano
+  - generate
+    - (multi)touch to generate playheads
+      - swipe for direction or tap for all directions
+  - edit
+    - touch to modify a hex
+    - drag n drop
+      - toggle for copying vs moving
+*/
+
 export interface AppSettings {
   isFirstRun: boolean;
   version: number;
@@ -31,12 +45,15 @@ export interface AppSettings {
     toggleShowLeftColumn: KeyboardShortcut;
     toggleShowInspector: KeyboardShortcut;
   };
+  touchMode: TouchMode;
+  performanceColors: string[];
 }
 
 export const defaultSettings: AppSettings = {
   isFirstRun: true,
   version: 1,
   playNoteOnClick: true,
+  touchMode: "edit",
   wrapPlayheads: true,
   tokens: Dict.fromArray<TokenUID, TokenSettings>(
     tokenDefinitions.map<[TokenUID, TokenSettings]>((t) => [
@@ -47,6 +64,18 @@ export const defaultSettings: AppSettings = {
   confirmDelete: true,
   midiInputs: [],
   midiOutputs: [],
+  performanceColors: [
+    "#30D5C8", // Teal Cyan
+    "#0A84FF", // Bright Blue
+    "#5E5CE6", // Indigo Blue
+    "#BF5AF2", // Soft Purple
+    "#FF2D55", // Hot Pink
+    "#FF3B30", // Bright Red
+    "#FF9500", // Deep Orange
+    "#FFCC00", // Golden Yellow
+    "#C6FF00", // Lime Green
+    "#32D74B", // Vibrant Green
+  ],
   keyboardShortcuts: {
     play: {
       key: "Enter",

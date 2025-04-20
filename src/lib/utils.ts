@@ -407,3 +407,26 @@ export function capitalize<S extends string>(s: S): Capitalize<S> {
 export function camelCaseToSentence(s: string): string {
   return capitalize(s).replace(/([a-z])([A-Z])/g, "$1 $2");
 }
+
+export function mapTouches<T = void>(
+  touches: TouchList,
+  fn: (touch: Touch, i: number) => T
+): T[] {
+  const ret: T[] = [];
+
+  for (let i = 0; i < touches.length; i++) {
+    ret.push(fn(touches[i], i));
+  }
+
+  return ret;
+}
+
+// expands object types one level deep
+export type Expand<T> = T extends infer O ? { [K in keyof O]: O[K] } : never;
+
+// expands object types recursively
+export type ExpandRecursively<T> = T extends object
+  ? T extends infer O
+    ? { [K in keyof O]: ExpandRecursively<O[K]> }
+    : never
+  : T;

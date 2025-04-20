@@ -165,14 +165,30 @@ export class Canvas {
       },
     };
 
-    this.canvas.addEventListener("mousemove", this.mouseMove.bind(this));
-    this.canvas.addEventListener("touchmove", this.mouseMove.bind(this));
-    this.canvas.addEventListener("mousedown", this.mouseDown.bind(this));
-    this.canvas.addEventListener("touchstart", this.mouseDown.bind(this));
-    this.canvas.addEventListener("mouseup", this.mouseUp.bind(this));
-    this.canvas.addEventListener("touchend", this.mouseUp.bind(this));
-    this.canvas.addEventListener("mouseleave", this.mouseLeave.bind(this));
-    this.canvas.addEventListener("touchcancel", this.mouseLeave.bind(this));
+    this.canvas.addEventListener("mousemove", this.mouseMove.bind(this), {
+      passive: false,
+    });
+    this.canvas.addEventListener("touchmove", this.mouseMove.bind(this), {
+      passive: false,
+    });
+    this.canvas.addEventListener("mousedown", this.mouseDown.bind(this), {
+      passive: false,
+    });
+    this.canvas.addEventListener("touchstart", this.mouseDown.bind(this), {
+      passive: false,
+    });
+    this.canvas.addEventListener("mouseup", this.mouseUp.bind(this), {
+      passive: false,
+    });
+    this.canvas.addEventListener("touchend", this.mouseUp.bind(this), {
+      passive: false,
+    });
+    this.canvas.addEventListener("mouseleave", this.mouseLeave.bind(this), {
+      passive: false,
+    });
+    this.canvas.addEventListener("touchcancel", this.mouseLeave.bind(this), {
+      passive: false,
+    });
   }
 
   public addEventListener(eventName: "mouseup", fn: MouseUpFn): void;
@@ -299,14 +315,47 @@ export class Canvas {
     this.offset = new Point(x, y);
   }
 
-  private posFromEvent(e: MouseEvent | TouchEvent): Point {
+  public posFromEvent(e: MouseEvent | TouchEvent | Touch): Point {
     let ret = new Point();
 
-    if (e instanceof MouseEvent) {
+    if (e instanceof MouseEvent || e instanceof Touch) {
       ret = new Point(e.pageX, e.pageY);
-    } else {
+    } else if (e instanceof TouchEvent) {
       ret = new Point(e.changedTouches[0].pageX, e.changedTouches[0].pageY);
     }
+
+    return this.globalPointToLocal(ret);
+  }
+
+  public localPointToGlobal(point: Point): Point {
+    const ret = point.copy();
+
+    if (this.usingDeepCalc) {
+      this.deepCalcPosition();
+    }
+
+    let bounds = this.canvas.getBoundingClientRect();
+
+    let o = this.usingDeepCalc
+      ? this.offset.copy()
+      : new Point(bounds.left, bounds.top);
+
+    if (this.align.horizontal && o.x > 0) {
+      o.x = (2 * o.x - bounds.width) / 2;
+    }
+
+    if (this.align.vertical && o.y > 0) {
+      o.y = (2 * o.y - bounds.height) / 2;
+    }
+
+    ret.multiply(Point.fromSizeLike(bounds).dividedBy(this.size));
+    ret.add(o);
+
+    return ret;
+  }
+
+  public globalPointToLocal(point: Point): Point {
+    const ret = point.copy();
 
     if (this.usingDeepCalc) {
       this.deepCalcPosition();
@@ -844,20 +893,20 @@ export class Canvas {
         );
 
         if (labels[index]) {
-          const fontSize = 12;
+          const fontSize = 16;
           const lines = labels[index].split("\n");
-          const start = (-1 / 2) * fontSize * (lines.length - 1);
+          const start = (-1 / 2) * fontSize * (lines.length - 1) + 2;
 
           lines.forEach((line, i) => {
             this.fillText(
               line,
-              centerPt.plus(new Point(0, start + (fontSize + 4) * i)),
+              centerPt.plus(new Point(0, start + fontSize * i)),
               i === 0 ? textColor : tokenTextColor,
               undefined,
               "center",
-              i != 0
-                ? fontSize * 1.25 + "px sans-serif"
-                : fontSize * 0.95 + "px sans-serif"
+              i === 0
+                ? fontSize * 1 + "px sans-serif"
+                : fontSize * 1 + "px monospace"
             );
           });
         }

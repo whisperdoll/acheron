@@ -70,6 +70,40 @@ export async function openComposition(): Promise<
   }
 }
 
+export async function saveComposition(composition: SerializedComposition) {
+  if (isOnDesktop()) {
+    const fs = await import("@tauri-apps/plugin-fs");
+    const dialog = await import("@tauri-apps/plugin-dialog");
+
+    const filepath = await dialog.open({
+      title: "Open Composition...",
+      filters: [{ name: "Acheron Composition", extensions: ["ache"] }],
+      canCreateDirectories: true,
+      directory: false,
+      multiple: false,
+    });
+
+    if (!filepath) return;
+
+    return JSON.parse(await fs.readTextFile(filepath));
+  } else {
+    return new Promise((resolve, reject) => {
+      try {
+        const blob = new Blob([JSON.stringify(composition)], {
+          type: "application/json",
+        });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "composition.ache";
+        a.click();
+      } catch (e) {
+        reject(e);
+      }
+    });
+  }
+}
+
 export async function openUrl(url: string) {
   if (isOnDesktop()) {
     const { openUrl } = await import("@tauri-apps/plugin-opener");

@@ -24,6 +24,9 @@ import useContextMenu, {
 import { Driver } from "../utils/driver";
 import SimpleAppState from "../state/SimpleAppState";
 import { msPerBeat } from "../lib/utils";
+import { mapTouches, mod, msPerBeat, pointArray } from "../lib/utils";
+import Midi from "../utils/midi";
+import HexGridContextMenu from "./HexGridContextMenu";
 
 interface Props {
   layerIndex: number;
@@ -338,6 +341,19 @@ export default function HexGrid(props: Props) {
     state.values.tokenDefinitions,
     state.values.layers[props.layerIndex]?.tokenIds,
   ]);
+  const [contextMenuNode, showContextMenu] = useContextMenu(
+    ({ hide, setPosition, isShowing }) => {
+      return [
+        {
+          contents: <HexGridContextMenu onHide={hide} />,
+        },
+      ];
+    },
+    {
+      offset: (bounds) => ({ x: 16, y: -bounds.height / 2 }),
+    },
+    [state.simulation.layers[props.layerIndex]?.tokenIds]
+  );
 
   ////////////////////////////////////////////////////////////////////////////////
   //////////////////////////////////// EVENTS ////////////////////////////////////
@@ -388,137 +404,324 @@ export default function HexGrid(props: Props) {
       }
     };
 
-    function documentMouseUp() {
-      state.set(
-        {
-          isDragging: false,
-          draggingDestHex: { hexIndex: -1, layerIndex: -1 },
-          draggingSourceHex: { hexIndex: -1, layerIndex: -1 },
-        },
-        "mouse up"
-      );
-      document.body.style.cursor = "default";
+    function documentMouseUp(e: MouseEvent | TouchEvent | PointerEvent) {
+      if (!canvasEl.current) return;
+
+      const isTouch = e instanceof TouchEvent;
+
+      if (settings.values.touchMode === "perform") {
+        const toRemove: Set<PerformanceNote["identifier"]> = new Set();
+
+        const identifiers = new Set(
+          isTouch ? mapTouches(e.changedTouches, (t) => t.identifier) : [-1]
+        );
+
+        // find matching notes
+        state.gui.performingNotes.forEach((note) => {
+          if (!identifiers.has(note.identifier)) return;
+
+          // stop the matching note
+          if (note.note) {
+            Midi.noteOff({
+              note: note.note,
+              channel: note.channel,
+              deviceName: note.device,
+            });
+          }
+          toRemove.add(note.identifier);
+        });
+
+        state.set((s) => ({
+          ...s,
+          gui: {
+            ...s.gui,
+            performingNotes: s.gui.performingNotes.filter(
+              (s) => !toRemove.has(s.identifier)
+            ),
+          },
+        }));
+
+        return;
+      }
+
+      if (settings.values.touchMode === "edit") {
+        state.set((s) => ({
+          ...s,
+          gui: {
+            ...s.gui,
+            hexGrid: {
+              ...s.gui.hexGrid,
+              isDragging: false,
+              dragDest: null,
+              dragSource: null,
+            },
+          },
+        }));
+        document.body.style.cursor = "default";
+        return;
+      }
+
+      if (settings.values.touchMode === "generate") {
+        // TODO
+        return;
+      }
     }
 
     function mouseDown(pos: Point, e: MouseEvent | TouchEvent | PointerEvent) {
       mouseLocation.current = pos;
       const hexIndex = closestHexIndex(pos);
-      // console.log("mouseDown", { hexIndex });
-      if (hexIndex === -1) return;
+      if (!canvasEl.current) return;
+      const isTouch = e instanceof TouchEvent;
 
-      const isPrimary = e instanceof TouchEvent || e.button === 0;
+      if (settings.values.touchMode === "perform") {
+        e.preventDefault();
+        const notes: PerformanceNote[] = [];
 
-      if (settings.values.playNoteOnClick && isPrimary) {
-        Driver.playTriad({
-          state: new SimpleAppState(state.values),
-          hexIndex,
-          triad: 0,
-          durationMs: msPerBeat({
-            bpm: state.getControlValue<"decimal">({
-              layerControl: "tempo",
-              layer: props.layerIndex,
-            }),
-          }),
+        const touches = isTouch
+          ? mapTouches(e.changedTouches, (t) => ({
+              hexIndex: closestHexIndex(canvas.current!.posFromEvent(t)),
+              identifier: t.identifier,
+            }))
+          : [{ hexIndex, identifier: -1 }];
+
+        touches.forEach(({ hexIndex, identifier }) => {
+          const [newNotes, unpermitted] = Driver.playTriad({
+            state,
+            hexIndex,
+            triad: 0,
+          });
+          notes.push(
+            ...newNotes.map<PerformanceNote>((n) => ({
+              ...n,
+              identifier,
+            })),
+            ...unpermitted.map<PerformanceNote>((n) => ({
+              ...n,
+              note: null,
+              identifier,
+            }))
+          );
         });
+
+        state.set((s) => ({
+          ...s,
+          gui: {
+            ...s.gui,
+            performingNotes: s.gui.performingNotes.concat(notes),
+          },
+        }));
+
+        return;
       }
 
-      state.set(
-        {
-          selectedHex: {
-            hexIndex,
-            layerIndex: props.layerIndex,
-          },
-        },
-        "mouse down"
-      );
-
-      if (!state.values.layers[props.layerIndex].tokenIds[hexIndex]?.length)
-        return;
-
-      state.set(
-        {
-          draggingSourceHex: {
-            hexIndex,
-            layerIndex: props.layerIndex,
-          },
-          isDragging: true,
-          draggingType: e.shiftKey ? "copy" : "move",
-        },
-        "mouse down on token"
-      );
-    }
-
-    function mouseMove(
-      pos: Point,
-      isDown: boolean,
-      lastPos: Point,
-      originalPos: Point,
-      e: MouseEvent | TouchEvent
-    ) {
-      mouseLocation.current = pos;
-    }
-
-    animationCallback.current = () => {
-      if (state.values.isDragging && mouseLocation.current) {
-        const hoveredHex = closestHexIndex(mouseLocation.current);
-        const hoveredHexIsSourceHex =
-          hoveredHex === state.values.draggingSourceHex.hexIndex &&
-          props.layerIndex === state.values.draggingSourceHex.layerIndex;
-        if (hoveredHex !== -1 && !hoveredHexIsSourceHex) {
-          state.set(
-            {
-              draggingDestHex: {
-                hexIndex: hoveredHex,
+      if (settings.values.touchMode === "edit") {
+        state.set((s) => ({
+          ...s,
+          gui: {
+            ...s.gui,
+            hexGrid: {
+              ...s.gui.hexGrid,
+              selectedHexes: {
+                hexIndexes: [hexIndex],
                 layerIndex: props.layerIndex,
               },
             },
-            "hover while dragging"
-          );
-          document.body.style.cursor =
-            state.values.draggingType === "copy" ? "copy" : "move";
-        } else {
-          state.set(
-            {
-              draggingDestHex: {
-                hexIndex: -1,
-                layerIndex: -1,
+          },
+        }));
+
+        if (
+          !state.simulation.layers[props.layerIndex].tokenIds[hexIndex]?.length
+        )
+          return;
+
+        state.set((s) => ({
+          ...s,
+          gui: {
+            ...s.gui,
+            hexGrid: {
+              ...s.gui.hexGrid,
+              dragSource: {
+                hexIndexes: [hexIndex],
+                layerIndex: props.layerIndex,
+              },
+              isDragging: true,
+              dragType: e.shiftKey ? "copy" : "move",
+            },
+          },
+        }));
+        return;
+      }
+
+      if (settings.values.touchMode === "generate") {
+        // TODO
+      }
+    }
+
+    function mouseMove(e: MouseEvent | TouchEvent | PointerEvent) {
+      const pos = canvas.current!.posFromEvent(e);
+      mouseLocation.current = pos;
+      const isTouch = e instanceof TouchEvent;
+
+      if (!canvasEl.current) return;
+
+      if (settings.values.touchMode === "perform") {
+        e.preventDefault();
+        const newNotes = state.gui.performingNotes.slice(0);
+        let changed = false;
+
+        const touches = isTouch
+          ? mapTouches(e.changedTouches, (t) => ({
+              identifier: t.identifier,
+              hexIndex: closestHexIndex(canvas.current!.posFromEvent(t)),
+            }))
+          : [
+              {
+                identifier: -1,
+                hexIndex: closestHexIndex(canvas.current!.posFromEvent(e)),
+              },
+            ];
+
+        touches.forEach(({ identifier, hexIndex }) => {
+          // determine if we changed notes
+          state.gui.performingNotes.forEach((note, noteIndex) => {
+            if (note.identifier !== identifier) return;
+            if (note.hexIndex === hexIndex && note.layer === props.layerIndex)
+              return;
+
+            // change
+            changed = true;
+
+            if (note.note) {
+              Midi.noteOff({
+                channel: note.channel,
+                deviceName: note.device,
+                note: note.note,
+              });
+            }
+
+            const [playedNotes, unpermittedPlayedNotes] = Driver.playTriad({
+              state,
+              hexIndex,
+              triad: 0,
+              layerIndex: props.layerIndex,
+              velocity: note.velocity ?? undefined,
+            });
+
+            newNotes[noteIndex] = {
+              identifier: note.identifier,
+              channel: note.channel,
+              device: note.device,
+              velocity: note.velocity,
+              layer: props.layerIndex,
+              note: playedNotes.at(0)?.note ?? null,
+              hexIndex,
+            };
+          });
+        });
+
+        if (changed) {
+          state.set((s) => ({
+            ...s,
+            gui: { ...s.gui, performingNotes: newNotes },
+          }));
+        }
+
+        return;
+      }
+
+      if (settings.values.touchMode === "edit") {
+        // TODO (maybe)
+      }
+
+      if (settings.values.touchMode === "generate") {
+        // TODO
+      }
+    }
+
+    animationCallback.current = () => {
+      if (
+        state.gui.hexGrid.isDragging &&
+        state.gui.hexGrid.dragSource &&
+        mouseLocation.current
+      ) {
+        const hoveredHex = closestHexIndex(mouseLocation.current);
+        const hoveredHexIsSourceHex =
+          hoveredHex === state.gui.hexGrid.dragSource.hexIndexes[0] &&
+          props.layerIndex === state.gui.hexGrid.dragSource.layerIndex;
+        if (hoveredHex !== undefined && !hoveredHexIsSourceHex) {
+          state.set((s) => ({
+            ...s,
+            gui: {
+              ...s.gui,
+              hexGrid: {
+                ...s.gui.hexGrid,
+                dragDest: {
+                  hexIndexes: [hoveredHex],
+                  layerIndex: props.layerIndex,
+                },
               },
             },
-            "hover over nothing while dragging"
-          );
+          }));
+          document.body.style.cursor =
+            state.gui.hexGrid.dragType === "copy" ? "copy" : "move";
+        } else {
+          state.set((s) => ({
+            ...s,
+            gui: {
+              ...s.gui,
+              hexGrid: {
+                ...s.gui.hexGrid,
+                dragDest: null,
+              },
+            },
+          }));
         }
       }
     };
 
     function mouseLeave(pos: Point, e: MouseEvent | TouchEvent) {
-      state.set(
-        {
-          draggingDestHex: {
-            hexIndex: -1,
-            layerIndex: -1,
+      state.set((s) => ({
+        ...s,
+        gui: {
+          ...s.gui,
+          hexGrid: {
+            ...s.gui.hexGrid,
+            dragDest: null,
           },
         },
-        "mouse leave while dragging"
-      );
+      }));
       mouseLocation.current = null;
     }
 
     async function contextMenu(e: MouseEvent) {
       e.preventDefault();
-      if (!hexIsSelected(state.values)) return;
+      if (!hexIsSelected(state)) return;
+      if (e instanceof TouchEvent) return;
+      if (!canvasEl.current) return;
+      if (!canvas.current) return;
 
-      showContextMenu(e);
+      const hexIndex = closestHexIndex(canvas.current!.posFromEvent(e));
+      const pos = canvas.current.localPointToGlobal(
+        hexPoints.current[hexIndex]
+      );
+
+      showContextMenu(e, {
+        position: pos.toJSON(),
+      });
     }
 
-    canvas.current?.addEventListener("mousemove", mouseMove);
+    document.body.addEventListener("mousemove", mouseMove, { passive: false });
+    document.body.addEventListener("touchmove", mouseMove, { passive: false });
     canvas.current?.addEventListener("mousedown", mouseDown);
     canvas.current?.addEventListener("mouseup", mouseUp);
     canvas.current?.addEventListener("mouseleave", mouseLeave);
     document.body.addEventListener("mouseup", documentMouseUp);
+    document.body.addEventListener("touchend", documentMouseUp);
     canvas.current?.canvas.addEventListener("contextmenu", contextMenu);
 
     return () => {
-      canvas.current?.removeEventListener("mousemove", mouseMove);
+      document.body.removeEventListener("mousemove", mouseMove);
+      document.body.removeEventListener("touchmove", mouseMove);
       canvas.current?.removeEventListener("mousedown", mouseDown);
       canvas.current?.removeEventListener("mouseup", mouseUp);
       canvas.current?.removeEventListener("mouseleave", mouseLeave);

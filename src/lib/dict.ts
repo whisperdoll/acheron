@@ -27,7 +27,7 @@ export default class Dict {
   static map<K extends Key, V, K2 extends Key, V2>(
     o: Record<K, V>,
     fn: (key: K, value: V) => [K2, V2]
-  ) {
+  ): Record<K2, V2> {
     return Dict.fromArray(
       Object.entries(o).map(([key, value]) => fn(key, value))
     );
@@ -44,5 +44,13 @@ export default class Dict {
     });
 
     return ret;
+  }
+
+  static merge<T extends Record<string | symbol | number, unknown>>(
+    os: T[]
+  ): T {
+    const ret = {};
+    os.forEach((o) => Object.assign(ret, o));
+    return ret as T;
   }
 }
