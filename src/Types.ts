@@ -8,6 +8,8 @@ import appStateStore, { AppState, LayerState } from "./state/AppState";
 import { sliceObject } from "./utils/utils";
 import { PlayerControlKey } from "./utils/DefaultDefinitions";
 import { randomFloat } from "./lib/utils";
+import * as WebMidi from "webmidi";
+import * as Midi from "./utils/midi";
 
 type Entries<T> = {
   [K in keyof T]: [K, T[K]];
@@ -16,7 +18,21 @@ type Entries<T> = {
 declare global {
   interface ObjectConstructor {
     entries<T extends object>(o: T): Entries<T>;
+    keys<T extends object>(o: T): (keyof T)[];
   }
+}
+export var lfoval = 1;
+
+export interface WebMidiInput extends WebMidi.Input {
+  type: "input";
+}
+
+export interface WebMidiOutput extends WebMidi.Output {
+  type: "output";
+}
+
+export interface WebMidiPortEvent extends WebMidi.Event {
+  port: WebMidiInput | WebMidiOutput;
 }
 
 export type TokenStore = Record<string, any>;
@@ -94,6 +110,8 @@ export const KeyMap = {
 
 export type Direction = 0 | 1 | 2 | 3 | 4 | 5;
 
+export type Midichannel = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16;
+
 export type StartCallback<StoreType extends TokenStore = TokenStore> = (
   store: StoreType,
   helpers: Record<string, Function>
@@ -111,6 +129,7 @@ export const ControlDataTypes = [
   "int",
   "decimal",
   "direction",
+  "midichannel",
   "bool",
   "select",
   "triad",
@@ -120,6 +139,7 @@ export type TypeForControlDataType<T extends ControlDataType> = T extends
   | "int"
   | "decimal"
   | "direction"
+  | "midichannel"
   | "triad"
   ? number
   : T extends "select"
@@ -195,6 +215,8 @@ export function coerceControlValueFromNumber<
         return +value;
       case "direction":
         return Math.floor(+value) % 6;
+	  case "midichannel":
+        return Math.max(Math.abs(Math.floor(+value ) % 16 + 1),1);
       case "int":
         return Math.floor(+value);
       case "select":
@@ -324,6 +346,7 @@ export interface Lfo {
   hiPeriod: number;
   period: number;
   sequence: number[];
+  control: number;
 }
 
 export function getLfoValue(
@@ -351,9 +374,12 @@ export function getLfoValue(
       return lfo.max - (t / period) * (lfo.max - lfo.min);
     }
     case "triangle": {
-      return t / period <= 0.5
-        ? lfo.min + (t / period) * (lfo.max - lfo.min) * 2
-        : lfo.max - (t / period) * (lfo.max - lfo.min) * 2;
+      return (
+        2 *
+        (t / period <= 0.5
+          ? lfo.min + (t / period) * (lfo.max - lfo.min)
+          : lfo.max - (t / period) * (lfo.max - lfo.min))
+      );
     }
     case "sine": {
       const amp = (lfo.max - lfo.min) / 2;
@@ -365,6 +391,16 @@ export function getLfoValue(
     case "sequence": {
       return lfo.sequence[Math.floor((t / period) * lfo.sequence.length)] ?? 0;
     }
+	case "midi Control": {
+      const amp = (lfo.max - lfo.min) / 2;
+	  var lfoval = ((Midi.cCArr[lfo.control] / 127) * amp) * 2 + lfo.min;
+			if (Midi.cCArr[0] != undefined) {
+			return lfoval;
+		}
+		else {
+			return 1;
+		}
+    }
     default: {
       throw "lfo error";
     }
@@ -373,8 +409,9 @@ export function getLfoValue(
 
 export interface LayerNote {
   end: number;
-  notes: string[];
+  note: string;
   type: "beat" | "ms";
-  outputNames: string[];
   channel: number;
+  velocity: number;
+  id?: string;
 }

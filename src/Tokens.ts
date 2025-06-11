@@ -1,42 +1,38 @@
 import {
-  ControlDataTypes,
   ControlState,
   SelectOption,
   TokenDefinition,
   Token,
-  TokenCallbacks,
   copyControl,
-  TokenUID,
 } from "./Types";
 import { buildFromDefs } from "./utils/DefaultDefinitions";
 import { v4 as uuidv4 } from "uuid";
-import * as fs from "@tauri-apps/plugin-fs";
-import * as npath from "@tauri-apps/api/path";
-import { emptyFn } from "./utils/utils";
 
-import AbsorbToken from "./tokens/absorb.ts";
-import GenerateToken from "./tokens/generate.ts";
-import LifespanToken from "./tokens/lifespan.ts";
-import NoteToken from "./tokens/note.ts";
-import RandomizeToken from "./tokens/randomize.ts";
-import ReboundToken from "./tokens/rebound.ts";
-import SkipToken from "./tokens/skip.ts";
-import SplitToken from "./tokens/split.ts";
-import TwistToken from "./tokens/twist.ts";
-import WormholeToken from "./tokens/wormhole.ts";
-import { AppState } from "./state/AppState.ts";
+import AbsorbToken from "./tokens/absorb";
+import GenerateToken from "./tokens/generate";
+import LifespanToken from "./tokens/lifespan";
+import NoteToken from "./tokens/note";
+import RandomizeToken from "./tokens/randomize";
+import ReboundToken from "./tokens/rebound";
+import SkipToken from "./tokens/skip";
+import SplitToken from "./tokens/split";
+import ShiftToken from "./tokens/shift";
+import TwistToken from "./tokens/twist";
+import WormholeToken from "./tokens/wormhole";
+import { AppState } from "./state/AppState";
 
 export const tokenDefinitions: TokenDefinition[] = [
-  AbsorbToken,
   GenerateToken,
-  LifespanToken,
   NoteToken,
   RandomizeToken,
   ReboundToken,
-  SkipToken,
   SplitToken,
+  SkipToken,
+  ShiftToken,
   TwistToken,
   WormholeToken,
+  AbsorbToken,
+  LifespanToken,
 ] as TokenDefinition[];
 
 function compareOptions(o1?: SelectOption[], o2?: SelectOption[]) {
@@ -64,7 +60,7 @@ function reportError(path: string, msg: string) {
 }
 
 export function buildToken(appState: AppState, uid: string) {
-  console.log(appState, uid);
+  // console.log(appState, uid);
   const def = appState.tokenDefinitions[uid];
   const controls = buildFromDefs(def.controls);
 
@@ -100,110 +96,4 @@ export function copyToken(
   };
 
   return { tokenState, controls };
-}
-
-export async function loadTokenFromPath(
-  path: string,
-  failSilently: boolean = false
-): Promise<{ tokenDef: TokenDefinition; callbacks: TokenCallbacks } | null> {
-  let fileContents: string;
-  const filePath = await npath.join(path, "script.js");
-
-  try {
-    fileContents = await fs.readTextFile(filePath);
-  } catch (e) {
-    if (!failSilently) reportError(path, "Unable to read file");
-    return null;
-  }
-
-  const firstLine = fileContents.split("\n")[0];
-
-  if (
-    firstLine.length < 19 ||
-    firstLine.substr(0, 18) !== "/// acheron.token "
-  ) {
-    if (!failSilently) reportError(path, "Invalid header");
-    return null;
-  }
-
-  let version = firstLine.substr(19);
-
-  if (version === "1") {
-    return await loadV1(path, fileContents, failSilently);
-  } else {
-    alert("Unknown token version");
-    return null;
-  }
-}
-
-async function loadV1(
-  path: string,
-  fileContents: string,
-  failSilently: boolean
-): Promise<{ tokenDef: TokenDefinition; callbacks: TokenCallbacks } | null> {
-  path = await npath.normalize(path);
-
-  const functionsIndex = fileContents.indexOf("/// token.functions");
-
-  if (functionsIndex === -1) {
-    if (!failSilently) reportError(path, "Missing functions header");
-    return null;
-  }
-
-  let tokenJsonText = fileContents.substr(fileContents.indexOf("\n"));
-  tokenJsonText = tokenJsonText
-    .substr(0, tokenJsonText.indexOf("/// token.functions"))
-    .trim();
-  let tokenJsonObj: TokenDefinition;
-
-  try {
-    tokenJsonObj = JSON.parse(tokenJsonText);
-  } catch (e: any) {
-    if (!failSilently) reportError(path, e.message);
-    return null;
-  }
-
-  const badDataTypes = Object.entries(tokenJsonObj.controls).filter(
-    (e) => e[1].type && !ControlDataTypes.includes(e[1].type)
-  );
-  if (badDataTypes.length > 0) {
-    badDataTypes.forEach(
-      (e) =>
-        !failSilently &&
-        reportError(
-          path,
-          `Invalid data type '${e[1].type!}' on token '${
-            tokenJsonObj.label
-          }' control '${e[0]}'`
-        )
-    );
-    return null;
-  }
-
-  try {
-    const callbacks: TokenCallbacks = {
-      onStart: emptyFn,
-      onStop: emptyFn,
-      onTick: emptyFn,
-    };
-
-    return {
-      callbacks,
-      tokenDef: Object.freeze(tokenJsonObj),
-    };
-  } catch (e: any) {
-    if (!failSilently)
-      reportError(path, "Could not load functions:\n" + e.message);
-    return null;
-  }
-}
-
-export async function getTokenUIDFromPath(
-  path: string
-): Promise<TokenUID | null> {
-  const token = await loadTokenFromPath(path, true);
-  if (!token || !Object.prototype.hasOwnProperty.call(token.tokenDef, "uid"))
-    return null;
-
-  return token.tokenDef.uid;
 }

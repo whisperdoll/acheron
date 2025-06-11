@@ -1,13 +1,7 @@
 import StateStore from "./state.ts";
 import App from "../App";
 import React, { useReducer, FunctionComponent } from "react";
-import {
-  getUserDataPath,
-  objectWithoutKeys,
-  sliceObject,
-} from "../utils/utils";
-import * as path from "@tauri-apps/api/path";
-import * as fs from "@tauri-apps/plugin-fs";
+import { objectWithoutKeys, sliceObject } from "../utils/utils";
 import { buildLayer } from "../Layers";
 import {
   ControlState,
@@ -32,7 +26,6 @@ import {
 } from "../utils/DefaultDefinitions";
 import { MidiDevice, MidiNote } from "../utils/midi";
 import { buildToken, copyToken, tokenDefinitions } from "../Tokens";
-import { migrateSettings } from "../Migrators";
 import List from "../lib/list.ts";
 import {
   resolveMaybeGenerated,
@@ -42,7 +35,9 @@ import {
 } from "../lib/utils.ts";
 import appSettingsStore from "./AppSettings.ts";
 import AbsorbToken from "../tokens/absorb.ts";
+import SkipToken from "../tokens/skip.ts";
 import Dict from "../lib/dict.ts";
+import env from "../lib/env.ts";
 
 export interface AppState {
   selectedHex: { hexIndex: number; layerIndex: number };
@@ -62,6 +57,7 @@ export interface AppState {
   layers: LayerState[];
   isPlaying: boolean;
   startTime: number;
+  currentTime: number;
   allowedOutputs: MidiDevice[];
   allowedInputs: MidiDevice[];
   currentBeat: number;
@@ -78,6 +74,8 @@ export interface AppState {
   isEditingLayerName: boolean;
   isShowingSettings: boolean;
   isMultiLayerMode: boolean;
+  leftColumnWidth: number;
+  inspectorWidth: number;
   multiLayerSize: number;
 }
 
@@ -140,6 +138,7 @@ const initialState: AppState = {
   layers: [], // appended to after layer contruction
   isPlaying: false,
   startTime: 0,
+  currentTime: 0,
   allowedOutputs: [],
   allowedInputs: [],
   currentBeat: 0,
@@ -153,11 +152,13 @@ const initialState: AppState = {
   isDragging: false,
   isEditingLayerName: false,
   isMultiLayerMode: false,
-  isShowingInspector: true,
-  isShowingLeftColumn: true,
+  isShowingInspector: !env("debug"),
+  isShowingLeftColumn: !env("debug"),
   isShowingSettings: false,
   leftColumnTab: "player",
   multiLayerSize: 2,
+  inspectorWidth: 300,
+  leftColumnWidth: 300,
 };
 
 const initialLayer = buildLayer(initialState);

@@ -5,7 +5,7 @@ import {
   SerializedCompositionToken,
 } from "./Serialization";
 import { AppSettings, TokenSettings } from "./state/AppSettings";
-import { getTokenUIDFromPath } from "./Tokens";
+import { tokenDefinitions } from "./Tokens";
 import { KeyMap, TokenUID } from "./Types";
 import {
   buildLfo,
@@ -29,6 +29,7 @@ interface LfoV1 {
   hiPeriod: number;
   period: number;
   sequence: any[];
+  control: number;
 }
 
 interface SerializedCompositionControlV1 {
@@ -93,50 +94,52 @@ interface SerializedCompositionV1 {
 
 export async function migrateSettings(
   settings: Record<string, any>
-): Promise<AppSettings> {
-  if (!settings.version) {
-    const newTokens: Record<TokenUID, TokenSettings> = {};
+): Promise<Partial<AppSettings>> {
+  if (settings.version === 1) return settings as AppSettings;
 
-    for (const [tokenPath, tokenSettings] of Object.entries(
-      settings.tokens as Record<TokenUID, TokenSettings>
-    )) {
-      const uid = await getTokenUIDFromPath(tokenPath);
+  const newTokens: Record<TokenUID, TokenSettings> = {};
+  const validUids = tokenDefinitions.map((d) => d.uid);
 
-      if (uid !== null) {
-        newTokens[uid] = {
-          shortcut: tokenSettings.shortcut ?? "",
-          enabled: true,
-        };
+  if (settings.tokens) {
+    if (typeof settings.tokens === "object") {
+      for (const [key, tokenSettings] of Object.entries(settings.tokens)) {
+        if (validUids.includes(key)) {
+          newTokens[key] = {
+            shortcut:
+              typeof tokenSettings.shortcut === "string"
+                ? tokenSettings.shortcut
+                : "",
+            enabled: true,
+          };
+        }
       }
     }
-
-    return {
-      confirmDelete: settings.confirmDelete,
-      playNoteOnClick: settings.playNoteOnClick,
-      tokens: newTokens,
-      version: 1,
-      wrapPlayheads: settings.wrapPlayheads,
-      isFirstRun: true,
-      midiInputs: [],
-      midiOutputs: [],
-    };
   }
 
-  return settings as AppSettings;
+  validUids.forEach((uid) => {
+    if (!(uid in newTokens)) {
+      newTokens[uid] = {
+        shortcut: "",
+        enabled: true,
+      };
+    }
+  });
+
+  return {
+    confirmDelete: settings.confirmDelete,
+    playNoteOnClick: settings.playNoteOnClick,
+    tokens: newTokens,
+    version: 1,
+    wrapPlayheads: settings.wrapPlayheads,
+    isFirstRun: true,
+  };
 }
 
 async function migrateSerializedToken(
   serialized: SerializedCompositionTokenV1 | SerializedCompositionToken
 ): Promise<SerializedCompositionToken | null> {
   if (Object.prototype.hasOwnProperty.call(serialized, "path")) {
-    serialized = serialized as SerializedCompositionTokenV1;
-    const uid = await getTokenUIDFromPath(serialized.path);
-    if (uid === null) return null;
-    return {
-      controls: serialized.controls,
-      id: serialized.id,
-      uid: uid,
-    };
+    throw "this save format is not supported";
   }
 
   return serialized as SerializedCompositionToken;
@@ -162,7 +165,7 @@ function migrateSerializedLayer(
         id: "",
         currentValueType: "fixed",
         key: "midiChannel",
-        lfo: buildLfo("int", 1, NumMIDIChannels),
+        lfo: buildLfo("midichannel", 1, 16),
         fixedValue: serialized.midiChannel,
       },
       key: {

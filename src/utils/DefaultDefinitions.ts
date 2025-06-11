@@ -44,27 +44,11 @@ export const noteArray: string[] = [
 ];
 
 function major(root: number) {
-  return [
-    root,
-    root + 2,
-    root + 4,
-    root + 5,
-    root + 7,
-    root + 9,
-    root + 11,
-  ].map((n) => n % 12);
+  return [root, root + 2, root + 4, root + 5, root + 7, root + 9, root + 11].map((n) => n % 12);
 }
 
 function minor(root: number) {
-  return [
-    root,
-    root + 2,
-    root + 3,
-    root + 5,
-    root + 7,
-    root + 8,
-    root + 10,
-  ].map((n) => n % 12);
+  return [root, root + 2, root + 3, root + 5, root + 7, root + 8, root + 10].map((n) => n % 12);
 }
 
 export type PlayerControlKey = (typeof PlayerControlKeys)[number];
@@ -128,7 +112,7 @@ export const playerControlDefs: Record<PlayerControlKey, ControlDefinition> = {
   },
   tempo: {
     label: "Tempo",
-    type: "int",
+    type: "decimal",
     min: 1,
     max: 960,
     defaultValue: 120,
@@ -208,9 +192,9 @@ function layerControlDefs(): Record<LayerControlKey, ControlDefinition> {
     },
     midiChannel: {
       label: "MIDI Channel",
-      type: "int",
+      type: "midichannel",
       min: 1,
-      max: NumMIDIChannels,
+      max: 16,
       step: 1,
       defaultValue: 1,
     },
@@ -255,9 +239,7 @@ export function DefaultLayerControls(): Record<TokenInstanceId, ControlState> {
 
 // ----------------------------------------------------------------
 
-export function buildFromDefs<K extends string>(
-  defs: Record<K, ControlDefinition>
-): Record<K, ControlState> {
+export function buildFromDefs<K extends string>(defs: Record<K, ControlDefinition>): Record<K, ControlState> {
   const parts: Record<string, ControlState> = {};
 
   function getDefaultValue(definition: ControlDefinition) {
@@ -267,6 +249,7 @@ export function buildFromDefs<K extends string>(
       case "int":
       case "decimal":
       case "direction":
+	  case "midichannel":
       case "triad":
         return definition.defaultValue ?? 0;
       case "select":
@@ -274,9 +257,7 @@ export function buildFromDefs<K extends string>(
           throw "select control without options :(";
         }
 
-        const defaultOption = definition.options.find(
-          (o) => o.value === definition.defaultValue
-        );
+        const defaultOption = definition.options.find((o) => o.value === definition.defaultValue);
         if (defaultOption) {
           return defaultOption.value;
         } else {
@@ -293,8 +274,7 @@ export function buildFromDefs<K extends string>(
 
   const defaultControls = {
     global: () => DefaultPlayerControls,
-    layer: () =>
-      _defaultLayerControls || (_defaultLayerControls = DefaultLayerControls()),
+    layer: () => _defaultLayerControls || (_defaultLayerControls = DefaultLayerControls()),
   };
 
   for (const key in defs) {
@@ -304,9 +284,9 @@ export function buildFromDefs<K extends string>(
         reportError("bad inherit key");
       } else {
         let inheritKey = inheritParts[1];
-        let defaultControl = Object.entries(
-          defaultControls[inheritParts[0]]()
-        ).find((e) => e[1].key === inheritKey)![1];
+        let defaultControl = Object.entries(defaultControls[inheritParts[0]]()).find(
+          (e) => e[1].key === inheritKey
+        )![1];
         if (defaultControl === null) {
           reportError("bad");
         } else {
@@ -321,12 +301,7 @@ export function buildFromDefs<K extends string>(
             inherit: defs[key].inherit,
             fixedValue: defaultControl.fixedValue,
             currentValueType: "inherit",
-            lfo: buildLfo(
-              defaultControl.type,
-              defaultControl.min,
-              defaultControl.max,
-              defaultControl.options
-            ),
+            lfo: buildLfo(defaultControl.type, defaultControl.min, defaultControl.max, defaultControl.options),
             id,
             key,
           };
@@ -360,12 +335,7 @@ export function buildFromDefs<K extends string>(
   return Object.freeze(parts) as Record<K, ControlState>;
 }
 
-function getMinMaxForType(
-  type: ControlDataType,
-  n_min?: number,
-  n_max?: number,
-  options?: SelectOption[]
-) {
+function getMinMaxForType(type: ControlDataType, n_min?: number, n_max?: number, options?: SelectOption[]) {
   let max: number, min: number;
 
   switch (type) {
@@ -382,6 +352,10 @@ function getMinMaxForType(
       max = 5;
       min = 0;
       break;
+	case "midichannel":
+      max = 16;
+      min = 1;
+      break;
     case "triad":
       max = 6;
       min = 0;
@@ -395,12 +369,7 @@ function getMinMaxForType(
   return { min, max };
 }
 
-export function buildLfo(
-  type: ControlDataType,
-  n_min?: number,
-  n_max?: number,
-  options?: SelectOption[]
-) {
+export function buildLfo(type: ControlDataType, n_min?: number, n_max?: number, options?: SelectOption[]) {
   const { min, max } = getMinMaxForType(type, n_min, n_max, options);
 
   // add an extra 1 for ints cuz 0-5 is actually 6 items
@@ -410,6 +379,7 @@ export function buildLfo(
     lowPeriod: 1,
     max: max + +(type !== "decimal"),
     min,
+	control: 1,
     sequence: [],
     type: "sawtooth",
   };

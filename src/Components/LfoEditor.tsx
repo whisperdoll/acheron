@@ -96,6 +96,19 @@ export default function LfoEditor() {
               />
             </div>
           )}
+		  {modifyingLfo.type === "midi Control" && (<>
+			<div className="row">
+                <span>MIDI CC:</span>
+                <NumberInput
+                    min={0}
+                    max={127}
+                    value={modifyingLfo.control}
+                    coerce={coerce}
+                    onChange={value => modifyLfo({ control: value })}
+					step={1.0}
+                        />
+                    </div>
+			</>)}
         {modifyingLfo.type === "square" && (
           <>
             <div className="row">

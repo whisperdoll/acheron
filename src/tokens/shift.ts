@@ -1,15 +1,14 @@
 import { TokenDefinition } from "../Types";
 import AppState from "../state/AppState";
-import * as driver from "../utils/driver";
 
 interface Store {
   gateCounter: number;
 }
 
-const RandomizeToken: TokenDefinition<Store> = {
-  label: "Randomize",
-  symbol: "*",
-  uid: "hvst.randomize",
+const ShiftToken: TokenDefinition<Store> = {
+  label: "Shift",
+  symbol: "<",
+  uid: "hvst.shift",
   controls: {
     probability: {
       label: "Probability",
@@ -18,20 +17,12 @@ const RandomizeToken: TokenDefinition<Store> = {
       max: 100,
       defaultValue: 100,
     },
-    randomLocation: {
-      label: "Random Location",
-      type: "bool",
-      defaultValue: true,
-    },
-    randomDirection: {
-      label: "Random Direction",
-      type: "bool",
-      defaultValue: false,
-    },
-    randomLayer: {
-      label: "Random Layer",
-      type: "bool",
-      defaultValue: false,
+	shift: {
+      label: "Shift",
+      type: "int",
+      min: -8,
+      max: 8,
+      defaultValue: 1,
     },
     gateOffset: {
       label: "Gate Offset",
@@ -64,31 +55,16 @@ const RandomizeToken: TokenDefinition<Store> = {
     onTick(store, helpers, playheads) {
       const {
         probability,
-        randomLocation,
-        randomDirection,
-        randomLayer,
+        shift,
         gateOffset,
         gateOn,
         gateOff,
       } = helpers.getControlValues();
 
-      function tryPerformRandomize(playheadIndex: number) {
+      function tryPerformShift(playheadIndex: number) {
         if (probability / 100 > Math.random()) {
-          if (randomLayer || randomLocation) {
-            const newLayer = randomLayer
-              ? Math.floor(helpers.getNumLayers() * Math.random())
-              : helpers.getLayer();
-            const newLocation = randomLocation
-              ? Math.floor(204 * Math.random())
-              : helpers.getHexIndex();
-            helpers.warpPlayhead(playheadIndex, newLocation, newLayer);
-          }
-
-          if (randomDirection) {
-            helpers.modifyPlayhead(playheadIndex, {
-              direction: Math.floor(6 * Math.random()),
-            });
-          }
+            const newLocation = Math.max(Math.min(helpers.getHexIndex() + (shift * 24), 203), 0);
+            helpers.warpPlayhead(playheadIndex, newLocation, helpers.getLayer());
         }
       }
 
@@ -96,13 +72,13 @@ const RandomizeToken: TokenDefinition<Store> = {
         if (playhead.age === 0) return;
 
         if (gateOn + gateOff === 0) {
-          tryPerformRandomize(playheadIndex);
+          tryPerformShift(playheadIndex);
         } else {
           if (
             store.gateCounter >= gateOffset + gateOff ||
             store.gateCounter < gateOffset
           ) {
-            tryPerformRandomize(playheadIndex);
+            tryPerformShift(playheadIndex);
           }
           store.gateCounter++;
           if (store.gateCounter >= gateOffset + gateOff + gateOn) {
@@ -114,4 +90,4 @@ const RandomizeToken: TokenDefinition<Store> = {
   },
 };
 
-export default RandomizeToken;
+export default ShiftToken;
