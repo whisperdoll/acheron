@@ -6,18 +6,26 @@ import {
   MaybePromise,
   MaybeGeneratedPromise,
   resolveMaybeGeneratedPromise,
+  isPromise,
 } from "../lib/utils";
 import equal from "fast-deep-equal/es6";
 import rfdc from "rfdc";
 import { detailedDiff } from "deep-object-diff";
+import env from "../lib/env";
 
-const DEBUG = true;
+const DEBUG = env("debug");
 
-export type StateStoreSubscription<T> = (prevState: T, newState: T) => void;
+export type StateStoreSubscription<T> = (
+  prevState: T | null,
+  newState: T
+) => void;
+
+type StateStoreSubscriptionFilter<T> = (prevState: T, newState: T) => boolean;
 
 export default class StateStore<StateType extends Record<string, any>> {
   private _values: StateType | null = null;
-  private generator: StateType | (() => StateType) | (() => Promise<StateType>);
+  private _prevValues: StateType | null = null;
+  private generator: MaybeGeneratedPromise<StateType, []>;
   private initialized = false;
   private subscriptions: StateStoreSubscription<StateType>[] = [];
   private queue: {
@@ -28,18 +36,53 @@ export default class StateStore<StateType extends Record<string, any>> {
   }[] = [];
   private busy: boolean = false;
 
+  public filters = {
+    deepEqual: (
+      selector: (state: StateType) => any
+    ): StateStoreSubscriptionFilter<StateType> => {
+      return (prevState, newState) => {
+        if (!prevState) return true;
+
+        return !equal(selector(prevState), selector(newState));
+      };
+    },
+  };
+
   constructor(defaults: typeof this.generator) {
     this.generator = defaults;
   }
 
-  async initialize() {
-    if (isFunction(this.generator)) {
-      this._values = await Promise.resolve(this.generator());
+  initializeSync(): this {
+    let g = this.generator;
+    if (isFunction(g)) {
+      g = g();
+    }
+
+    if (isPromise(g)) {
+      throw new Error("generator returned a promise");
+    }
+
+    return this;
+  }
+
+  async initialize(): Promise<this> {
+    let g = this.generator;
+    if (isFunction(g)) {
+      g = g();
+    }
+
+    if (isPromise(g)) {
+      this._values = await g;
     } else {
-      this._values = this.generator;
+      this._values = g;
     }
 
     this.initialized = true;
+    return this;
+  }
+
+  dangerouslyReplaceValues(values: StateType) {
+    this._values = values;
   }
 
   get values(): StateType {
@@ -63,21 +106,21 @@ export default class StateStore<StateType extends Record<string, any>> {
 
   async processNextItemInQueue() {
     const initialState = rfdc()(this.values);
-    let prevState = initialState;
+    this._prevValues = this._prevValues || initialState;
 
     while (this.queue.length) {
       const { newState, why, resolve, reject } = this.queue.shift()!;
 
       const resolvedNewState = await resolveMaybeGeneratedPromise(
         newState,
-        prevState
+        this._prevValues
       );
 
       Object.assign(this.values, resolvedNewState);
 
-      if (equal(prevState, this.values)) {
+      if (equal(this._prevValues, this.values)) {
         resolve(this.values);
-        prevState = { ...this.values };
+        this._prevValues = { ...this.values };
         continue;
       }
 
@@ -85,43 +128,51 @@ export default class StateStore<StateType extends Record<string, any>> {
         why !== "tick" &&
         console.log(
           `setting state bc ${why}`,
-          detailedDiff(prevState, this.values)
+          detailedDiff(this._prevValues, this.values)
         );
 
       resolve(this.values);
       this.notifySubscribers(initialState, this.values);
-      prevState = { ...this.values };
+      this._prevValues = { ...this.values };
     }
 
     this.busy = false;
   }
 
-  subscribe(onUpdate: StateStoreSubscription<StateType>): () => void {
-    this.subscriptions.push(onUpdate);
+  subscribe(
+    onUpdate: StateStoreSubscription<StateType>,
+    filter?: StateStoreSubscriptionFilter<StateType>
+  ): () => void {
+    onUpdate(this._prevValues, this.values);
+
+    const subscriptionFn: StateStoreSubscription<StateType> = !filter
+      ? onUpdate
+      : (prevState, currentState) => {
+          // console.log(onUpdate, filter(prevState!, currentState), {
+          //   onUpdate,
+          //   filter,
+          //   prevState,
+          //   currentState,
+          // });
+          if (filter(prevState!, currentState)) {
+            onUpdate(prevState, currentState);
+          }
+        };
+
+    this.subscriptions.push(subscriptionFn);
     return () =>
-      this.subscriptions.splice(this.subscriptions.indexOf(onUpdate), 1);
+      this.subscriptions.splice(this.subscriptions.indexOf(subscriptionFn), 1);
   }
 
   useSubscription(
     onUpdate: StateStoreSubscription<StateType>,
     dependencyArray: any[] = [],
-    comparator?: (state: StateType) => any
+    filter?: StateStoreSubscriptionFilter<StateType>
   ) {
-    useEffect(
-      () =>
-        this.subscribe((prevState, state) => {
-          if (comparator) {
-            // console.log(">>>>", comparator(prevState), comparator(state));
-          }
-          if (
-            (comparator && !equal(comparator(prevState), comparator(state))) ||
-            !comparator
-          ) {
-            onUpdate(prevState, state);
-          }
-        }),
-      dependencyArray
-    );
+    useEffect(() => {
+      // console.log({ onUpdate, dependencyArray, filter });
+      return this.subscribe(onUpdate, filter);
+    }, dependencyArray);
   }
 
   useState<T>(selector: (state: StateType) => T): T;
@@ -136,7 +187,7 @@ export default class StateStore<StateType extends Record<string, any>> {
         setStateValue(selector ? selector(newState) : { ...newState });
       },
       [setStateValue],
-      selector
+      selector && this.filters.deepEqual(selector)
     );
 
     return stateValue;

@@ -11,10 +11,11 @@ import {
 export interface SerializedCompositionControl {
   key: string;
   id: string;
-  currentValueType: "fixed" | "modulate" | "inherit" | "multiply" | "add";
+  currentValueType: "fixed" | "inherit" | "multiply" | "add" | "modulate";
   inherit?: string;
   showIf?: string;
   fixedValue: any;
+  altValue: number;
   lfo: Lfo;
 }
 
@@ -81,6 +82,7 @@ function buildTokenFromSerialized(
         currentValueType: serializedControl.currentValueType,
         inherit: serializedControl.inherit,
         fixedValue: serializedControl.fixedValue,
+        altValue: serializedControl.altValue,
         lfo: { ...serializedControl.lfo },
       };
     }
@@ -93,7 +95,7 @@ function buildTokenFromSerialized(
     store: {},
     symbol: def.symbol,
     callbacks: { ...appState.tokens[serialized.uid].callbacks },
-    controlIds: Object.keys(controls),
+    controlIds: Object.keys(controls as Record<string, ControlState>),
     controls,
   };
 
@@ -110,6 +112,7 @@ function serializeControl(control: ControlState): SerializedCompositionControl {
     currentValueType: control.currentValueType,
     inherit: control.inherit,
     fixedValue: control.fixedValue,
+	altValue: control.altValue,
     lfo: control.lfo,
     showIf: control.showIf,
   };
@@ -206,6 +209,7 @@ export async function deserializeComposition(
         currentValueType: serializedControl.currentValueType,
         inherit: serializedControl.inherit,
         fixedValue: serializedControl.fixedValue,
+		altValue: serializedControl.altValue,
         lfo: { ...serializedControl.lfo },
       };
       appControls[control.id] = control;
@@ -230,6 +234,7 @@ export async function deserializeComposition(
           currentValueType: serializedControl.currentValueType,
           inherit: serializedControl.inherit,
           fixedValue: serializedControl.fixedValue,
+		  altValue: serializedControl.altValue,
           lfo: { ...serializedControl.lfo },
         };
         (

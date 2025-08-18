@@ -19,9 +19,14 @@ interface LfoV1 {
     | "sine"
     | "square"
     | "random"
-    | "sequence"
     | "sawtooth"
     | "reverse Sawtooth"
+	| "sine Relative"
+    | "square Relative"
+    | "random Relative"
+    | "sawtooth Relative"
+    | "reverse Sawtooth Relative"
+    | "sequence"
     | "midi Control";
   min: number;
   max: number;
@@ -30,14 +35,16 @@ interface LfoV1 {
   period: number;
   sequence: any[];
   control: number;
+  amplitude: number;
 }
 
 interface SerializedCompositionControlV1 {
   key: string;
   id: string;
-  currentValueType: "fixed" | "modulate" | "inherit" | "multiply" | "add";
+  currentValueType: "fixed" | "inherit" | "multiply" | "add" | "modulate";
   inherit?: string;
   fixedValue: any;
+  altValue: number;
   lfo: LfoV1;
 }
 
@@ -160,6 +167,7 @@ function migrateSerializedLayer(
         key: "enabled",
         lfo: buildLfo("bool"),
         fixedValue: serialized.enabled,
+		altValue: 1,
       },
       midiChannel: {
         id: "",
@@ -167,6 +175,7 @@ function migrateSerializedLayer(
         key: "midiChannel",
         lfo: buildLfo("midichannel", 1, 16),
         fixedValue: serialized.midiChannel,
+		altValue: 1,
       },
       key: {
         id: "",
@@ -179,6 +188,7 @@ function migrateSerializedLayer(
           Object.keys(KeyMap).map((key) => ({ label: key, value: key }))
         ),
         fixedValue: Object.keys(KeyMap)[serialized.key],
+		altValue: 1,
       },
       tempoSync: {
         id: "",
@@ -186,6 +196,7 @@ function migrateSerializedLayer(
         key: "tempoSync",
         lfo: buildLfo("bool"),
         fixedValue: serialized.tempoSync,
+		altValue: 1,
       },
     };
 
@@ -207,6 +218,7 @@ function migrateSerializedLayer(
           key: "tempoSync",
           lfo: buildLfo("bool"),
           fixedValue: (serialized as SerializedCompositionLayer).tempoSync,
+		  altValue: 1,
         },
       };
     }
@@ -255,6 +267,7 @@ export async function migrateSerializedComposition(
               DefaultPlayerControls.key.options
             ),
             fixedValue: serialized.global.key,
+			altValue: 1,
           }
         : serialized.global.key,
     tempoSync:
@@ -265,6 +278,7 @@ export async function migrateSerializedComposition(
             key: "tempoSync",
             lfo: buildLfo("bool"),
             fixedValue: serialized.global.tempoSync,
+			altValue: 1,
           }
         : serialized.global.tempoSync,
   };

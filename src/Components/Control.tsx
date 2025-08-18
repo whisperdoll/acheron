@@ -113,8 +113,13 @@ export default React.memo(function Control(props: Props) {
     handleChange({ fixedValue: newValue });
   };
 
+  const handleAltValueChanged = (value: any) => {
+    handleChange({ altValue: +value });
+  };
+
   function handleSelectValueChanged(e: React.ChangeEvent<HTMLSelectElement>) {
     handleChange({ fixedValue: e.currentTarget.value });
+	//e.currentTarget.showPicker();
   }
   
   function handleDirectionChanged(direction: number) {
@@ -125,7 +130,37 @@ export default React.memo(function Control(props: Props) {
       currentValueType: e.currentTarget.value as ControlValueType,
     });
   };
-
+//  const picko = (e: React.MouseEvent<HTMLSelectElement>) => {
+// //     e.preventDefault();
+//	  if (!e.currentTarget.matches(':focus')) {
+//      e.currentTarget.showPicker();
+//		e.currentTarget.open = true;
+//      console.log(e.currentTarget);
+//	  }
+//};
+//  const pickoo = (e: React.FocusEvent<HTMLSelectElement>) => {
+//      e.preventDefault();
+//	  //if (!e.currentTarget.matches(':focus')) {
+//      e.currentTarget.open = true;
+//     // console.log(e.currentTarget);}
+//	  
+//  };
+//    function pickeroo(this: HTMLInputElement) {
+//	const that: HTMLSelectElement = this;
+//    console.log(this);
+//    this.showPicker();
+//	e.currentTarget;
+// };
+  
+//    function pickeroo() {
+////	if (document.activeElement instanceof HTMLSelectElement) {
+//	console.log("huh")
+//    document.activeElement.showPicker();
+//	
+//  }};
+  
+  
+  
   function handleTriadChanged(triad: number) {
     handleChange({ fixedValue: triad });
   }
@@ -151,7 +186,7 @@ export default React.memo(function Control(props: Props) {
             max={controlState.max}
             min={controlState.min}
             step={controlState.step}
-            roundPlaces={controlState.type === "int" ? 0 : 9}
+            roundPlaces={controlState.type === "int" ? 0 : 3}
           />
         );
         break;
@@ -159,11 +194,11 @@ export default React.memo(function Control(props: Props) {
         controlPart = (
           <NumberInput
             onChange={handleValueChanged}
-            value={(controlValue as number) ?? 0}
+            value={(controlValue as number) ?? 1}
             max={16}
             min={1}
             step={controlState.step}
-            roundPlaces={controlState.type === "midichannel" ? 0 : 9}
+            roundPlaces={0}
           />
         );
 		break;
@@ -210,8 +245,34 @@ export default React.memo(function Control(props: Props) {
           </div>
         );
     }
-  } // LFO
+  } 
+  
+    else if (["multiply", "add"].includes(controlState.currentValueType)) {
+        controlPart = (
+          <NumberInput
+            onChange={handleAltValueChanged}
+            value={controlState.altValue}
+            max={controlState.max}
+            min={controlState.min}
+            step={0.1}
+            roundPlaces={3}
+          />
+        );
+    }
+  
+  
+  // LFO
   else {
+        controlPart = (
+          <NumberInput
+            onChange={handleAltValueChanged}
+            value={controlState.altValue}
+            max={controlState.max}
+            min={controlState.min}
+            step={0.1}
+            roundPlaces={3}
+          />
+        );
     switch (controlState.type) {
       case "bool":
       case "decimal":
@@ -263,12 +324,12 @@ export default React.memo(function Control(props: Props) {
     <div className="control">
       <div className="labelRow">
         <div className="label">{controlState.label}</div>
-        <select value={controlState.currentValueType} onChange={handleValueTypeChanged} className="valueType">
+        <select value={controlState.currentValueType} onChange={handleValueTypeChanged}>
           <option value="fixed">Fixed</option>
-          {controlState.inherit && <option value="inherit">Inherit</option>}
-          <option value="modulate">Modulate</option>
+		  {controlState.inherit && <option value="inherit">Inherit</option>}
           {controlState.inherit && <option value="multiply">Multiply</option>}
           {controlState.inherit && <option value="add">Add</option>}
+          <option value="modulate">Modulate</option>
         </select>
       </div>
       <div className="controlRow">{controlPart}</div>

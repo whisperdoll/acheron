@@ -14,6 +14,7 @@ export default function LfoEditor() {
   const modifyingLfo = modifyingControl.lfo;
 
   function modifyLfo(partial: Partial<Lfo>) {
+  
     const lfo: Lfo = {
       ...modifyingLfo,
       ...partial,
@@ -38,7 +39,7 @@ export default function LfoEditor() {
 
   const coerce =
     modifyingControl.type === "decimal" ? (v: number) => v : Math.floor;
-
+    
   return (
     <div className="lfoEditor-backdrop">
       <div className="lfoEditor-content">
@@ -58,7 +59,7 @@ export default function LfoEditor() {
             ))}
           </select>
         </div>
-        {modifyingLfo.type !== "sequence" && (
+        {!["sequence", "sine Relative", "square Relative", "sawtooth Relative", "reverse Sawtooth Relative", "random Relative", "triangle Relative"].includes(modifyingLfo.type) && (
           <>
             <div className="row">
               <span>Min Value:</span>
@@ -82,7 +83,7 @@ export default function LfoEditor() {
             </div>
           </>
         )}
-        {modifyingLfo.type !== "square" &&
+        {modifyingLfo.type !== "square" && modifyingLfo.type !== "square Relative" &&
           modifyingLfo.type !== "midi Control" && (
             <div className="row">
               <span>Period (seconds):</span>
@@ -104,12 +105,12 @@ export default function LfoEditor() {
                     max={127}
                     value={modifyingLfo.control}
                     coerce={coerce}
-                    onChange={value => modifyLfo({ control: value })}
-					step={1.0}
+                    onChange={(newValue) => modifyLfo({ control : Math.max(newValue) })}
+					step={1}
                         />
                     </div>
 			</>)}
-        {modifyingLfo.type === "square" && (
+        {(modifyingLfo.type === "square" || modifyingLfo.type === "square Relative" ) && (
           <>
             <div className="row">
               <span>Low Period (seconds):</span>
@@ -129,6 +130,21 @@ export default function LfoEditor() {
                 min={0.1}
                 onChange={(newValue) =>
                   modifyLfo({ hiPeriod: Math.max(newValue) })
+                }
+                step={0.1}
+              />
+            </div>
+          </>
+        )}
+		{["sine Relative", "square Relative", "sawtooth Relative", "reverse Sawtooth Relative", "random Relative", "triangle Relative"].includes(modifyingLfo.type) && (
+          <>
+            <div className="row">
+              <span>Amplitude:</span>
+              <NumberInput
+                value={modifyingLfo.amplitude}
+                min={0.1}
+                onChange={(newValue) =>
+                  modifyLfo({ amplitude: Math.max(newValue) })
                 }
                 step={0.1}
               />

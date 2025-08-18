@@ -23,7 +23,7 @@ import {
   msToS,
   objectWithoutKeys,
 } from "./utils";
-import Midi, { MidiScheduler, NoteOffOptions } from "./midi";
+import Midi, { MidiScheduler } from "./midi";
 import { LayerControlKey } from "./DefaultDefinitions";
 import { AppState, AppStateStore, LayerState } from "../state/AppState";
 import settings from "../state/AppSettings";
@@ -42,6 +42,7 @@ import SimpleAppState from "../state/SimpleAppState";
     playhead: Playhead;
   }[] = [];
 
+var oldLength =100;
   
 export class Driver {
   private scheduledForMove = schedForMove;
@@ -81,13 +82,13 @@ export class Driver {
     ); // [layerIndex][noteIndex]
 
     for (let i = 0; i < workingState.values.layers.length; i++) {
-      const { resultingState, notesStarted, notesStopped } = this.progressLayer(
+      const { resultingState, notesStarted } = this.progressLayer(
         workingState,
         ms,
         i
-      );
+      );allStartedNotes
       allStartedNotes[i].push(...notesStarted);
-      allStoppedNotes[i].push(...notesStopped);
+//      allStoppedNotes[i].push(...notesStopped);
       workingState.set(resultingState);
     }
     for (let i = 0; i < workingState.values.layers.length; i++) {
@@ -98,7 +99,7 @@ export class Driver {
 
     return {
       notesStarted: allStartedNotes,
-      notesStopped: allStoppedNotes,
+//      notesStopped: allStoppedNotes,
       resultingState: workingState,
     };
   }
@@ -168,17 +169,19 @@ export class Driver {
         deviceName,
         note,
         velocity,
+		durationMs,
+		duration: durationMs,
       }))
     );
 
-    Midi.noteOff(
-      transposed.map((note) => ({
-        channel,
-        deviceName,
-        note,
-        time: `+${durationMs}`,
-      }))
-    );
+//    Midi.noteOff(/
+//      transposed.map((note) => ({
+//        channel,
+//        deviceName,
+//        note,
+//        time: `+${durationMs}`,
+//      }))
+//    );
   }
 
   private buildHelpers(
@@ -385,9 +388,10 @@ export class Driver {
               ? currentBeat + duration
               : currentMs + duration,
           note,
-          type: durationType,
+		  typed: durationType,
           channel,
           velocity,
+		  duration,
         }));
 
         // notesToAdd.forEach((note) => {
@@ -564,13 +568,13 @@ export class Driver {
   ): {
     resultingState: AppState;
     notesStarted: LayerNote[];
-    notesStopped: LayerNote[];
+//    notesStopped: LayerNote[];
   } {
     if (!state.values.isPlaying) {
       return {
         resultingState: state.values,
         notesStarted: [],
-        notesStopped: [],
+ //       notesStopped: [],
       };
     }
 
@@ -602,7 +606,6 @@ export class Driver {
         Math.floor(newCurrentBeat) > layer.currentBeat)
     ) {
       // move any playheads //
-	      
       layer.playheads.forEach((hex, hexIndex) => {
         hex.forEach((playhead, playheadIndex) => {
           if (playhead.age < playhead.lifespan) {
@@ -610,7 +613,7 @@ export class Driver {
               ...playhead,
               age: playhead.age + 1,
             };
-console.log(playheadIndex);
+
             const moveInfoIndex = this.scheduledForMove.findIndex(
               (m) =>
                 m.src.layerIndex === layerIndex &&
@@ -711,21 +714,21 @@ console.log(playheadIndex);
       newPlayheads = layer.playheads;
     }
 
-    const notesStarted = this.notesToAdd;
-    let { newPlayingNotes, notesStopped } = List.partitionBy(
+    var notesStarted = this.notesToAdd;
+    let { newPlayingNotes } = List.partitionBy(
       layer.playingNotes,
       (note) => {
-        const cmp = note.type === "beat" ? newCurrentBeat : newCurrentTime;
-        if (note.end <= cmp) {
-          return "notesStopped";
-        }
+        //const cmp = note.typed === "beat" ? newCurrentBeat : newCurrentTime;
+        //if (note.end <= cmp) {
+        //  return;
+        //}
         return "newPlayingNotes";
       }
     );
     newPlayingNotes ||= [];
-    notesStopped ||= [];
+//    notesStopped ||= [];
     newPlayingNotes.push(...notesStarted);
-
+if (notesStarted.length > 0) {
     notesStarted.forEach((note) => {
       note.id = MidiScheduler.scheduleNoteOn({
         channel: state.getControlValue<"midichannel">({
@@ -736,16 +739,34 @@ console.log(playheadIndex);
         note: note.note,
         time: performance.now(),
         velocity: note.velocity,
+		duration: note.typed === "beat" ? note.duration / bpms : note.duration,
       });
     });
-    notesStopped.forEach((note) => {
-      MidiScheduler.scheduleNoteOff({
-        id: note.id!,
-        time: performance.now(),
-      });
-    });
-    MidiScheduler.bufferUpcomingNotesToDevice(100);
+//	console.log(notesStarted);
+	}
+//	if (notesStopped.length > 0)  {
+//    notesStopped.forEach((note) => {
+//      MidiScheduler.scheduleNoteOff({
+//        id: note.id!,
+//        time: performance.now(),
+//      });
+//    });
+////	console.log(notesStopped);
+//}
 
+
+	
+
+
+    
+	if (MidiScheduler.queue.length > oldLength) {
+MidiScheduler.queue.splice(0, oldLength - 1);
+//	MidiScheduler.queue = 
+	 }
+
+	 MidiScheduler.bufferUpcomingNotesToDevice(100);
+oldLength = MidiScheduler.queue.length;
+if (MidiScheduler.queue.length > 1) {MidiScheduler.queue.shift();}
     const protoLayer: LayerState = {
       ...layer,
       playheads: newPlayheads,
@@ -764,7 +785,9 @@ console.log(playheadIndex);
         midiBuffer: [],
       };
     }
-
+//	if (notesStarted.length != 0) {
+//console.log(notesStarted);
+//}
     return {
       resultingState: {
         ...state.values,
@@ -772,7 +795,7 @@ console.log(playheadIndex);
         tokens: newTokens,
       },
       notesStarted,
-      notesStopped,
+//      notesStopped,
     };
   }
 }

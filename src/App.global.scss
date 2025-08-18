@@ -2,6 +2,43 @@
 
 :root {
   --multilayer-cols: 3;
+  --leftColumnWidth: 280px;
+  --inspectorWidth: 280px;
+
+  --background-color: linear-gradient(
+    18deg,
+    rgb(68, 21, 52) 0%,
+    rgb(23, 24, 100) 100%
+  );
+  --button-background-color-active: rgba(0, 0, 0, 0.2);
+  --button-background-color-hover: rgba(255, 255, 255, 0.2);
+  --button-background-color: rgba(255, 255, 255, 0.1);
+  --control-header-background-color: rgba(255, 255, 255, 0.1);
+  --dangerous-button-background-color-active: rgba(100, 0, 0, 0.4);
+  --dangerous-button-background-color-hover: rgba(255, 100, 100, 0.3);
+  --dangerous-button-background-color: rgba(255, 0, 0, 0.2);
+  --header-background-color: rgba(0, 0, 0, 0.5);
+  --outline-color: rgba(255, 255, 255, 0.15);
+  --pulse-color-active: rgba(100, 255, 100, 0.5);
+  --pulse-color: rgba(255, 255, 255, 0.3);
+  --scrollbar-background-color: rgba(0, 0, 0, 0.1);
+  --scrollbar-foreground-color: rgba(255, 255, 255, 0.2);
+  --status-bar-background-color: var(--header-background-color);
+  --status-bar-foreground-color: var(--text-color);
+  --sub-header-background-color: rgba(0, 0, 0, 0.3);
+  --text-color: rgb(255, 255, 255);
+  --hex-text-color: rgba(255, 245, 255, 0.72);
+  --hex-text-color-selected: var(--hex-text-color);
+  --hex-token-text-color: var(--text-color);
+  --hex-token-text-color-selected: var(--hex-text-color-selected);
+  --hex-background-color: transparent;
+  --hex-background-color-selected: rgba(255, 255, 255, 0.2);
+  --hex-playhead-background-color: rgba(255, 0, 0, 0.3);
+  --hex-playhead-background-color-dying: rgba(255, 0, 0, 0.2);
+  --hex-playhead-text-color: var(--hex-text-color);
+  --hex-outline-color: var(--outline-color);
+  --hex-key-background-color: rgba(0, 197, 197, 0.2);
+  --hex-background-color-drop: var(--hex-background-color-selected);
 }
 
 * {
@@ -22,6 +59,10 @@
   user-select: none;
 }
 
+.hide {
+  display: none;
+}
+
 .numberInput-container {
   overflow: hidden;
   -webkit-touch-callout: none;
@@ -39,6 +80,8 @@
       -webkit-appearance: none;
     }
 
+    -moz-appearance: textfield;
+
     flex-grow: 1;
     min-width: 0;
   }
@@ -52,15 +95,6 @@
       padding: 2px 0.25rem;
       font-size: 0.6em;
       flex-grow: 1;
-
-      &:hover {
-        background-color: white;
-        color: black;
-      }
-
-      &:active {
-        background-color: #ddd;
-      }
     }
   }
 }
@@ -68,27 +102,31 @@
 html,
 body,
 #root {
+  font-size: 14px;
   padding: 0;
   margin: 0;
   width: 100%;
+  max-width: 100%;
   height: 100%;
   position: relative;
-  color: white;
-  background-color: #221922;
+  color: var(--text-color);
+  background: var(--background-color);
+  scrollbar-color: var(--scrollbar-foreground-color)
+    var(--scrollbar-background-color);
 }
 
 input,
 select {
   font-size: 1em;
   background-color: rgba(255, 255, 255, 0.1);
-  color: white;
+  color: var(--text-color);
   border: 0;
-  border-bottom: 1px solid #aaa;
+  border-bottom: 1px solid var(--outline-color);
   padding: 0.25rem 0.5rem;
 
-  &:hover {
-    background-color: rgba(255, 255, 255, 0.2);
-  }
+//  &:hover {
+//    background-color: rgba(255, 255, 255, 0.2);
+//  }
 
   & > option {
     background-color: black;
@@ -113,19 +151,19 @@ input[type="checkbox"] {
 
 button:not(.nostyle) {
   user-select: none;
-  background-color: rgba(255, 255, 255, 0.1);
-  color: white;
-  border: 0px solid #555;
+  background-color: var(--button-background-color);
+  color: var(--text-color);
+  border: 0;
   font-size: 1em;
   cursor: pointer;
   padding: 0.5rem;
 
   &:hover {
-    background-color: rgba(255, 255, 255, 0.2);
+    background-color: var(--button-background-color-hover);
   }
 
   &:active {
-    background-color: #222;
+    background-color: var(--button-background-color-active);
   }
 
   &.iconButton {
@@ -142,6 +180,7 @@ button:not(.nostyle) {
 }
 
 button.nostyle {
+  color: var(--text-color);
   font-size: 1em;
   user-select: none;
   background-color: transparent;
@@ -149,29 +188,25 @@ button.nostyle {
   cursor: pointer;
   padding: 0;
   margin: 0;
-}
-
-button.patreon {
-  background-color: darken(#e85b46, 5);
 
   &:hover {
-    background-color: lighten(#e85b46, 2);
+    background-color: var(--button-background-color-hover);
   }
 
   &:active {
-    background-color: darken(#e85b46, 12);
+    background-color: var(--button-background-color-active);
   }
 }
 
 button.delete {
-  background-color: #9c2020;
+  background-color: var(--dangerous-button-background-color);
 
   &:hover {
-    background-color: color.adjust(#9c2020, $lightness: 7%);
+    background-color: var(--dangerous-button-background-color-hover);
   }
 
   &:active {
-    background-color: color.adjust(#9c2020, $lightness: -7%);
+    background-color: var(--dangerous-button-background-color-active);
   }
 }
 
@@ -183,6 +218,17 @@ button.delete {
   position: relative;
 }
 
+.mono {
+  font-family: monospace;
+}
+
+.tokenMenuItem {
+  display: flex;
+  flex-direction: row;
+  gap: 1rem;
+}
+
+.modal-backdrop,
 .settings-backdrop,
 .lfoEditor-backdrop,
 .tokenSettings-backdrop {
@@ -190,6 +236,8 @@ button.delete {
   height: 100%;
   padding: 0;
   margin: 0;
+  left: 0;
+  top: 0;
   position: absolute;
   background-color: rgba(0, 0, 0, 0.7);
   z-index: 100;
@@ -198,6 +246,7 @@ button.delete {
   justify-content: center;
   align-items: center;
 
+  .modal-content,
   .settings-content,
   .lfoEditor-content {
     min-width: 20%;
@@ -217,8 +266,8 @@ button.delete {
     }
 
     h2 {
-      margin-top: 0.5rem;
-      margin-bottom: 0.5rem;
+      margin-top: 1rem;
+      margin-bottom: 0.25rem;
     }
 
     .midiSelects {
@@ -233,7 +282,7 @@ button.delete {
         display: flex;
         flex-direction: column;
         gap: 0.25rem;
-        border: 1px solid #aaa;
+        border: 1px solid var(--outline-color);
         padding: 0.25rem 0.25rem;
 
         flex-basis: 100%;
@@ -252,7 +301,7 @@ button.delete {
       gap: 0.25rem;
 
       .tokenSetting {
-        border: 1px solid #aaa;
+        border: 1px solid var(--outline-color);
         padding: 0.5rem;
         display: flex;
         flex-direction: column;
@@ -279,8 +328,43 @@ button.delete {
       }
     }
 
+    .keyboardShortcuts {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
+      justify-content: start;
+      gap: 0.25rem;
+
+      .keyboardShortcut {
+        border: 1px solid var(--outline-color);
+        padding: 0.5rem;
+        display: flex;
+        flex-direction: row;
+        flex-basis: calc(100% / 1 - 0.25rem * 0 / 1);
+        gap: 0.5rem;
+        min-width: 0;
+
+        @media (min-width: 800px) {
+          flex-basis: calc(100% / 2 - 0.25rem * 1 / 2);
+        }
+
+        @media (min-width: 1000px) {
+          flex-basis: calc(100% / 3 - 0.25rem * 2 / 3);
+        }
+
+        input {
+          flex-grow: 1;
+          min-width: 0;
+        }
+
+        .tokenLabel {
+          font-size: 1.2em;
+        }
+      }
+    }
+
     .sequence {
-      border: 1px solid #aaa;
+      border: 1px solid var(--outline-color);
       padding: 0.5rem;
       gap: 0.5rem;
 
@@ -297,9 +381,11 @@ button.delete {
     }
 
     .bottomButtons {
-      text-align: right;
       margin-top: auto;
       margin-bottom: 0;
+      display: flex;
+      gap: 0.5rem;
+      justify-content: flex-end;
     }
   }
 }
@@ -315,16 +401,46 @@ $statusBarHeight: 2rem;
   position: relative;
   flex-grow: 1;
   height: calc(100% - #{$statusBarHeight});
+  overflow: auto;
+
+  @media only screen and (max-width: 768px) {
+    flex-direction: column;
+  }
 }
 
 .statusBar {
   height: $statusBarHeight;
-  background-color: #101;
+  background-color: var(--status-bar-background-color);
   display: flex;
   flex-direction: row;
   align-items: center;
-  padding: 0 0.5rem;
+  padding: 0 calc($statusBarHeight / 4);
   gap: 0.25rem;
+  overflow: hidden;
+
+  .version {
+    margin-left: auto;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+    color: hsl(from var(--text-color) h s l / 0.5);
+
+    &:hover {
+      color: var(--text-color);
+    }
+
+    a {
+      text-decoration: none;
+      overflow: hidden;
+      white-space: nowrap;
+      color: inherit;
+
+      &:hover {
+        text-decoration: underline;
+        color: var(--text-color);
+      }
+    }
+  }
 
   button {
     background-color: transparent;
@@ -333,18 +449,26 @@ $statusBarHeight: 2rem;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.25rem;
+    font-size: calc($statusBarHeight * 0.625);
+    color: var(--status-bar-foreground-color);
+
+    &.inactive {
+      color: hsl(from var(--status-bar-foreground-color) h s calc(l - 50));
+    }
+
+    &.active {
+    }
   }
 
   .pulse {
     margin-right: 0.5rem;
-    width: 1rem;
-    height: 1rem;
-    background-color: #aaa;
+    width: calc($statusBarHeight * 0.5);
+    height: calc($statusBarHeight * 0.5);
+    background-color: var(--pulse-color);
     border-radius: 100%;
 
     &.active {
-      background-color: #afa;
+      background-color: var(--pulse-color-active);
     }
   }
 }
@@ -356,7 +480,7 @@ $statusBarHeight: 2rem;
   flex-direction: column;
   justify-content: stretch;
   background-color: rgba(255, 255, 255, 0.03);
-  border: 1px solid #aaa;
+  border: 1px solid var(--outline-color);
   border-radius: 0.25rem;
   gap: 0.5rem;
   padding-bottom: 0.5rem;
@@ -365,13 +489,11 @@ $statusBarHeight: 2rem;
     display: flex;
     flex-direction: row;
     align-items: center;
-    border-bottom: 1px solid #aaa;
+    border-bottom: 1px solid var(--outline-color);
     padding: 0.25rem 0.5rem;
-    background-color: rgba(255, 255, 255, 0.1);
-
-    .label {
-      margin-right: 1rem;
-    }
+    background-color: var(--control-header-background-color);
+    gap: 0.5rem;
+    flex-wrap: wrap;
 
     .valueType {
       margin-left: auto;
@@ -391,11 +513,12 @@ $statusBarHeight: 2rem;
     .numberInput-container,
     select {
       flex-grow: 1;
+      min-width: 0;
     }
   }
 
   .sequence {
-    border: 1px solid #aaa;
+    border: 1px solid var(--outline-color);
     padding: 0.5rem;
 
     .row {
@@ -406,7 +529,7 @@ $statusBarHeight: 2rem;
   .midiSelect {
     display: flex;
     flex-direction: column;
-    border: 1px solid #aaa;
+    border: 1px solid var(--outline-color);
     padding: 0.25rem 0.25rem;
 
     & > * {
@@ -426,7 +549,7 @@ $statusBarHeight: 2rem;
 
       width: 100%;
 
-      border: 1px solid #aaa;
+      border: 1px solid var(--outline-color);
       position: absolute;
       left: 0;
       top: 0;
@@ -437,11 +560,51 @@ $statusBarHeight: 2rem;
     padding: 0.25rem 0;
   }
 
-  .triadRow,
   .directionRow {
     display: flex;
     flex-direction: row;
     width: 100%;
+    flex-wrap: wrap;
+    border: 1px solid var(--outline-color);
+    border-radius: 5px;
+    overflow: hidden;
+
+    button {
+      flex-basis: 33%;
+      min-width: 2rem;
+      height: 2.25rem;
+      flex-grow: 1;
+      margin: 0;
+      background-color: transparent;
+      background-position: center;
+      background-repeat: no-repeat;
+      border-left-width: 0;
+      border-right-width: 0;
+
+      &:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+      }
+
+      &.selected {
+        background-color: rgba(200, 50, 200, 0.5);
+      }
+    }
+
+    &.disabled button {
+      &:hover:not(.selected) {
+        background-color: transparent;
+      }
+    }
+  }
+
+  .triadRow {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    flex-wrap: wrap;
+    border: 1px solid var(--outline-color);
+    border-radius: 5px;
+    overflow: hidden;
 
     button {
       min-width: 2rem;
@@ -451,21 +614,9 @@ $statusBarHeight: 2rem;
       background-color: transparent;
       background-position: center;
       background-repeat: no-repeat;
-      border: 1px solid #aaa;
+      background-size: 2rem;
       border-left-width: 0;
       border-right-width: 0;
-
-      &:first-of-type {
-        border-left-width: 1px;
-        border-top-left-radius: 5px;
-        border-bottom-left-radius: 5px;
-      }
-
-      &:last-of-type {
-        border-right-width: 1px;
-        border-top-right-radius: 5px;
-        border-bottom-right-radius: 5px;
-      }
 
       &:hover {
         background-color: rgba(255, 255, 255, 0.1);
@@ -484,11 +635,214 @@ $statusBarHeight: 2rem;
   }
 }
 
-.leftColumn {
-  height: 100%;
-  border-right: 1px solid #aaa;
+button.googleIconButton {
+  display: flex;
+  gap: 0.25rem;
+  align-items: center;
+  justify-content: center;
+}
+
+button.showLeftColumn {
+  border-radius: 4px;
+  align-self: flex-start;
+  margin-left: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+button.showInspector {
+  border-radius: 4px;
+  align-self: flex-start;
+  margin-right: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.resizeHandle {
+  @media only screen and (min-width: 768px) {
+    max-width: 1rem;
+    min-width: 1rem;
+    height: 100%;
+    cursor: ew-resize;
+
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.2);
+    }
+  }
+
+  @media only screen and (max-width: 768px) {
+    max-height: 0;
+    min-height: 0;
+    width: 100%;
+    cursor: ns-resize;
+  }
+}
+
+.leftColumn + * {
+  @media only screen and (min-width: 768px) {
+    border-left: 1px solid var(--outline-color);
+  }
+
+  @media only screen and (max-width: 768px) {
+    border-top: 1px solid var(--outline-color);
+  }
+}
+
+.leftColumn,
+.inspector {
+  box-sizing: content-box;
   display: flex;
   flex-direction: column;
+
+  @media only screen and (max-width: 768px) {
+    flex-direction: row;
+  }
+
+  .mainHeader {
+    border: 1px solid var(--outline-color);
+    border-top-width: 0;
+    border-left-width: 0;
+    border-right-width: 0;
+    display: flex;
+    flex-direction: row;
+    gap: 0.25rem;
+    align-items: center;
+    padding: 0 0.25rem;
+    padding-right: 0rem;
+    background-color: var(--header-background-color);
+
+    .pin {
+      margin-left: auto;
+
+      &:not(:hover) {
+        background-color: transparent;
+      }
+    }
+
+    @media only screen and (max-width: 768px) {
+      border-bottom-width: 0;
+      border-top-width: 0;
+      border-left-width: 1px;
+      border-right-width: 1px;
+      padding: 0.25rem 0.25rem;
+      padding-top: 0rem;
+
+      .pin {
+        margin-left: auto;
+
+        &:not(:hover) {
+          background-color: transparent;
+        }
+      }
+    }
+  }
+
+  .header {
+    border: 1px solid var(--outline-color);
+    border-left-width: 0;
+    border-right-width: 0;
+    padding: 0.25rem 0.5rem;
+    background-color: var(--sub-header-background-color);
+    margin-bottom: 0.25rem;
+
+    &:not(:first-of-type) {
+      margin-top: 0.25rem;
+    }
+
+    @media only screen and (max-width: 768px) {
+      border-top-width: 0;
+      border-bottom-width: 0;
+      border-left-width: 1px;
+      border-right-width: 1px;
+      margin-bottom: 0;
+      margin-right: 0.25rem;
+      padding: 0.5rem 0.25rem;
+
+      &:not(:first-of-type) {
+        margin-top: 0;
+        margin-left: 0.25rem;
+      }
+    }
+  }
+
+  @media only screen and (max-width: 768px) {
+    .mainHeader,
+    .header,
+    .layerHeader {
+      writing-mode: sideways-lr;
+
+      &.layerHeader {
+        padding: 0.25rem;
+      }
+    }
+  }
+}
+
+.leftColumn {
+  height: 100%;
+  min-width: var(--leftColumnWidth);
+  max-width: var(--leftColumnWidth);
+
+  @media only screen and (max-width: 768px) {
+    height: auto;
+    min-height: fit-content;
+    flex-direction: row;
+    max-width: unset;
+    min-width: 0;
+    overflow-x: auto;
+    width: 100%;
+  }
+
+  .tabs {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    justify-content: stretch;
+
+    button {
+      flex-grow: 1;
+
+      &.active {
+        background-color: white;
+        color: #111;
+      }
+    }
+
+    @media only screen and (max-width: 768px) {
+      flex-direction: column;
+    }
+  }
+
+  .playerSettings,
+  .layerSettings,
+  .layerSettingsInner {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: start;
+    overflow: auto;
+    overflow-x: hidden;
+
+    @media only screen and (max-width: 768px) {
+      flex-direction: row;
+      overflow-x: auto;
+    }
+
+    .layerHeader {
+      text-align: center;
+      padding-top: 0.25rem;
+      padding-bottom: 0.25rem;
+      border: 1px solid var(--outline-color);
+      border-left: 0;
+      border-right: 0;
+      font-weight: bold;
+      background-color: var(--sub-header-background-color);
+    }
+
+    &.layerSettings .header {
+      &:first-of-type {
+        border-top: 0;
+      }
+    }
+  }
 }
 
 .middleColumn {
@@ -500,8 +854,8 @@ $statusBarHeight: 2rem;
   min-width: 0;
 
   &.single-layer {
-    margin-left: 2rem;
-    margin-right: 2rem;
+    margin-left: 0.5rem;
+    margin-right: 0.5rem;
     padding: 1rem 0;
     gap: 1rem;
   }
@@ -513,8 +867,13 @@ $statusBarHeight: 2rem;
     display: flex;
     flex-direction: row;
     align-items: center;
+    flex-wrap: wrap;
     gap: 0.5rem;
     padding: 0.5rem 1.5rem;
+
+    .columnsLabel {
+      width: 6rem;
+    }
   }
 
   .multilayer {
@@ -544,14 +903,7 @@ $statusBarHeight: 2rem;
         justify-content: center;
         gap: 0.5rem;
 
-        span {
-          margin-top: 3px;
-        }
-
         .remove {
-          &:hover {
-            background-color: rgba(255, 255, 255, 0.5);
-          }
         }
       }
 
@@ -567,9 +919,10 @@ $statusBarHeight: 2rem;
     display: flex;
     flex-direction: row;
     align-items: stretch;
+    flex-wrap: wrap;
+    gap: 0.5rem;
 
     & > * {
-      margin-right: 0.5rem;
       font-size: 1em;
     }
 
@@ -578,12 +931,14 @@ $statusBarHeight: 2rem;
       display: flex;
       flex-direction: row;
       align-items: center;
+      min-width: 0;
 
       input,
       select,
       .numberInput-container {
         flex-grow: 1;
         margin-left: 0.5rem;
+        min-width: 0;
       }
     }
   }
@@ -596,7 +951,7 @@ $statusBarHeight: 2rem;
   border-radius: 0.75rem;
   background-color: rgba(255, 255, 255, 0);
   padding: 0.5rem 0.5rem;
-  border: 1px solid #aaa;
+  border: 1px solid var(--outline-color);
 
   & > * {
     margin-right: 0.5rem;
@@ -649,72 +1004,29 @@ $statusBarHeight: 2rem;
   }
 }
 
-.tabs {
-  display: flex;
-  flex-direction: row;
-  align-items: stretch;
-  justify-content: stretch;
-
-  button {
-    flex-grow: 1;
-
-    &.active {
-      background-color: white;
-      color: #111;
-    }
-  }
-}
-
-.playerSettings,
-.layerSettings,
-.layerSettingsInner {
-  flex-grow: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: stretch;
-  overflow: auto;
-
-  .layerHeader {
-    text-align: center;
-    padding-top: 0.25rem;
-    padding-bottom: 0.25rem;
-    border: 1px solid #aaa;
-    border-left: 0;
-    border-right: 0;
-    font-weight: bold;
-  }
-
-  &.layerSettings .header {
-    &:first-of-type {
-      border-top: 0;
-    }
-  }
-}
-
-.header {
-  border: 1px solid #aaa;
-  border-left: 0;
-  border-right: 0;
-  padding: 0.25rem 0.5rem;
-  background: #525;
-  margin-bottom: 0.25rem;
-
-  &:not(:first-of-type) {
-    margin-top: 0.25rem;
-  }
-}
-
 .inspector {
-  height: 100%;
-  flex-basis: 300px;
+  gap: 0.25rem;
 
-  display: flex;
-  flex-direction: column;
+  @media only screen and (min-width: 768px) {
+    border-left: 1px solid var(--outline-color);
+    height: 100%;
+    min-width: var(--inspectorWidth);
+    max-width: var(--inspectorWidth);
+  }
 
-  border-left: 1px solid #aaa;
+  @media only screen and (max-width: 768px) {
+    border-top: 1px solid var(--outline-color);
+    width: 100%;
+  }
 
-  & > * {
-    margin-top: 0.5rem;
+  .headerSection {
+    display: flex;
+    flex-direction: column;
+    gap: inherit;
+
+    @media only screen and (max-width: 768px) {
+      padding: 0.5rem 0;
+    }
   }
 
   .selectedHexLabel {
@@ -727,10 +1039,18 @@ $statusBarHeight: 2rem;
     justify-content: stretch;
     overflow: auto;
 
+    @media only screen and (max-width: 768px) {
+      flex-direction: row;
+    }
+
     .tokenControl {
       display: flex;
       flex-direction: column;
       justify-content: stretch;
+
+      @media only screen and (max-width: 768px) {
+        flex-direction: row;
+      }
 
       .control:last-child {
         margin-bottom: 0.5rem;
@@ -769,7 +1089,7 @@ $statusBarHeight: 2rem;
 
     .addButton {
       &.expanded {
-        border-bottom: 1px solid #aaa;
+        border-bottom: 1px solid var(--outline-color);
       }
     }
 

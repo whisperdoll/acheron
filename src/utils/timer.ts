@@ -48,7 +48,7 @@ export default class Timer {
     if (this.intervalMs > 25) {
       setTimeout(() => {
         this.startImmediateTick();
-      }, Number(this.intervalMs - 25));
+      }, this.intervalMs - 25);
     } else {
       this.startImmediateTick();
     }

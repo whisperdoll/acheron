@@ -39,10 +39,11 @@ export type TokenStore = Record<string, any>;
 
 export type ControlValueType =
   | "fixed"
-  | "modulate"
   | "inherit"
   | "multiply"
-  | "add";
+  | "add"
+  | "modulate";
+
 
 export type TokenUID = string;
 export type TokenInstanceId = string;
@@ -185,7 +186,8 @@ export interface ControlState<T extends ControlDataType = ControlDataType> {
   inherit?: string;
   showIf?: string;
   fixedValue: TypeForControlDataType<T>;
-  currentValueType: "fixed" | "modulate" | "inherit" | "multiply" | "add";
+  altValue: number;
+  currentValueType: "fixed" | "inherit" | "multiply" | "add" | "modulate";
   lfo: Lfo;
   control?: number;
 }
@@ -242,7 +244,6 @@ export function coerceControlValueToNumber<
     return +value;
   }
 }
-
 const inheritableTypes: ControlValueType[] = ["inherit", "add", "multiply"];
 export function getControlValue<
   T extends ControlDataType = ControlDataType
@@ -273,21 +274,54 @@ export function getControlValue<
     );
     if (opts.control.currentValueType === "add") {
       inheritedValue += coerceControlValueToNumber(
-        opts.control.fixedValue,
+        opts.control.altValue,
         opts.control
       );
     } else if (opts.control.currentValueType === "multiply") {
       inheritedValue *= coerceControlValueToNumber(
-        opts.control.fixedValue,
+        opts.control.altValue,
         opts.control
       );
-    }
+	  }
     return coerceControlValueFromNumber(
       Math.max(Math.min(+inheritedValue, opts.control.max), opts.control.min),
       opts.control
     );
-  } else if (opts.control.currentValueType === "modulate") {
-    const value = getLfoValue(
+  } else if (opts.control.currentValueType === "modulate" && ["sine Relative", "square Relative", "sawtooth Relative", "reverse Sawtooth Relative", "random Relative", "triangle Relative"].includes(opts.control.lfo.type)) {
+            
+			const inheritParts = getInheritParts(opts.control.inherit);
+			let inheritedValue = 1;
+    if (!inheritParts) {
+      inheritedValue = coerceControlValueToNumber(
+        opts.control.fixedValue,
+        opts.control
+      );
+    }
+	
+	else {
+		const inheritedControl = getControlFromInheritParts(
+      opts.controls,
+      opts.playerControls,
+      opts.layer,
+      inheritParts,
+);
+	
+    inheritedValue = coerceControlValueToNumber(
+	getControlValue({ ...opts, control: inheritedControl }),
+      inheritedControl
+    );}
+	const value = getLfoValue(
+      opts.control.lfo,
+      {
+        beat: opts.currentBeat,
+        ms: opts.currentTimeMs,
+      },
+      "ms"
+    );
+    return coerceControlValueFromNumber(+inheritedValue + value, opts.control);
+  } 
+  else if (opts.control.currentValueType === "modulate" ) {
+	    const value = getLfoValue(
       opts.control.lfo,
       {
         beat: opts.currentBeat,
@@ -296,7 +330,8 @@ export function getControlValue<
       "ms"
     );
     return coerceControlValueFromNumber(value, opts.control);
-  } else if (opts.control.currentValueType === "fixed") {
+  } 
+    else if (opts.control.currentValueType === "fixed") {
     return opts.control.fixedValue;
   } else {
     console.error("invalid control value type", opts, appStateStore.values);
@@ -333,6 +368,12 @@ export const LfoTypes = [
   "random",
   "sawtooth",
   "reverse Sawtooth",
+  "sine Relative",
+  "square Relative",
+  "triangle Relative",
+  "random Relative",
+  "sawtooth Relative",
+  "reverse Sawtooth Relative",
   "sequence",
   "midi Control",
 ] as const;
@@ -347,6 +388,7 @@ export interface Lfo {
   period: number;
   sequence: number[];
   control: number;
+  amplitude: number;
 }
 
 export function getLfoValue(
@@ -361,9 +403,31 @@ export function getLfoValue(
   const lowPeriod = lfo.lowPeriod * 1000;
   const hiPeriod = lfo.hiPeriod * 1000;
   const period = lfo.period * 1000;
-  const t = now % (lfo.type === "square" ? lowPeriod + hiPeriod : period);
-
+  const t = now % (lfo.type === "square" || lfo.type === "square Relative" ? lowPeriod + hiPeriod : period);
   switch (lfo.type) {
+    case "random Relative": {
+      return (randomFloat() * lfo.amplitude);
+    }
+    case "sawtooth Relative": {
+      return ((t / period) * lfo.amplitude);
+    }
+    case "reverse Sawtooth Relative": {
+      return ((1 - (t / period)) * lfo.amplitude);
+    }
+    case "triangle Relative": {
+      return (
+	  
+        ((t / period <= 0.5
+          ? 0 + ((t / period) * 2)
+          : 1 - (((t / period) - 0.5) )* 2) * lfo.amplitude)
+      );
+    }
+    case "sine Relative": {
+      return (Math.sin((t / period) * Math.PI * 2) * lfo.amplitude);
+    }
+    case "square Relative": {
+      return ((t < lowPeriod ? 1 : -1) * lfo.amplitude);
+    }
     case "random": {
       return lfo.min + randomFloat() * (lfo.max - lfo.min);
     }
@@ -375,10 +439,10 @@ export function getLfoValue(
     }
     case "triangle": {
       return (
-        2 *
-        (t / period <= 0.5
-          ? lfo.min + (t / period) * (lfo.max - lfo.min)
-          : lfo.max - (t / period) * (lfo.max - lfo.min))
+	  
+        t / period <= 0.5
+          ? lfo.min + (t / period) * ((lfo.max - lfo.min) * 2)
+          : lfo.max - ((t / period) - 0.5) * ((lfo.max - lfo.min) * 2)
       );
     }
     case "sine": {
@@ -394,7 +458,7 @@ export function getLfoValue(
 	case "midi Control": {
       const amp = (lfo.max - lfo.min) / 2;
 	  var lfoval = ((Midi.cCArr[lfo.control] / 127) * amp) * 2 + lfo.min;
-			if (Midi.cCArr[0] != undefined) {
+			if (Midi.cCArr[0] != undefined && !Number.isNaN(Midi.cCArr[0])) {
 			return lfoval;
 		}
 		else {
@@ -407,11 +471,55 @@ export function getLfoValue(
   }
 }
 
+//export function getRawLfoValue(
+//  lfo: Lfo,
+//  currentTime: { beat: number; ms: number },
+//  align: "beat" | "ms"
+//): number {
+//  const now =
+//    align === "ms"
+//      ? currentTime.ms
+//      : Math.floor(currentTime.ms / currentTime.beat) * currentTime.ms;
+//  const lowPeriod = lfo.lowPeriod * 1000;
+//  const hiPeriod = lfo.hiPeriod * 1000;
+//  const period = lfo.period * 1000;
+//  const t = now % (lfo.type === "square" ? lowPeriod + hiPeriod : period);
+//  switch (lfo.type) {
+//    case "random Relative": {
+//      return randomFloat() * lfo.amplitude;
+//    }
+//    case "sawtooth Relative": {
+//      return (t / period) * lfo.amplitude;
+//    }
+//    case "reverse Sawtooth Relative": {
+//      return (1 - (t / period)) * lfo.amplitude;
+//    }
+//    case "triangle Relative": {
+//      return (
+//	  
+//        (t / period <= 0.5
+//          ? 0 + ((t / period) * 2)
+//          : 1 - (((t / period) - 0.5) * 2)) * lfo.amplitude
+//      );
+//    }
+//    case "sine Relative": {
+//      return Math.sin((t / period) * Math.PI * 2) * lfo.amplitude;
+//    }
+//    case "square Relative": {
+//      return (t < lowPeriod ? 1 : -1) * lfo.amplitude;
+//    }
+//
+//    default: {
+//      throw "lfo error";
+//    }
+//  }
+//}
+
 export interface LayerNote {
-  end: number;
   note: string;
-  type: "beat" | "ms";
+  typed: "beat" | "ms";
   channel: number;
   velocity: number;
   id?: string;
+  duration: number;
 }

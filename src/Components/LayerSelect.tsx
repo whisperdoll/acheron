@@ -1,14 +1,9 @@
 import React from "react";
 import state from "../state/AppState";
 import settings from "../state/AppSettings";
-import IconButton from "./IconButton";
-import {
-  faCheck,
-  faEdit,
-  faMinus,
-  faPlus,
-} from "@fortawesome/free-solid-svg-icons";
-import { confirmPrompt } from "../utils/utils";
+import GoogleIconButton from "./GoogleIconButton";
+import { confirmPrompt } from "../utils/desktop";
+import useKeyboardShortcutStrings from "../Hooks/useKeyboardShortcutStrings";
 
 interface Props {}
 
@@ -19,7 +14,23 @@ const LayerSelect: React.FC<Props> = React.memo(() => {
     currentLayerIndex: s.selectedHex.layerIndex,
     layerNames: s.layers.map((l) => l.name),
   }));
+  const keyboardShortcutStrings = useKeyboardShortcutStrings();
 
+//  const picko = (e: React.MouseEvent<HTMLSelectElement>) => {
+// //     e.preventDefault();
+//	  if (!e.currentTarget.matches(':focus')) {
+//      e.currentTarget.showPicker();
+// //     console.log(e.currentTarget);
+//	  }
+//  };
+//  const pickoo = (e: React.FocusEvent<HTMLSelectElement>) => {
+//      e.preventDefault();
+////	  if (e.currentTarget.matches(':focus')) {
+////      e.currentTarget.showPicker();
+////	  e.target.showPicker();
+// //     console.log(e.currentTarget);}
+//	  
+//  };
   async function confirmRemoveLayer(layerIndex?: number) {
     if (layerIndex === undefined) {
       layerIndex = state.values.selectedHex.layerIndex;
@@ -91,37 +102,45 @@ const LayerSelect: React.FC<Props> = React.memo(() => {
         )}
       </label>
       {reactiveState.isEditingLayerName ? (
-        <IconButton
+        <GoogleIconButton
           onClick={(e) =>
             state.set({ isEditingLayerName: false }, "stop edit layer name")
           }
-          icon={faCheck}
+          icon="check"
+          buttonStyle="rounded"
+          fill
         >
           Save Name
-        </IconButton>
+        </GoogleIconButton>
       ) : (
-        <IconButton
+        <GoogleIconButton
           onClick={(e) =>
             state.set({ isEditingLayerName: true }, "edit layer name")
           }
-          icon={faEdit}
+          icon="edit"
+          buttonStyle="rounded"
+          fill
         >
           Edit Name
-        </IconButton>
+        </GoogleIconButton>
       )}
-      <IconButton
+      <GoogleIconButton
         onClick={() => confirmRemoveLayer()}
         className="delete"
-        icon={faMinus}
+        icon="remove"
+        buttonStyle="rounded"
+        fill
       >
         Delete Layer
-      </IconButton>
-      <IconButton
+      </GoogleIconButton>
+      <GoogleIconButton
         onClick={(e) => state.addLayer(true, "add layer button")}
-        icon={faPlus}
+        icon="add"
+        buttonStyle="rounded"
+        fill
       >
-        Add New Layer
-      </IconButton>
+        Add Layer ({keyboardShortcutStrings.addNewLayer})
+      </GoogleIconButton>
     </div>
   );
 });

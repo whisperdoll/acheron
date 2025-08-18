@@ -3,6 +3,8 @@ import { transposeNote } from "./elysiumutils";
 import { WebMidiInput, WebMidiPortEvent } from "../Types";
 import List from "../lib/list";
 import { MaybeGenerated, resolveMaybeGenerated } from "../lib/utils";
+import equal from 'fast-deep-equal/es6/react';
+import { BloomSet, UniqueSet } from '@sepiariver/unique-set';
 
 export interface MidiDevice {
   name: string;
@@ -15,18 +17,19 @@ export interface NoteOnOptions {
   time?: string | number;
   channel: number;
   deviceName: MaybeGenerated<string | string[]>;
+  duration: number;
 }
 
-interface NoteOffParams {
-  release?: number;
-}
+//interface NoteOffParams {
+//  release?: number;
+//}
 
-export interface NoteOffOptions extends NoteOffParams {
-  note: string;
-  time?: string | number;
-  channel: number;
-  deviceName: MaybeGenerated<string | string[]>;
-}
+//export interface NoteOffOptions extends NoteOffParams {
+//  note: string;
+//  time?: string | number;
+//  channel: number;
+//  deviceName: MaybeGenerated<string | string[]>;
+//}
 
 export interface MidiNote {
   name: string;
@@ -44,8 +47,11 @@ const allNotes = Array(128)
   .fill(0)
   .map((_, i) => i);
   
-
 export var cCArr = [1];
+
+for (let i = 0; i < 127; i++) {
+    cCArr[i] = 1;
+  };
 
 export default class Midi {
   private static enabledOutputNames: string[] = [];
@@ -205,30 +211,31 @@ export default class Midi {
           const midiOutput = WebMidi.getOutputByName(deviceName);
           if (!midiOutput) return;
 
-          midiOutput.channels[note.channel].sendNoteOn(note.note, {
+          midiOutput.channels[note.channel].playNote(note.note, {
             rawAttack: note.velocity,
             time: note.time,
+			duration: note.duration ?? 1,
           });
         }
       );
     });
   }
 
-  public static noteOff(notes: NoteOffOptions | NoteOffOptions[]) {
-    List.wrap(notes).forEach((note) => {
-      List.wrap(resolveMaybeGenerated(note.deviceName)).forEach(
-        (deviceName) => {
-          const midiOutput = WebMidi.getOutputByName(deviceName);
-          if (!midiOutput) return;
-
-          midiOutput.channels[note.channel].sendNoteOff(note.note, {
-            rawRelease: note.release,
-            time: note.time,
-          });
-        }
-      );
-    });
-  }
+//  public static noteOff(notes: NoteOffOptions | NoteOffOptions[]) {
+//    List.wrap(notes).forEach((note) => {
+//      List.wrap(resolveMaybeGenerated(note.deviceName)).forEach(
+//        (deviceName) => {
+//          const midiOutput = WebMidi.getOutputByName(deviceName);
+//          if (!midiOutput) return;
+//
+//          midiOutput.channels[note.channel].sendNoteOff(note.note, {
+//            rawRelease: note.release,
+//            time: note.time,
+//          });
+//        }
+//      );
+//    });
+//  }
 
   public static allNotesOff() {
     WebMidi.outputs.forEach((output) => {
@@ -241,6 +248,7 @@ interface ScheduledNoteOn extends NoteOnOptions {
   time: number;
   bufferedToDevice: boolean;
   type: "noteOn";
+  typed: string;
   id: string;
 }
 
@@ -248,21 +256,22 @@ interface BufferedNoteOn extends ScheduledNoteOn {
   bufferedToDevice: true;
 }
 
-interface ScheduledNoteOff extends NoteOffOptions {
-  time: number;
-  bufferedToDevice: boolean;
-  type: "noteOff";
-  id: string;
-}
+//interface ScheduledNoteOff extends NoteOffOptions {
+//  time: number;
+//  bufferedToDevice: boolean;
+//  type: "noteOff";
+//  typed: string;
+//  id: string;
+//}
 
-type ScheduledNote = ScheduledNoteOn | ScheduledNoteOff;
+type ScheduledNote = ScheduledNoteOn;
 
 function isBufferedNoteOn(n: ScheduledNote): n is BufferedNoteOn {
   return n.type === "noteOn" && n.bufferedToDevice;
 }
-
+//var oldLength = 100;
 export class MidiScheduler {
-  private static queue: ScheduledNote[] = [];
+  public static queue: ScheduledNote[] = [];
   public static bufferedUntil: number | null = null;
   private static idCounter = 0;
 
@@ -274,33 +283,57 @@ export class MidiScheduler {
 
   public static scheduleNoteOn(note: NoteOnOptions & { time: number }): string {
     const id = this.generateId();
+	
+
     this.queue.push({
-      ...note,
+	  ...note,
       id,
       type: "noteOn",
+	  typed: "",
       bufferedToDevice: false,
     });
+//	oldLength = this.queue.length;
+//	if (this.queue.length > 2) {
 
+//	this.queue = this.queue.slice(0 - (this.queue.length - oldLength))
+ //    }
+//console.log("_On_");
+//		this.queue = this.queue.slice(-16);
+//console.log(this.queue);
+//	oldLength = this.queue.length;
     return id;
   }
 
-  public static scheduleNoteOff(
-    note: NoteOffParams & { id: string; time: number }
-  ) {
-    const noteOn = this.queue.find(
-      (n) => n.id === note.id && n.type === "noteOn"
-    );
-    if (!noteOn) {
-      throw new Error("scheduled noteOff for non-existing noteOn");
-    }
-
-    this.queue.push({
-      ...noteOn,
-      ...note,
-      type: "noteOff",
-      bufferedToDevice: false,
-    });
-  }
+//  public static scheduleNoteOff(
+//    note: NoteOffParams & { id: string; time: number }
+//  ) {
+//    const noteOn = this.queue.find(
+//      (n) => n.id === note.id && n.type === "noteOn"
+//    );
+//    if (!noteOn) {
+//console.log("scheduled noteOff for non-existing noteOn");
+//    }
+//	else {
+//
+//    this.queue.push({
+//      ...noteOn,
+//      ...note,
+//      type: "noteOff",
+//	  typed: "",
+//      bufferedToDevice: false,
+//    });
+//	if (this.queue.length > oldLength && oldLength > 1) {
+//
+//	this.queue = this.queue.slice(0 - (this.queue.length /2));
+//
+//     }
+//	 if (this.queue.length % 2 === 0) {this.queue.pop;}
+//	oldLength = this.queue.length;
+//	;
+//
+//	console.log("_Off_");
+//console.log(this.queue);
+//  }}
 
   // returns noteOns that are buffered to the device
   public static clear(): BufferedNoteOn[] {
@@ -316,15 +349,7 @@ export class MidiScheduler {
 
     this.queue.forEach((note) => {
       if (note.bufferedToDevice || note.time - now > thresholdMs) return;
-
-      switch (note.type) {
-        case "noteOn":
           Midi.noteOn(note);
-          break;
-        case "noteOff":
-          Midi.noteOff(note);
-          break;
-      }
       note.bufferedToDevice = true;
       if (!this.bufferedUntil || note.time > this.bufferedUntil) {
         this.bufferedUntil = note.time;
@@ -334,28 +359,28 @@ export class MidiScheduler {
 
 
 
-  // public static clean() {
-  //   // schedule noteoffs for any buffered noteons without a corresponding buffered noteoff
-  //   const [noteOns, noteOffs] = List.partition(
-  //     this.queue,
-  //     (n) => n.type === "noteOn"
-  //   );
-  //   noteOns.forEach((noteOn) => {
-  //     if (noteOn.bufferedToDevice) return;
-
-  //     const noteOffIsBuffered = noteOffs.some(
-  //       (noteOff) =>
-  //         noteOff.note === noteOn.note &&
-  //         noteOff.bufferedToDevice &&
-  //         noteOff.time > noteOn.time
-  //     );
-
-  //     if (noteOffIsBuffered) return;
-
-  //     Midi.noteOff({
-  //       ...noteOn,
-  //       time: noteOn.time + 1,
-  //     });
-  //   });
-  // }
+//   public static clean() {
+//     // schedule noteoffs for any buffered noteons without a corresponding buffered noteoff
+//     const [noteOns, noteOffs] = List.partition(
+//       this.queue,
+//       (n) => n.type === "noteOn"
+//     );
+//     noteOns.forEach((noteOn) => {
+//       if (noteOn.bufferedToDevice) return;
+//
+//       const noteOffIsBuffered = noteOffs.some(
+//         (noteOff) =>
+//           noteOff.note === noteOn.note &&
+//           noteOff.bufferedToDevice &&
+//           noteOff.time > noteOn.time
+//       );
+//
+//       if (noteOffIsBuffered) return;
+//
+//       Midi.noteOff({
+//         ...noteOn,
+//         time: noteOn.time + 1,
+//       });
+//     });
+//   }
 }

@@ -43,7 +43,7 @@ export default React.memo(function LfoControls({ control }: Props) {
           ))}
         </select>
       </div>
-      {modifyingLfo.type !== "sequence" && (
+      {!["sequence", "sine Relative", "square Relative", "sawtooth Relative", "reverse Sawtooth Relative", "random Relative", "triangle Relative"].includes(modifyingLfo.type) && (
         <>
           <div className="controlRow">
             <span className="label">Min:</span>
@@ -67,7 +67,7 @@ export default React.memo(function LfoControls({ control }: Props) {
           </div>
         </>
       )}
-      {modifyingLfo.type !== "square" && modifyingLfo.type !== "midi Control" && modifyingLfo.type !== "random" && (
+      {modifyingLfo.type !== "square Relative" && modifyingLfo.type !== "square" && modifyingLfo.type !== "midi Control" && modifyingLfo.type !== "random" && (
         <div className="controlRow">
           <span className="label">Period:</span>
           <NumberInput
@@ -79,7 +79,7 @@ export default React.memo(function LfoControls({ control }: Props) {
           />
         </div>
       )}
-      {modifyingLfo.type === "square" && (
+      {(modifyingLfo.type === "square" || modifyingLfo.type === "square Relative") && (
         <>
           <div className="controlRow">
             <span className="label">Lo Period:</span>
@@ -98,6 +98,36 @@ export default React.memo(function LfoControls({ control }: Props) {
               min={0.1}
               max={10000}
               onChange={(newValue) => modifyLfo({ hiPeriod: Math.max(newValue) })}
+              step={0.1}
+            />
+          </div>
+        </>
+      )}
+	  
+	  {(modifyingLfo.type === "midi Control") && (
+        <>
+          <div className="controlRow">
+            <span className="label">MIDI CC:</span>
+            <NumberInput
+              value={modifyingLfo.control}
+              min={0}
+              max={127}
+              onChange={(newValue) => modifyLfo({ control : Math.max(newValue) })}
+              step={1}
+            />
+          </div>
+        </>
+      )}
+	  
+	  {["sine Relative", "square Relative", "sawtooth Relative", "reverse Sawtooth Relative", "random Relative", "triangle Relative"].includes(modifyingLfo.type) && (
+        <>
+          <div className="controlRow">
+            <span className="label">Amplitude:</span>
+            <NumberInput
+              value={modifyingLfo.amplitude}
+              min={0.1}
+              max={10000}
+              onChange={(newValue) => modifyLfo({ amplitude: Math.max(newValue) })}
               step={0.1}
             />
           </div>
