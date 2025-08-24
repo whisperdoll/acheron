@@ -110,6 +110,7 @@ export class Driver {
     triad: number;
     durationMs: number;
     velocity?: number;
+	delay?: number;
     additionalTranspose?: number;
     layerIndex?: number;
   }) {
@@ -122,6 +123,8 @@ export class Driver {
       additionalTranspose,
       layerIndex,
     } = opts;
+	
+
     let notes: string[] = [hexNotes[hexIndex]];
     triad = mod(triad, 7);
 
@@ -160,10 +163,19 @@ export class Driver {
       layerControl: "midiChannel",
       layer: layerIndex || "current",
     });
-
+	
+//	const del = state.getControlValue(c as ControlState<"decimal">, {
+//                    controls: state.values.controls,
+//                    layer: state.values.layers[props.layerIndex],
+//                  });
+				  
+				  
+//				  <"decimal">({
+ //         layerControl: "delay",
+ //         layer: layerIndex
+//});
     const deviceName = settings.values.midiOutputs;
-
-    Midi.noteOn(
+      Midi.noteOn(
       transposed.map((note) => ({
         channel,
         deviceName,
@@ -171,8 +183,11 @@ export class Driver {
         velocity,
 		durationMs,
 		duration: durationMs,
+		delay: 0,
       }))
     );
+//	setTimeout(playnote, 10000);
+
 
 //    Midi.noteOff(/
 //      transposed.map((note) => ({
@@ -349,9 +364,11 @@ export class Driver {
         duration: number,
         durationType: "beat" | "ms",
         velocity: number,
-        transpose: number = 0
+        transpose: number = 0,
+		delay: number = 0,
       ) {
-        let notes: string[] = [hexNotes[hexIndex]];
+	  
+	  let notes: string[] = [hexNotes[hexIndex]];
         triad = mod(triad, 7);
 
         if (triad > 0) {
@@ -375,13 +392,22 @@ export class Driver {
               layerControl: "transpose",
               layer: layerIndex,
             }) + transpose;
-          return transposeNote(note, finalTranspose);
+          return transposeNote(note, finalTranspose,);
         });
 
         const channel = state.getControlValue<"midichannel">({
           layerControl: "midiChannel",
           layer: layerIndex,
         });
+		
+
+		
+		const finalDelay = state.getControlValue<"decimal">({
+          layerControl: "delay",
+          layer: layerIndex || "current",
+        }) + (delay || 0);
+	  
+
         const notesToAdd = transposed.map((note) => ({
           end:
             durationType === "beat"
@@ -392,6 +418,7 @@ export class Driver {
           channel,
           velocity,
 		  duration,
+		  delay: finalDelay,
         }));
 
         // notesToAdd.forEach((note) => {
@@ -402,8 +429,13 @@ export class Driver {
         //     note,
         //   });
         // });
+//const that = this;
+//			    setTimeout( () => {
         self.notesToAdd.push(...notesToAdd);
-      },
+ //  	}, 10);
+//	  console.log(self.notesToAdd);
+},
+
       getCurrentBeat(withinBar: boolean = true): number {
         return withinBar
           ? Math.floor(currentBeat) %
@@ -713,8 +745,9 @@ export class Driver {
     } else {
       newPlayheads = layer.playheads;
     }
-
     var notesStarted = this.notesToAdd;
+	
+
     let { newPlayingNotes } = List.partitionBy(
       layer.playingNotes,
       (note) => {
@@ -725,9 +758,13 @@ export class Driver {
         return "newPlayingNotes";
       }
     );
+	
     newPlayingNotes ||= [];
 //    notesStopped ||= [];
-    newPlayingNotes.push(...notesStarted);
+
+newPlayingNotes.push(...notesStarted);
+
+//    setTimeout(()=> {
 if (notesStarted.length > 0) {
     notesStarted.forEach((note) => {
       note.id = MidiScheduler.scheduleNoteOn({
@@ -738,12 +775,14 @@ if (notesStarted.length > 0) {
         deviceName: () => settings.values.midiOutputs,
         note: note.note,
         time: performance.now(),
+		delay: note.delay,
         velocity: note.velocity,
 		duration: note.typed === "beat" ? note.duration / bpms : note.duration,
       });
     });
 //	console.log(notesStarted);
 	}
+//}, note.delay * 1000);
 //	if (notesStopped.length > 0)  {
 //    notesStopped.forEach((note) => {
 //      MidiScheduler.scheduleNoteOff({

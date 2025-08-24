@@ -26,6 +26,7 @@ export default function (props: Props) {
     "velocity",
     "emphasis",
     "noteLength",
+	"delay",
   ];
 
   const generatorControls: LayerControlKey[] = ["timeToLive", "pulseEvery"];

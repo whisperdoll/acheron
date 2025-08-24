@@ -522,4 +522,5 @@ export interface LayerNote {
   velocity: number;
   id?: string;
   duration: number;
+  delay: number;
 }

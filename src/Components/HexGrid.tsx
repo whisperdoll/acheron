@@ -415,6 +415,7 @@ export default function HexGrid(props: Props) {
           state: new SimpleAppState(state.values),
           hexIndex,
           triad: 0,
+		  delay: 0,
           durationMs: msPerBeat({
             bpm: state.getControlValue<"decimal">({
               layerControl: "tempo",

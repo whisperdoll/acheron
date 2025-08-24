@@ -93,6 +93,7 @@ export interface LayerState {
   emphasis: ControlInstanceId;
   tempoSync: ControlInstanceId;
   noteLength: ControlInstanceId;
+  delay: ControlInstanceId;
   timeToLive: ControlInstanceId;
   pulseEvery: ControlInstanceId;
   tokenIds: string[][]; // each hex has an array of tokens

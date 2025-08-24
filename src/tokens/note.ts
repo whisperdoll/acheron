@@ -27,6 +27,14 @@ const NoteToken: TokenDefinition<Store> = {
       max: 36,
       defaultValue: 0,
     },
+    delay: {
+      label: "Delay",
+      type: "decimal",
+      min: 0,
+      max: 16,
+      step: 0.1,
+      defaultValue: 0,
+    },
     gateOffset: {
       label: "Gate Offset",
       type: "int",
@@ -49,13 +57,13 @@ const NoteToken: TokenDefinition<Store> = {
       defaultValue: 0,
     },
     velocity: {
-      inherit: "global.velocity",
+      inherit: "layer.velocity",
     },
     emphasis: {
-      inherit: "global.emphasis",
+      inherit: "layer.emphasis",
     },
     noteLength: {
-      inherit: "global.noteLength",
+      inherit: "layer.noteLength",
     },
   },
   callbacks: {
@@ -73,9 +81,10 @@ const NoteToken: TokenDefinition<Store> = {
         velocity,
         emphasis,
         noteLength,
-        ghostBeats,
+//        ghostBeats,
         triad,
         transpose,
+		delay,
       } = helpers.getControlValues();
 
       let hasPerformed = false;
@@ -91,7 +100,8 @@ const NoteToken: TokenDefinition<Store> = {
             noteLength * (durationType === "ms" ? 1000 : 1),
             durationType,
             helpers.getCurrentBeat() === 0 ? emphasis : velocity,
-            transpose
+            transpose,
+			delay
           );
           hasPerformed = true;
         }

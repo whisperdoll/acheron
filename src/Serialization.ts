@@ -38,6 +38,7 @@ export interface SerializedCompositionLayer {
   emphasis: SerializedCompositionControl;
   tempoSync: SerializedCompositionControl;
   noteLength: SerializedCompositionControl;
+  delay: SerializedCompositionControl;
   timeToLive: SerializedCompositionControl;
   pulseEvery: SerializedCompositionControl;
   tokenIds: string[][];
@@ -164,6 +165,7 @@ export function serializeComposition(
         emphasis: serializeControl(appState.controls[layer.emphasis]),
         tempoSync: serializeControl(appState.controls[layer.emphasis]),
         noteLength: serializeControl(appState.controls[layer.noteLength]),
+		delay: serializeControl(appState.controls[layer.delay]),
         timeToLive: serializeControl(appState.controls[layer.timeToLive]),
         pulseEvery: serializeControl(appState.controls[layer.pulseEvery]),
         tokenIds: layer.tokenIds,
@@ -261,6 +263,7 @@ export async function deserializeComposition(
       tempoSync: layer.tempoSync.id,
       noteLength: layer.noteLength.id,
       timeToLive: layer.timeToLive.id,
+	  delay: layer.delay.id,
       pulseEvery: layer.pulseEvery.id,
       tokenIds: layer.tokenIds,
       playheads: [],

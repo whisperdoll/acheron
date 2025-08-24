@@ -18,6 +18,7 @@ export interface NoteOnOptions {
   channel: number;
   deviceName: MaybeGenerated<string | string[]>;
   duration: number;
+  delay: number;
 }
 
 //interface NoteOffParams {
@@ -290,6 +291,7 @@ export class MidiScheduler {
       id,
       type: "noteOn",
 	  typed: "",
+	  delay: note.delay,
       bufferedToDevice: false,
     });
 //	oldLength = this.queue.length;
@@ -349,8 +351,10 @@ export class MidiScheduler {
 
     this.queue.forEach((note) => {
       if (note.bufferedToDevice || note.time - now > thresholdMs) return;
-          Midi.noteOn(note);
-      note.bufferedToDevice = true;
+          setTimeout(()=> {Midi.noteOn(note);
+      }, note.delay * 1000);
+//	    console.log(note.delay);
+		note.bufferedToDevice = true;  
       if (!this.bufferedUntil || note.time > this.bufferedUntil) {
         this.bufferedUntil = note.time;
       }

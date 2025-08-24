@@ -22,6 +22,10 @@ export type StateStoreSubscription<T> = (
 
 type StateStoreSubscriptionFilter<T> = (prevState: T, newState: T) => boolean;
 
+function sleep(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms || 1));
+}
+
 export default class StateStore<StateType extends Record<string, any>> {
   private _values: StateType | null = null;
   private _prevValues: StateType | null = null;
@@ -35,7 +39,13 @@ export default class StateStore<StateType extends Record<string, any>> {
     reject: (err: string) => void;
   }[] = [];
   private busy: boolean = false;
-
+//  private queueOld: {
+//    newState: MaybeGeneratedPromise<Partial<StateType>, [StateType]>;
+//    why: string;
+//    resolve: (state: StateType) => void;
+//    reject: (err: string) => void;
+//  }[] = [];
+  private startFlag: boolean = false;
   public filters = {
     deepEqual: (
       selector: (state: StateType) => any
@@ -47,7 +57,7 @@ export default class StateStore<StateType extends Record<string, any>> {
       };
     },
   };
-
+  
   constructor(defaults: typeof this.generator) {
     this.generator = defaults;
   }
@@ -104,11 +114,16 @@ export default class StateStore<StateType extends Record<string, any>> {
     });
   }
 
+
   async processNextItemInQueue() {
+   
     const initialState = rfdc()(this.values);
     this._prevValues = this._prevValues || initialState;
+//    this.queue = [...new Set(this.queue)];
+//if (!equal(this.queue, this.queueOld) || this.startFlag === false ) {
 
     while (this.queue.length) {
+	
       const { newState, why, resolve, reject } = this.queue.shift()!;
 
       const resolvedNewState = await resolveMaybeGeneratedPromise(
@@ -134,9 +149,18 @@ export default class StateStore<StateType extends Record<string, any>> {
       resolve(this.values);
       this.notifySubscribers(initialState, this.values);
       this._prevValues = { ...this.values };
-    }
 
-    this.busy = false;
+    }
+//    this.queueOld = this.queue;
+    
+ // } 
+//  else {
+//  this.queue.shift();
+//  }
+//    	  		setTimeout(() => {
+this.busy = false;
+//}, 10)
+
   }
 
   subscribe(

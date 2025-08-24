@@ -174,6 +174,7 @@ export const LayerControlTypes = [
   "emphasis",
   "tempo",
   "transpose",
+  "delay",
   "velocity",
   "noteLength",
   "pulseEvery",
@@ -221,6 +222,14 @@ function layerControlDefs(): Record<LayerControlKey, ControlDefinition> {
     },
     noteLength: {
       inherit: "global.noteLength",
+    },
+	delay: {
+      label: "Delay",
+      type: "decimal",
+      min: 0,
+      max: 16,
+      step: 0.1,
+      defaultValue: 0,
     },
     pulseEvery: {
       inherit: "global.pulseEvery",

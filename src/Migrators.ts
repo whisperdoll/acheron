@@ -72,6 +72,7 @@ interface SerializedCompositionLayerV1 {
   emphasis: SerializedCompositionControlV1;
   tempoSync: boolean;
   noteLength: SerializedCompositionControlV1;
+  delay: SerializedCompositionControlV1;
   timeToLive: SerializedCompositionControlV1;
   pulseEvery: SerializedCompositionControlV1;
   tokenIds: string[][];
