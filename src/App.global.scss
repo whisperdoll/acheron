@@ -1,5 +1,9 @@
 @use "sass:color";
 
+@function subdivision($n, $gap) {
+  @return calc((100% / $n) - ($gap) * (($n - 1) / $n));
+}
+
 :root {
   --multilayer-cols: 3;
   --leftColumnWidth: 280px;
@@ -149,7 +153,8 @@ input[type="checkbox"] {
   height: 1.05em;
 }
 
-button:not(.nostyle) {
+button:not(.nostyle),
+.button:not(.nostyle) {
   user-select: none;
   background-color: var(--button-background-color);
   color: var(--text-color);
@@ -462,8 +467,10 @@ $statusBarHeight: 2rem;
 
   .pulse {
     margin-right: 0.5rem;
-    width: calc($statusBarHeight * 0.5);
-    height: calc($statusBarHeight * 0.5);
+    min-width: calc($statusBarHeight * 0.5);
+    min-height: calc($statusBarHeight * 0.5);
+    max-width: calc($statusBarHeight * 0.5);
+    max-height: calc($statusBarHeight * 0.5);
     background-color: var(--pulse-color);
     border-radius: 100%;
 
@@ -473,25 +480,206 @@ $statusBarHeight: 2rem;
   }
 }
 
+.hexGridContextMenuContents {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 75dvh;
+  overflow: visible;
+
+  // &::before {
+  //   content: " ";
+  //   position: absolute;
+  //   left: -21px;
+  //   z-index: 2;
+  //   top: 50%;
+  //   width: 14px;
+  //   height: 14px;
+  //   border-color: var(--outline-color);
+  //   border-width: 1px;
+  //   border-style: none none solid solid;
+  //   background-color: rgba(15, 15, 15, 0.3);
+  //   backdrop-filter: blur(10px);
+  //   transform: translate(0, -50%) rotate(45deg);
+  //   -webkit-transform: translate(0, -50%) rotate(45deg);
+  //   -moz-transform: translate(0, -50%) rotate(45deg);
+  //   clip-path: polygon(0% 0%, 16px 16px, 0% 16px);
+  // }
+
+  .context-menu:has(&) {
+    padding: 0;
+  }
+
+  .context-menu .context-menu-item:has(&) {
+    padding: 1rem;
+  }
+
+  .addSection {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    justify-content: space-around;
+
+    & > .title {
+    }
+
+    .addTokenRow {
+      display: flex;
+      flex-direction: row;
+      align-items: stretch;
+      justify-content: stretch;
+      gap: 0.25rem;
+      flex-wrap: wrap;
+
+      button {
+        width: subdivision(5, 0.25rem);
+      }
+    }
+  }
+
+  .modifySection {
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+
+    & > .title {
+      display: flex;
+      justify-content: center;
+    }
+
+    .tokenSelect {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0.25rem;
+
+      .title {
+        font-size: 1.2rem;
+        display: flex;
+        flex-direction: row;
+        gap: 0.5rem;
+
+        .remove {
+          margin-left: auto;
+        }
+      }
+
+      .description {
+        display: flex;
+        flex-direction: column;
+        align-items: start;
+        color: #ddd;
+        font-size: 0.8rem;
+      }
+    }
+  }
+
+  .selectedTokenContents {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    overflow-y: auto;
+
+    & > .title {
+      font-size: 1.2rem;
+      display: flex;
+      flex-direction: row;
+      gap: 0.5rem;
+
+      .remove {
+        margin-left: auto;
+      }
+    }
+
+    .tokenControl {
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+
+    .control {
+      margin: 0;
+    }
+  }
+}
+
+.touchModeMenu {
+  position: absolute;
+  bottom: $statusBarHeight;
+  background-color: rgba(15, 15, 15, 0.3);
+  backdrop-filter: blur(10px);
+  z-index: 2;
+  border: 1px solid var(--outline-color);
+
+  .touchModeMenuItem {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 0.5rem 0.25rem;
+    padding-right: 0.75rem;
+    gap: 0.25rem;
+    cursor: pointer;
+
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    &:not(:last-of-type) {
+      border-bottom: 1px solid var(--outline-color);
+    }
+
+    .titleAndDescription {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .title {
+      font-size: 1.2rem;
+    }
+
+    .description {
+      display: flex;
+      flex-direction: column;
+      color: #ddd;
+
+      span {
+        display: block;
+      }
+    }
+
+    .itemIcon {
+      font-size: 1.75rem;
+      padding: 0 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .check {
+      font-size: 1.75rem;
+      margin-left: auto;
+    }
+  }
+}
+
 .control {
-  margin: 5px 0.5rem;
   display: flex;
   align-items: stretch;
   flex-direction: column;
   justify-content: stretch;
-  background-color: rgba(255, 255, 255, 0.03);
-  border: 1px solid var(--outline-color);
-  border-radius: 0.25rem;
-  gap: 0.5rem;
-  padding-bottom: 0.5rem;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+
+  &:nth-child(even) {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
 
   .labelRow {
     display: flex;
     flex-direction: row;
     align-items: center;
-    border-bottom: 1px solid var(--outline-color);
-    padding: 0.25rem 0.5rem;
-    background-color: var(--control-header-background-color);
     gap: 0.5rem;
     flex-wrap: wrap;
 
@@ -501,13 +689,50 @@ $statusBarHeight: 2rem;
   }
 
   .controlRow {
-    padding: 0 0.5rem;
+    display: flex;
+    flex-direction: row;
+    justify-content: stretch;
+    align-items: center;
+    gap: inherit;
+    flex-grow: 1;
 
+    input,
+    .numberInput-container,
+    select {
+      flex-grow: 1;
+      min-width: 0;
+      width: 0;
+    }
+  }
+
+  .lfoControlRow {
     display: flex;
     flex-direction: row;
     justify-content: stretch;
     align-items: center;
     gap: 0.5rem;
+    flex-grow: 1;
+
+    &:has(.group) {
+      gap: 1rem;
+    }
+
+    .group {
+      display: inherit;
+      flex-direction: inherit;
+      align-items: inherit;
+      justify-content: inherit;
+      flex-grow: 1;
+      gap: 0.5rem;
+
+      input,
+      .numberInput-container,
+      select {
+        flex-grow: 1;
+        min-width: 0;
+        width: 0;
+      }
+    }
 
     input,
     .numberInput-container,
@@ -530,16 +755,10 @@ $statusBarHeight: 2rem;
     display: flex;
     flex-direction: column;
     border: 1px solid var(--outline-color);
-    padding: 0.25rem 0.25rem;
-
-    & > * {
-      margin: 0.25rem;
-    }
   }
 
   .lfoVisualizer {
     position: relative;
-    margin: 0 0.5rem;
     display: flex;
 
     canvas {
@@ -557,7 +776,6 @@ $statusBarHeight: 2rem;
   }
 
   .readonly {
-    padding: 0.25rem 0;
   }
 
   .directionRow {
@@ -570,8 +788,9 @@ $statusBarHeight: 2rem;
     overflow: hidden;
 
     button {
-      flex-basis: 33%;
-      min-width: 2rem;
+      flex-basis: calc(100% / 3);
+      min-width: 1rem;
+      padding: 0;
       height: 2.25rem;
       flex-grow: 1;
       margin: 0;
@@ -908,7 +1127,7 @@ button.showInspector {
       }
 
       .hexGrid {
-        canvas {
+        & > canvas {
           width: 100%;
         }
       }
@@ -970,7 +1189,7 @@ button.showInspector {
   justify-content: center;
   position: relative;
 
-  canvas {
+  & > canvas {
     user-select: none;
     position: absolute;
     z-index: 1;
@@ -996,11 +1215,45 @@ button.showInspector {
   min-height: 0;
   min-width: 0;
 
-  canvas {
+  & > canvas {
     max-height: 100%;
     max-width: 100%;
     min-height: 0;
     min-width: 0;
+  }
+}
+
+.tokenControl {
+  display: flex;
+  flex-direction: column;
+  justify-content: stretch;
+  gap: 0rem;
+  border: 1px solid var(--outline-color);
+
+  .header {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+
+    &.collapsible {
+      cursor: pointer;
+    }
+
+    .remove {
+      margin-left: auto;
+
+      &:hover {
+        background-color: rgba(255, 255, 255, 0.5);
+      }
+    }
+  }
+
+  .controlRow {
+    input,
+    select,
+    .numberInput-container {
+      width: 100%;
+    }
   }
 }
 
@@ -1044,10 +1297,6 @@ button.showInspector {
     }
 
     .tokenControl {
-      display: flex;
-      flex-direction: column;
-      justify-content: stretch;
-
       @media only screen and (max-width: 768px) {
         flex-direction: row;
       }
@@ -1057,26 +1306,6 @@ button.showInspector {
       }
 
       .header {
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        cursor: pointer;
-
-        .remove {
-          margin-left: auto;
-
-          &:hover {
-            background-color: rgba(255, 255, 255, 0.5);
-          }
-        }
-      }
-
-      .controlRow {
-        input,
-        select,
-        .numberInput-container {
-          width: 100%;
-        }
       }
     }
   }

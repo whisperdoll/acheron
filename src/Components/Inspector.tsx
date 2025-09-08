@@ -40,10 +40,7 @@ export default function (props: Props) {
         "Confirm remove token"
       ))
     ) {
-      state.removeTokenFromSelected(
-        tokenIds[tokenIndex],
-        "remove token from inspector"
-      );
+      state.removeToken(tokenIds[tokenIndex], "remove token from inspector");
     }
   }
 

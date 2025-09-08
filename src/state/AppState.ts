@@ -17,6 +17,7 @@ import {
   ControlDataType,
   getControlValue,
   TypeForControlDataType,
+  PerformanceNote,
 } from "../Types";
 import {
   DefaultPlayerControls,
@@ -40,6 +41,7 @@ import env from "../lib/env.ts";
 
 export interface AppState {
   selectedHex: { hexIndex: number; layerIndex: number };
+  hoveredHex: { hexIndex: number; layerIndex: number };
   controls: Record<ControlInstanceId, ControlState>;
   tokens: Record<TokenInstanceId, Token>;
   tokenDefinitions: Record<TokenUID, TokenDefinition>;
@@ -72,10 +74,14 @@ export interface AppState {
   leftColumnTab: "player" | "layer";
   isEditingLayerName: boolean;
   isShowingSettings: boolean;
+  isShowingTouchModeMenu: boolean;
   isMultiLayerMode: boolean;
   leftColumnWidth: number;
   inspectorWidth: number;
   multiLayerSize: number;
+  performingNotes: PerformanceNote[];
+  gridRows: number;
+  gridCols: number;
 }
 
 export interface LayerState {
@@ -154,10 +160,14 @@ const initialState: AppState = {
   isShowingInspector: !env("debug"),
   isShowingLeftColumn: !env("debug"),
   isShowingSettings: false,
+  isShowingTouchModeMenu: false,
   leftColumnTab: "player",
   multiLayerSize: 2,
   inspectorWidth: 300,
   leftColumnWidth: 300,
+  performingNotes: [],
+  gridRows: 12,
+  gridCols: 17,
 };
 
 const initialLayer = buildLayer(initialState);
@@ -232,38 +242,68 @@ export class AppStateStore extends StateStore<AppState> {
     );
   }
 
+  static removeTokenFromHex(
+    state: AppState,
+    tokenId: TokenInstanceId,
+    opts: MaybeGenerated<{ hexIndex: number; layerIndex: number }, [AppState]>
+  ): AppState {
+    const resolvedOpts = resolveMaybeGenerated(opts, state);
+
+    return {
+      ...state,
+      tokens: objectWithoutKeys(state.tokens, [tokenId]),
+      controls: objectWithoutKeys(
+        state.controls,
+        state.tokens[tokenId].controlIds
+      ),
+      layers: List.withIndexReplaced(
+        state.layers,
+        resolvedOpts.layerIndex,
+        (layer) => ({
+          ...layer,
+          tokenIds: List.withIndexReplaced(
+            layer.tokenIds,
+            resolvedOpts.hexIndex,
+            (old) => old.filter((id) => id !== tokenId)
+          ),
+        })
+      ),
+    };
+  }
+
   removeTokenFromHex(
     tokenId: string,
     opts: MaybeGenerated<{ hexIndex: number; layerIndex: number }, [AppState]>,
     why: string
   ) {
     this.set((state) => {
-      const resolvedOpts = resolveMaybeGenerated(opts, state);
-
-      return {
-        ...state,
-        tokens: objectWithoutKeys(state.tokens, [tokenId]),
-        controls: objectWithoutKeys(
-          state.controls,
-          state.tokens[tokenId].controlIds
-        ),
-        layers: List.withIndexReplaced(
-          state.layers,
-          resolvedOpts.layerIndex,
-          (layer) => ({
-            ...layer,
-            tokenIds: List.withIndexReplaced(
-              layer.tokenIds,
-              resolvedOpts.hexIndex,
-              (old) => old.filter((id) => id !== tokenId)
-            ),
-          })
-        ),
-      };
+      return AppStateStore.removeTokenFromHex(state, tokenId, opts);
     }, why);
   }
 
-  removeTokenFromSelected(tokenId: string, why: string) {
+  removeToken(tokenId: string, why: string) {
+    this.set((state) => {
+      let layerIndex, hexIndex;
+      state.layers.forEach((layer, layerIndexCursor) => {
+        layer.tokenIds.find((tokenIds, hexIndexCursor) => {
+          if (tokenIds.includes(tokenId)) {
+            hexIndex = hexIndexCursor;
+            layerIndex = layerIndexCursor;
+            return true;
+          }
+        });
+      });
+
+      if (layerIndex === undefined || hexIndex === undefined) {
+        throw new Error("heh woops");
+      }
+
+      return AppStateStore.removeTokenFromHex(state, tokenId, {
+        hexIndex,
+        layerIndex,
+      });
+    }, "remove token bro");
+
     this.removeTokenFromHex(
       tokenId,
       (state) => ({

@@ -1,7 +1,8 @@
 import Control from "./Control";
-import state from "../state/AppState";
 import settings from "../state/AppSettings";
 import GoogleIconButton from "./GoogleIconButton";
+import { cx } from "../lib/utils";
+import state from "../state/AppState";
 
 interface Props {
   tokenId: string;
@@ -9,33 +10,43 @@ interface Props {
   isCollapsed: boolean;
   onToggleCollapse: () => any;
   layerIndex: number;
+  showHeader?: boolean;
+  collapsible?: boolean;
 }
 
 export default function (props: Props) {
-  const reactiveState = state.useState();
-  const reactiveSettings = settings.useState();
+  const showHeader = props.showHeader ?? true;
+  const collapsible = props.collapsible ?? true;
 
-  const token = reactiveState.tokens[props.tokenId];
+  const token = state.useState((s) => s.tokens[props.tokenId]);
+  const controls = state.useState((s) => s.controls);
+  const layers = state.useState((s) => s.layers);
 
   return (
     <div className="tokenControl">
-      <div className="header" onClick={() => props.onToggleCollapse()}>
-        <span className="noselect">
-          {props.isCollapsed ? "▸" : "▾"} {token.label}
-        </span>
-        <GoogleIconButton
-          buttonStyle="rounded"
-          icon="close"
-          fill
-          opticalSize={20}
-          title="Remove Layer"
-          onClick={(e) => {
-            e.stopPropagation();
-            props.onRemove();
-          }}
-          className="nostyle remove"
-        />
-      </div>
+      {showHeader && (
+        <div
+          className={cx("header", { collapsible })}
+          onClick={() => props.onToggleCollapse()}
+        >
+          <span className="noselect">
+            {collapsible ? (props.isCollapsed ? "▸ " : "▾ ") : ""}
+            {token.label}
+          </span>
+          <GoogleIconButton
+            buttonStyle="rounded"
+            icon="close"
+            fill
+            opticalSize={20}
+            title="Remove Layer"
+            onClick={(e) => {
+              e.stopPropagation();
+              props.onRemove();
+            }}
+            className="nostyle remove"
+          />
+        </div>
+      )}
       {!props.isCollapsed &&
         token.controlIds.map((controlId) => {
           const ret = (
@@ -46,21 +57,21 @@ export default function (props: Props) {
             />
           );
 
-          const control = reactiveState.controls[controlId];
+          const control = controls[controlId];
           if (control.showIf !== undefined) {
             const key = control.showIf.startsWith("!")
               ? control.showIf.substr(1)
               : control.showIf;
             const shouldNegate = control.showIf.startsWith("!");
             const index = token.controlIds.findIndex(
-              (cid) => reactiveState.controls[cid].key === key
+              (cid) => controls[cid].key === key
             );
 
             if (index !== -1) {
               const bool = Boolean(
                 state.getControlValue(token.controlIds[index], {
-                  layer: reactiveState.layers[props.layerIndex],
-                  controls: reactiveState.controls,
+                  layer: layers[props.layerIndex],
+                  controls: controls,
                 })
               );
               return bool !== shouldNegate ? ret : undefined;

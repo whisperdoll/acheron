@@ -33,9 +33,14 @@ export default React.memo(function LfoControls({ control }: Props) {
 
   return (
     <>
-      <div className="controlRow">
+      <div className="lfoControlRow">
         <span className="label">Type:</span>
-        <select onChange={(e) => modifyLfo({ type: e.currentTarget.value as LfoType })} value={modifyingLfo.type}>
+        <select
+          onChange={(e) =>
+            modifyLfo({ type: e.currentTarget.value as LfoType })
+          }
+          value={modifyingLfo.type}
+        >
           {LfoTypes.map((lfoType) => (
             <option key={lfoType} value={lfoType}>
               {capitalize(lfoType)}
@@ -45,61 +50,70 @@ export default React.memo(function LfoControls({ control }: Props) {
       </div>
       {modifyingLfo.type !== "sequence" && (
         <>
-          <div className="controlRow">
-            <span className="label">Min:</span>
-            <NumberInput
-              min={-99999}
-              max={99999}
-              value={modifyingLfo.min}
-              coerce={coerce}
-              onChange={(value) => modifyLfo({ min: value })}
-            />
-          </div>
-          <div className="controlRow">
-            <span className="label">Max:</span>
-            <NumberInput
-              min={-99999}
-              max={99999}
-              value={modifyingLfo.max}
-              coerce={coerce}
-              onChange={(value) => modifyLfo({ max: value })}
-            />
+          <div className="lfoControlRow">
+            <div className="group">
+              <span className="label">Min:</span>
+              <NumberInput
+                value={modifyingLfo.min}
+                coerce={coerce}
+                onChange={(value) => modifyLfo({ min: value })}
+              />
+            </div>
+
+            <div className="group">
+              <span className="label">Max:</span>
+              <NumberInput
+                min={-99999}
+                max={99999}
+                value={modifyingLfo.max}
+                coerce={coerce}
+                onChange={(value) => modifyLfo({ max: value })}
+              />
+            </div>
           </div>
         </>
       )}
-      {modifyingLfo.type !== "square" && modifyingLfo.type !== "midi Control" && modifyingLfo.type !== "random" && (
-        <div className="controlRow">
-          <span className="label">Period:</span>
-          <NumberInput
-            value={modifyingLfo.period}
-            max={10000}
-            min={0.1}
-            onChange={(newValue) => modifyLfo({ period: Math.max(newValue) })}
-            step={0.1}
-          />
-        </div>
-      )}
-      {modifyingLfo.type === "square" && (
-        <>
-          <div className="controlRow">
-            <span className="label">Lo Period:</span>
+      {modifyingLfo.type !== "square" &&
+        modifyingLfo.type !== "midi Control" &&
+        modifyingLfo.type !== "random" && (
+          <div className="lfoControlRow">
+            <span className="label">Period:</span>
             <NumberInput
-              value={modifyingLfo.lowPeriod}
-              min={0.1}
+              value={modifyingLfo.period}
               max={10000}
-              onChange={(newValue) => modifyLfo({ lowPeriod: Math.max(newValue) })}
+              min={0.1}
+              onChange={(newValue) => modifyLfo({ period: Math.max(newValue) })}
               step={0.1}
             />
           </div>
-          <div className="controlRow">
-            <span className="label">Hi Period:</span>
-            <NumberInput
-              value={modifyingLfo.hiPeriod}
-              min={0.1}
-              max={10000}
-              onChange={(newValue) => modifyLfo({ hiPeriod: Math.max(newValue) })}
-              step={0.1}
-            />
+        )}
+      {modifyingLfo.type === "square" && (
+        <>
+          <div className="lfoControlRow">
+            <div className="group">
+              <span className="label">Lo Period:</span>
+              <NumberInput
+                value={modifyingLfo.lowPeriod}
+                min={0.1}
+                max={10000}
+                onChange={(newValue) =>
+                  modifyLfo({ lowPeriod: Math.max(newValue) })
+                }
+                step={0.1}
+              />
+            </div>
+            <div className="group">
+              <span className="label">Hi Period:</span>
+              <NumberInput
+                value={modifyingLfo.hiPeriod}
+                min={0.1}
+                max={10000}
+                onChange={(newValue) =>
+                  modifyLfo({ hiPeriod: Math.max(newValue) })
+                }
+                step={0.1}
+              />
+            </div>
           </div>
         </>
       )}
@@ -114,7 +128,9 @@ export default React.memo(function LfoControls({ control }: Props) {
                 value={value}
                 onChange={(newValue) =>
                   modifyLfo({
-                    sequence: modifyingLfo.sequence.map((v, vi) => (vi === i ? coerce(newValue) : v)),
+                    sequence: modifyingLfo.sequence.map((v, vi) =>
+                      vi === i ? coerce(newValue) : v
+                    ),
                   })
                 }
               />
@@ -129,7 +145,13 @@ export default React.memo(function LfoControls({ control }: Props) {
               </button>
             </div>
           ))}
-          <button onClick={() => modifyLfo({ sequence: modifyingLfo.sequence.concat([0]) })}>+ Add Value</button>
+          <button
+            onClick={() =>
+              modifyLfo({ sequence: modifyingLfo.sequence.concat([0]) })
+            }
+          >
+            + Add Value
+          </button>
         </div>
       )}
     </>

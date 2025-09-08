@@ -1,10 +1,12 @@
-import React, { useContext, useEffect, useRef } from "react";
-import { ControlState, KeyMap } from "../Types";
+import React, { useContext, useEffect, useRef, useState } from "react";
+import { ControlState, KeyMap, PerformanceNote } from "../Types";
 import { Canvas } from "../utils/canvas";
 import {
+  generateGridNotes,
   getNoteParts,
   hexNotes,
   noteArray,
+  noteColors,
   NumHexes,
 } from "../utils/elysiumutils";
 import Point from "../utils/point";
@@ -23,10 +25,10 @@ import useContextMenu, {
 } from "../Hooks/useContextMenu";
 import { Driver } from "../utils/driver";
 import SimpleAppState from "../state/SimpleAppState";
-import { msPerBeat } from "../lib/utils";
-import { mapTouches, mod, msPerBeat, pointArray } from "../lib/utils";
+import { mapTouches, mod, pointArray } from "../lib/utils";
 import Midi from "../utils/midi";
 import HexGridContextMenu from "./HexGridContextMenu";
+import Color from "colorjs.io";
 
 interface Props {
   layerIndex: number;
@@ -45,8 +47,8 @@ export default function HexGrid(props: Props) {
   const hexPoints = useRef<Point[]>([]);
   const mouseLocation = useRef<Point | null>(null);
 
-  const rows = 12;
-  const cols = 17;
+  const rows = state.values.gridRows;
+  const cols = state.values.gridCols;
   const start = noteArray.indexOf("D#") + noteArray.length * 7;
   const hexRadius = 38;
   const lineWidth = 2;
@@ -61,6 +63,7 @@ export default function HexGrid(props: Props) {
     s.selectedHex.layerIndex === props.layerIndex;
   const hexIsSelected = (s: AppState) =>
     s.selectedHex.hexIndex !== -1 && layerIsSelected(s);
+  const tokenIds = state.useState((s) => s.layers[props.layerIndex].tokenIds);
 
   const rootStyle = getComputedStyle(document.documentElement);
   const colors = Dict.fromArray(
@@ -100,6 +103,7 @@ export default function HexGrid(props: Props) {
     return hexIndex;
   }
 
+  // keyboard controls
   useEffect(() => {
     const keyDown = async (e: KeyboardEvent) => {
       if (!hexIsSelected(state.values)) {
@@ -180,6 +184,7 @@ export default function HexGrid(props: Props) {
     };
   }, [props.layerIndex]);
 
+  // setup
   useEffect(() => {
     canvas.current = new Canvas({
       canvasElement: canvasEl.current!,
@@ -217,6 +222,7 @@ export default function HexGrid(props: Props) {
       textColor: colors["hexTextColor"],
       tokenTextColor: colors["hexTokenTextColor"],
       backgroundColor: colors["hexBackgroundColor"],
+      notes: hexNotes.map(getNoteParts),
     });
 
     if (pts) {
@@ -255,10 +261,11 @@ export default function HexGrid(props: Props) {
         startHigh: false,
         textColor: colors["hexTextColor"],
         tokenTextColor: colors["hexTokenTextColor"],
-        labels: hexNotes.map((hexNote, i) => {
+        labels: generateGridNotes("D#7", rows, cols).map((hexNote, i) => {
           const symbols = state.values.layers[props.layerIndex].tokenIds[i].map(
             (tokenId) => state.values.tokens[tokenId].symbol
           );
+          return `${i}\n${hexNote}`;
           return symbols.length > 0
             ? hexNote + "\n" + symbols.join("")
             : hexNote;
@@ -299,48 +306,6 @@ export default function HexGrid(props: Props) {
     ])
   );
 
-  const [contextMenuNode, showContextMenu] = useContextMenu(() => {
-    const defs = Object.entries(state.values.tokenDefinitions);
-    const addItems: ContextMenuItem[] = defs.map(([uid, def]) => {
-      return {
-        contents: (
-          <div className="tokenMenuItem">
-            <span className="mono">{def.symbol}</span>
-            <span>{def.label}</span>
-          </div>
-        ),
-        handler() {
-          state.addTokenToSelected(uid, "context menu");
-        },
-      };
-    });
-
-    const removeItems: ContextMenuItem[] = state.values.layers[
-      props.layerIndex
-    ].tokenIds[state.values.selectedHex.hexIndex].map((tokenId) => {
-      return {
-        contents: "Remove " + state.values.tokens[tokenId].label,
-        handler() {
-          state.removeTokenFromHex(
-            tokenId,
-            state.values.selectedHex,
-            "remove token via context menu"
-          );
-        },
-      };
-    });
-
-    const ret: ContextMenuItem[] = [...addItems];
-    if (removeItems.length) {
-      ret.push(SeparatorItem);
-      ret.push(...removeItems);
-    }
-
-    return ret;
-  }, [
-    state.values.tokenDefinitions,
-    state.values.layers[props.layerIndex]?.tokenIds,
-  ]);
   const [contextMenuNode, showContextMenu] = useContextMenu(
     ({ hide, setPosition, isShowing }) => {
       return [
@@ -352,7 +317,7 @@ export default function HexGrid(props: Props) {
     {
       offset: (bounds) => ({ x: 16, y: -bounds.height / 2 }),
     },
-    [state.simulation.layers[props.layerIndex]?.tokenIds]
+    [props.layerIndex, tokenIds]
   );
 
   ////////////////////////////////////////////////////////////////////////////////
@@ -417,7 +382,7 @@ export default function HexGrid(props: Props) {
         );
 
         // find matching notes
-        state.gui.performingNotes.forEach((note) => {
+        state.values.performingNotes.forEach((note) => {
           if (!identifiers.has(note.identifier)) return;
 
           // stop the matching note
@@ -431,32 +396,27 @@ export default function HexGrid(props: Props) {
           toRemove.add(note.identifier);
         });
 
-        state.set((s) => ({
-          ...s,
-          gui: {
-            ...s.gui,
-            performingNotes: s.gui.performingNotes.filter(
+        state.set(
+          (s) => ({
+            performingNotes: s.performingNotes.filter(
               (s) => !toRemove.has(s.identifier)
             ),
-          },
-        }));
+          }),
+          "perform notes visual"
+        );
 
         return;
       }
 
       if (settings.values.touchMode === "edit") {
-        state.set((s) => ({
-          ...s,
-          gui: {
-            ...s.gui,
-            hexGrid: {
-              ...s.gui.hexGrid,
-              isDragging: false,
-              dragDest: null,
-              dragSource: null,
-            },
-          },
-        }));
+        state.set(
+          (s) => ({
+            isDragging: false,
+            draggingDestHex: { hexIndex: -1, layerIndex: -1 },
+            draggingSourceHex: { hexIndex: -1, layerIndex: -1 },
+          }),
+          "stop dragging"
+        );
         document.body.style.cursor = "default";
         return;
       }
@@ -486,9 +446,15 @@ export default function HexGrid(props: Props) {
 
         touches.forEach(({ hexIndex, identifier }) => {
           const [newNotes, unpermitted] = Driver.playTriad({
-            state,
+            state: new SimpleAppState(state.values),
             hexIndex,
             triad: 0,
+            durationMs:
+              1 /
+              state.getControlValue<"decimal">({
+                layerControl: "tempo",
+                layer: props.layerIndex,
+              }),
           });
           notes.push(
             ...newNotes.map<PerformanceNote>((n) => ({
@@ -503,52 +469,36 @@ export default function HexGrid(props: Props) {
           );
         });
 
-        state.set((s) => ({
-          ...s,
-          gui: {
-            ...s.gui,
-            performingNotes: s.gui.performingNotes.concat(notes),
-          },
-        }));
+        state.set(
+          (s) => ({
+            performingNotes: s.performingNotes.concat(notes),
+          }),
+          "perform some notes"
+        );
 
         return;
       }
 
       if (settings.values.touchMode === "edit") {
-        state.set((s) => ({
-          ...s,
-          gui: {
-            ...s.gui,
-            hexGrid: {
-              ...s.gui.hexGrid,
-              selectedHexes: {
-                hexIndexes: [hexIndex],
-                layerIndex: props.layerIndex,
-              },
+        state.set(
+          (s) => ({
+            selectedHex: {
+              hexIndex: hexIndex,
+              layerIndex: props.layerIndex,
             },
-          },
-        }));
+          }),
+          "select hex"
+        );
 
-        if (
-          !state.simulation.layers[props.layerIndex].tokenIds[hexIndex]?.length
-        )
+        if (!state.values.layers[props.layerIndex].tokenIds[hexIndex]?.length)
           return;
 
-        state.set((s) => ({
-          ...s,
-          gui: {
-            ...s.gui,
-            hexGrid: {
-              ...s.gui.hexGrid,
-              dragSource: {
-                hexIndexes: [hexIndex],
-                layerIndex: props.layerIndex,
-              },
-              isDragging: true,
-              dragType: e.shiftKey ? "copy" : "move",
-            },
-          },
-        }));
+        state.set(
+          (s) => ({
+            draggingSourceHex: { hexIndex, layerIndex: props.layerIndex },
+          }),
+          "set drag src"
+        );
         return;
       }
 
@@ -566,7 +516,7 @@ export default function HexGrid(props: Props) {
 
       if (settings.values.touchMode === "perform") {
         e.preventDefault();
-        const newNotes = state.gui.performingNotes.slice(0);
+        const newNotes = state.values.performingNotes.slice(0);
         let changed = false;
 
         const touches = isTouch
@@ -583,7 +533,7 @@ export default function HexGrid(props: Props) {
 
         touches.forEach(({ identifier, hexIndex }) => {
           // determine if we changed notes
-          state.gui.performingNotes.forEach((note, noteIndex) => {
+          state.values.performingNotes.forEach((note, noteIndex) => {
             if (note.identifier !== identifier) return;
             if (note.hexIndex === hexIndex && note.layer === props.layerIndex)
               return;
@@ -600,11 +550,17 @@ export default function HexGrid(props: Props) {
             }
 
             const [playedNotes, unpermittedPlayedNotes] = Driver.playTriad({
-              state,
+              state: new SimpleAppState(state.values),
               hexIndex,
               triad: 0,
               layerIndex: props.layerIndex,
               velocity: note.velocity ?? undefined,
+              durationMs:
+                1 /
+                state.getControlValue<"decimal">({
+                  layerControl: "tempo",
+                  layer: props.layerIndex,
+                }),
             });
 
             newNotes[noteIndex] = {
@@ -620,10 +576,12 @@ export default function HexGrid(props: Props) {
         });
 
         if (changed) {
-          state.set((s) => ({
-            ...s,
-            gui: { ...s.gui, performingNotes: newNotes },
-          }));
+          state.set(
+            (s) => ({
+              performingNotes: newNotes,
+            }),
+            "set perform notes"
+          );
         }
 
         return;
@@ -640,62 +598,51 @@ export default function HexGrid(props: Props) {
 
     animationCallback.current = () => {
       if (
-        state.gui.hexGrid.isDragging &&
-        state.gui.hexGrid.dragSource &&
+        state.values.draggingSourceHex.hexIndex !== -1 &&
         mouseLocation.current
       ) {
         const hoveredHex = closestHexIndex(mouseLocation.current);
         const hoveredHexIsSourceHex =
-          hoveredHex === state.gui.hexGrid.dragSource.hexIndexes[0] &&
-          props.layerIndex === state.gui.hexGrid.dragSource.layerIndex;
-        if (hoveredHex !== undefined && !hoveredHexIsSourceHex) {
-          state.set((s) => ({
-            ...s,
-            gui: {
-              ...s.gui,
-              hexGrid: {
-                ...s.gui.hexGrid,
-                dragDest: {
-                  hexIndexes: [hoveredHex],
-                  layerIndex: props.layerIndex,
-                },
+          hoveredHex === state.values.draggingSourceHex.hexIndex &&
+          props.layerIndex === state.values.draggingSourceHex.layerIndex;
+
+        if (hoveredHex !== -1 && !hoveredHexIsSourceHex) {
+          state.set(
+            (s) => ({
+              isDragging: true,
+              draggingDestHex: {
+                hexIndex: hoveredHex,
+                layerIndex: props.layerIndex,
               },
-            },
-          }));
+            }),
+            "set dragging dest hex"
+          );
           document.body.style.cursor =
-            state.gui.hexGrid.dragType === "copy" ? "copy" : "move";
+            state.values.draggingType === "copy" ? "copy" : "move";
         } else {
-          state.set((s) => ({
-            ...s,
-            gui: {
-              ...s.gui,
-              hexGrid: {
-                ...s.gui.hexGrid,
-                dragDest: null,
-              },
-            },
-          }));
+          state.set(
+            (s) => ({
+              draggingDestHex: { hexIndex: -1, layerIndex: -1 },
+            }),
+            "clear dragging hex"
+          );
         }
       }
     };
 
     function mouseLeave(pos: Point, e: MouseEvent | TouchEvent) {
-      state.set((s) => ({
-        ...s,
-        gui: {
-          ...s.gui,
-          hexGrid: {
-            ...s.gui.hexGrid,
-            dragDest: null,
-          },
-        },
-      }));
+      state.set(
+        (s) => ({
+          draggingDestHex: { hexIndex: -1, layerIndex: -1 },
+        }),
+        "clear dragging hex"
+      );
       mouseLocation.current = null;
     }
 
     async function contextMenu(e: MouseEvent) {
       e.preventDefault();
-      if (!hexIsSelected(state)) return;
+      if (!hexIsSelected(state.values)) return;
       if (e instanceof TouchEvent) return;
       if (!canvasEl.current) return;
       if (!canvas.current) return;
@@ -771,15 +718,27 @@ export default function HexGrid(props: Props) {
 
       // draw selected //
       if (hexIsSelected(state.values)) {
-        backCanvas.current?.fillHexagonCell({
-          gridLocation: startPosition,
-          cellCoordinate: new Point(
-            ~~(state.values.selectedHex.hexIndex / rows),
-            state.values.selectedHex.hexIndex % rows
-          ),
-          color: colors["hexBackgroundColorSelected"],
-          gridStartsHigh: false,
-          hexRadius,
+        const note = getNoteParts(hexNotes[state.values.selectedHex.hexIndex]);
+        const color = new Color(noteColors[note.name]);
+        color.alpha = 0.4;
+        const lightColor = color.clone();
+        // lightColor.hsv[1] *= 0.5;
+        lightColor.alpha = 0.1;
+
+        hexNotes.forEach((hexNote, i) => {
+          const hexNoteParts = getNoteParts(hexNote);
+          if (hexNoteParts.name === note.name) {
+            backCanvas.current?.fillHexagonCell({
+              gridLocation: startPosition,
+              cellCoordinate: new Point(~~(i / rows), i % rows),
+              color: (i === state.values.selectedHex.hexIndex
+                ? color
+                : lightColor
+              ).toString(),
+              gridStartsHigh: false,
+              hexRadius,
+            });
+          }
         });
       }
 
@@ -861,33 +820,6 @@ export default function HexGrid(props: Props) {
       s.midiNotes,
     ])
   );
-
-  // useEffect(() =>
-  // {
-  //     if (!canvas.current || state.selectedHex === -1) return;
-
-  //     const tokens = state.layers[props.layerIndex].tokenIds[state.selectedHex].map(tid => state.tokens[tid]);
-  //     const symbols = tokens.map(t => t.symbol).join("");
-  //     const directions: number[] = [];
-
-  //     tokens.forEach((token) =>
-  //     {
-  //         token.controlIds.forEach((controlId) =>
-  //         {
-  //             const control = state.controls[controlId];
-  //             if (control.type === "direction")
-  //             {
-  //                 directions.push(getControlValue(state, control));
-  //             }
-  //         });
-  //     });
-
-  //     canvas.current.blendMode = "destination-out";
-  //     canvas.current.fillHexagonCell(startPosition, new Point(~~(state.selectedHex / rows), state.selectedHex % rows), hexRadius, false, "#221922");
-  //     canvas.current.blendMode = "source-over";
-  //     canvas.current.drawHexagonCell(startPosition, new Point(~~(state.selectedHex / rows), state.selectedHex % rows),
-  //         hexRadius, false, "white", lineWidth, `${hexNotes[state.selectedHex]}${symbols.length > 0 ? "\n" + symbols : ""}`, directions);
-  // }, [ state.controls ]);
 
   const style = props.size
     ? { width: props.size + "px", height: "auto" }

@@ -396,3 +396,13 @@ export interface LayerNote {
   velocity: number;
   id?: string;
 }
+
+export interface PerformanceNote {
+  note: string | null; // in case we're dragging off the grid temporarily
+  layer: number;
+  channel: number;
+  velocity: number | null;
+  identifier: Touch["identifier"];
+  hexIndex: number;
+  device: string | string[];
+}

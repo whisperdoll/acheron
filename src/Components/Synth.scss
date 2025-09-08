@@ -1,0 +1,35 @@
+.Synth {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+
+  canvas {
+    border: 1px solid #aaa;
+  }
+
+  .controls {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.5rem;
+
+    label,
+    .knobContainer {
+      gap: 0.25rem;
+      display: flex;
+      flex-direction: inherit;
+      align-items: inherit;
+
+      input[type="number"] {
+        width: 4rem;
+      }
+    }
+  }
+
+  .error {
+    background: #ffcccc;
+    border: 1px solid #ffaaaa;
+    padding: 0.25rem;
+    border-radius: 2px;
+  }
+}

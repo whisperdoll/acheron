@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from "react";
 import { cx } from "../lib/utils";
 import settings, { TouchMode } from "../state/AppSettings";
 import GoogleIcon, { CodePoint } from "./GoogleIcon";
-import { useAppStore } from "../state/AppState";
+import state from "../state/AppState";
 
 /*
   - performance
@@ -51,7 +51,7 @@ export const touchModeDescriptions: Record<
 export default function TouchModeMenu() {
   const currentMode = settings.useState((s) => s.touchMode);
   const ref = useRef<HTMLDivElement>(null);
-  const state = useAppStore();
+  const reactiveState = state.useState();
 
   useEffect(() => {
     function pointerDown(e: PointerEvent) {
@@ -73,10 +73,13 @@ export default function TouchModeMenu() {
         return;
       }
 
-      state.set((s) => ({
-        ...s,
-        gui: { ...s.gui, isShowingTouchModeMenu: false },
-      }));
+      state.set(
+        (s) => ({
+          ...s,
+          isShowingTouchModeMenu: false,
+        }),
+        "toggle showing touch mode menu"
+      );
     }
 
     document.addEventListener("pointerdown", pointerDown);
@@ -96,10 +99,13 @@ export default function TouchModeMenu() {
               })}
               onClick={(e) => {
                 settings.set({ touchMode: mode }, "change touch mode");
-                state.set((s) => ({
-                  ...s,
-                  gui: { ...s.gui, isShowingTouchModeMenu: false },
-                }));
+                state.set(
+                  (s) => ({
+                    ...s,
+                    isShowingTouchModeMenu: false,
+                  }),
+                  "hide touch mode menu"
+                );
               }}
             >
               <GoogleIcon

@@ -5,7 +5,7 @@ import TokenControl from "./TokenControl";
 import { confirmPrompt } from "../utils/desktop";
 import { camelCaseToSentence, capitalize } from "../lib/utils";
 import GoogleIconButton from "./GoogleIconButton";
-import { useAppStore } from "../state/AppState";
+import state from "../state/AppState";
 import { tokenDefinitionsMap } from "../Tokens";
 
 interface Props {
@@ -13,14 +13,14 @@ interface Props {
 }
 
 export default function HexGridContextMenu({ onHide: hide }: Props) {
-  const state = useAppStore();
-  const layerIndex = state.gui.hexGrid.selectedHexes.layerIndex;
-  const tokenIds = state.gui.hexGrid.selectedHexes.hexIndexes.length
-    ? state.simulation.layers[state.gui.hexGrid.selectedHexes.layerIndex]
-        .tokenIds[state.gui.hexGrid.selectedHexes.hexIndexes[0]]
-    : [];
-  const stateTokens = state.simulation.tokenInstances;
-  const stateControls = state.simulation.controlInstances;
+  const layerIndex = state.useState((s) => s.selectedHex.layerIndex);
+  const tokenIds = state.useState((s) =>
+    s.selectedHex.hexIndex !== -1
+      ? s.layers[s.selectedHex.layerIndex].tokenIds[s.selectedHex.hexIndex]
+      : []
+  );
+  const stateTokens = state.useState((s) => s.tokens);
+  const stateControls = state.useState((s) => s.controls);
   const [selectedTokenId, setSelectedTokenId] = useState<string | null>(null);
   const selectedToken =
     selectedTokenId === null ? null : stateTokens[selectedTokenId];
@@ -29,11 +29,11 @@ export default function HexGridContextMenu({ onHide: hide }: Props) {
     if (
       !settings.values.confirmDelete ||
       (await confirmPrompt(
-        `Are you sure you want to delete the ${state.simulation.tokenInstances[tokenId].label} token?`,
+        `Are you sure you want to delete the ${state.values.tokens[tokenId].label} token?`,
         "Confirm remove token"
       ))
     ) {
-      state.removeToken(tokenId);
+      state.removeToken(tokenId, "remove token via context menu");
       setSelectedTokenId(null);
     }
   }
@@ -105,7 +105,10 @@ export default function HexGridContextMenu({ onHide: hide }: Props) {
                     className="mono addToken"
                     title={tokenDef.label}
                     onClick={() => {
-                      state.addTokenToSelected(uid);
+                      state.addTokenToSelected(
+                        uid,
+                        "add token via context menu"
+                      );
                     }}
                   >
                     {tokenDef.symbol}

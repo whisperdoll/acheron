@@ -4,6 +4,7 @@ import {
   getControlValue,
   KeyMap,
   LayerNote,
+  PerformanceNote,
   Playhead,
   Token,
 } from "../Types";
@@ -190,7 +191,7 @@ export class Driver {
       notes.map<Omit<PerformanceNote, "identifier">>((n) => ({
         note: n.note,
         channel: n.channel,
-        layer: layerIndex ?? state.gui.hexGrid.selectedHexes.layerIndex,
+        layer: layerIndex ?? state.values.selectedHex.layerIndex,
         velocity: n.velocity,
         hexIndex,
         device: n.deviceName,

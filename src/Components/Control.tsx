@@ -21,7 +21,14 @@ import { PlayerControlKeys } from "../utils/DefaultDefinitions";
 import LfoVisualizer from "./LfoVisualizer";
 import LfoControls from "./LfoControls";
 
-const directionIcons = [direction0, direction1, direction2, direction3, direction4, direction5];
+const directionIcons = [
+  direction0,
+  direction1,
+  direction2,
+  direction3,
+  direction4,
+  direction5,
+];
 
 const directionOrder = [5, 0, 1, 4, 3, 2];
 
@@ -49,7 +56,9 @@ export default React.memo(function Control(props: Props) {
       (l) =>
         pluck(l, PlayerControlKeys).includes(props.controlId) ||
         l.tokenIds.some((tidArray) =>
-          tidArray.some((tid) => reactiveState.tokens[tid].controlIds.includes(props.controlId))
+          tidArray.some((tid) =>
+            reactiveState.tokens[tid].controlIds.includes(props.controlId)
+          )
         )
     );
 
@@ -63,7 +72,10 @@ export default React.memo(function Control(props: Props) {
   // const bpms = 60 / tempo * 1000;
   // const now = Math.floor(Date.now() / bpms) * bpms;
 
-  const controlValueDeps = [reactiveState.controls[props.controlId], reactiveState.layers[layerIndex].currentBeat];
+  const controlValueDeps = [
+    reactiveState.controls[props.controlId],
+    reactiveState.layers[layerIndex].currentBeat,
+  ];
   const controlValue = useMemo(() => {
     return state.getControlValue(controlState, {
       layer: reactiveState.layers[props.layerIndex],
@@ -171,7 +183,10 @@ export default React.memo(function Control(props: Props) {
         break;
       case "select":
         controlPart = (
-          <select onChange={handleSelectValueChanged} value={(controlValue as string) ?? ""}>
+          <select
+            onChange={handleSelectValueChanged}
+            value={(controlValue as string) ?? ""}
+          >
             {controlState.options?.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
@@ -183,16 +198,18 @@ export default React.memo(function Control(props: Props) {
       case "triad":
         controlPart = (
           <div className="triadRow">
-            {[triad0, triad1, triad2, triad3, triad4, triad5, triad6].map((triad, i) => (
-              <button
-                key={i}
-                className={controlValue === i ? "selected" : ""}
-                style={{
-                  backgroundImage: `url(${triad})`,
-                }}
-                onClick={() => handleTriadChanged(i)}
-              ></button>
-            ))}
+            {[triad0, triad1, triad2, triad3, triad4, triad5, triad6].map(
+              (triad, i) => (
+                <button
+                  key={i}
+                  className={controlValue === i ? "selected" : ""}
+                  style={{
+                    backgroundImage: `url(${triad})`,
+                  }}
+                  onClick={() => handleTriadChanged(i)}
+                ></button>
+              )
+            )}
           </div>
         );
     }
@@ -203,10 +220,10 @@ export default React.memo(function Control(props: Props) {
       case "decimal":
       case "int":
       default:
-        controlPart = <div>Value: {controlValue}</div>;
+        controlPart = <div>{controlValue}</div>;
         break;
       case "select":
-        controlPart = <div>Value: {controlValue}</div>;
+        controlPart = <div>{controlValue}</div>;
         break;
       case "direction":
         controlPart = (
@@ -227,15 +244,19 @@ export default React.memo(function Control(props: Props) {
       case "triad":
         controlPart = (
           <div className="triadRow disabled">
-            {[triad0, triad1, triad2, triad3, triad4, triad5, triad6].map((triad, i) => (
-              <button
-                key={i}
-                className={controlValue === i ? "selected noclicky" : "noclicky"}
-                style={{
-                  backgroundImage: `url(${triad})`,
-                }}
-              ></button>
-            ))}
+            {[triad0, triad1, triad2, triad3, triad4, triad5, triad6].map(
+              (triad, i) => (
+                <button
+                  key={i}
+                  className={
+                    controlValue === i ? "selected noclicky" : "noclicky"
+                  }
+                  style={{
+                    backgroundImage: `url(${triad})`,
+                  }}
+                ></button>
+              )
+            )}
           </div>
         );
         break;
@@ -245,8 +266,13 @@ export default React.memo(function Control(props: Props) {
   return (
     <div className="control">
       <div className="labelRow">
-        <div className="label">{controlState.label}</div>
-        <select value={controlState.currentValueType} onChange={handleValueTypeChanged} className="valueType">
+        <div className="label">{controlState.label}:</div>
+        <div className="controlRow">{controlPart}</div>
+        <select
+          value={controlState.currentValueType}
+          onChange={handleValueTypeChanged}
+          className="valueType"
+        >
           <option value="fixed">Fixed</option>
           {controlState.inherit && <option value="inherit">Inherit</option>}
           <option value="modulate">Modulate</option>
@@ -254,7 +280,6 @@ export default React.memo(function Control(props: Props) {
           {controlState.inherit && <option value="add">Add</option>}
         </select>
       </div>
-      <div className="controlRow">{controlPart}</div>
       {controlState.currentValueType === "modulate" && (
         <>
           <LfoControls control={controlState} />

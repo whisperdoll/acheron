@@ -18,9 +18,12 @@ interface DrawHexagonGridOpts {
   outlineWidth: number;
   textColor: string;
   tokenTextColor: string;
-  backgroundColor: string;
+  backgroundColor:
+    | string
+    | ((note: { name: string; octave: number }) => string);
   labels?: string[];
   directions?: number[][];
+  notes: { name: string; octave: number }[];
 }
 
 interface DrawHexagonGridDecorationOpts {
@@ -942,6 +945,7 @@ export class Canvas {
     backgroundColor,
     labels,
     directions,
+    notes,
   }: DrawHexagonGridOpts): Point[] {
     const a = (2 * Math.PI) / 6;
     const triangle = this.triangleCanvas(textColor);
@@ -952,6 +956,7 @@ export class Canvas {
 
     for (let y = 0; y < size.y; y++) {
       for (let x = 0; x < size.x; x++) {
+        const index = x * size.y + y;
         const shouldStartHigh = startHigh ? x % 2 === 0 : x % 2 === 1;
         const startY = shouldStartHigh
           ? location.y
@@ -970,8 +975,12 @@ export class Canvas {
               0.5
           );
         }
+
         this.context.closePath();
-        this.color = backgroundColor;
+        this.color =
+          typeof backgroundColor === "function"
+            ? backgroundColor(notes[index])
+            : backgroundColor;
         this.context.fill();
         this.color = "white";
         this.blendMode = "destination-out";
@@ -979,8 +988,6 @@ export class Canvas {
         this.blendMode = "source-over";
         this.color = outlineColor;
         this.context.stroke();
-
-        const index = x * size.y + y;
 
         pts[index] = new Point(
           location.x + hexRadius * (1 + Math.cos(a)) * x,

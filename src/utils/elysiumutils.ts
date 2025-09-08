@@ -38,14 +38,14 @@ export function getNoteParts(note: string): { name: string; octave: number } {
   }
 }
 
-export function transposeNote(note: string, transpose: number) {
+export function transposeNote(note: string, semitones: number) {
   const { octave, name } = getNoteParts(note);
 
   const noteIndex = noteArray.indexOf(name);
-  const newNoteIndex = mod(noteIndex + transpose, 12);
-  const octaveDelta = Math.floor((transpose + noteIndex) / 12);
+  const newNoteIndex = mod(noteIndex + semitones, 12);
+  const octaveDelta = Math.floor((semitones + noteIndex) / 12);
 
-  // console.log(note, transpose, noteArray[newNoteIndex] + (octave + octaveDelta).toString());
+  // console.log(note, semitones, noteArray[newNoteIndex] + (octave + octaveDelta).toString());
   return noteArray[newNoteIndex] + (octave + octaveDelta).toString();
 }
 
@@ -173,6 +173,30 @@ export function hexIndexesFromNote(note: string): number[] {
     _hexIndexCache[note] = ret;
     return ret;
   }
+}
+
+export function generateGridNotes(
+  startingNote: string,
+  rows: number,
+  cols: number
+) {
+  const ret = [];
+  let cursor = startingNote;
+
+  for (let x = 0; x < cols; x++) {
+    const columnStartingNote = cursor;
+
+    for (let y = 0; y < rows; y++) {
+      // going down = subtract a perfect fifth = subtract 7 semitones
+      ret.push(cursor);
+      cursor = transposeNote(cursor, -7);
+    }
+
+    // up-right is +major third (4), down-right is -minor third (3)
+    cursor = transposeNote(columnStartingNote, x % 2 === 0 ? 4 : -3);
+  }
+
+  return ret;
 }
 
 export const hexNotes = [
@@ -397,6 +421,21 @@ export const hexNotes = [
   "C#2",
   "F#1",
 ];
+
+export const noteColors: Record<string, string> = {
+  A: "#e6194B",
+  "A#": "#3cb44b",
+  B: "#ffe119",
+  C: "#4363d8",
+  "C#": "#f58231",
+  D: "#911eb4",
+  "D#": "#42d4f4",
+  E: "#f032e6",
+  F: "#bfef45",
+  "F#": "#fabed4",
+  G: "#469990",
+  "G#": "#dcbeff",
+};
 
 /*
 -7, -7, -7, -7, -19, +5, -19, +5, -7, -7, -7, -7, */

@@ -19,6 +19,7 @@ import SplitToken from "./tokens/split.ts";
 import TwistToken from "./tokens/twist.ts";
 import WormholeToken from "./tokens/wormhole.ts";
 import { AppState } from "./state/AppState.ts";
+import List from "./lib/list.ts";
 
 export const tokenDefinitions: TokenDefinition[] = [
   GenerateToken,
@@ -32,6 +33,8 @@ export const tokenDefinitions: TokenDefinition[] = [
   AbsorbToken,
   LifespanToken,
 ] as TokenDefinition[];
+
+export const tokenDefinitionsMap = List.indexBy(tokenDefinitions, (d) => d.uid);
 
 function compareOptions(o1?: SelectOption[], o2?: SelectOption[]) {
   if (!o1) return !o2;

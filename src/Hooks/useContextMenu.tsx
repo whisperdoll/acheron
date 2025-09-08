@@ -89,7 +89,7 @@ const ContextMenuElement = React.memo(
     const updatePosition = useCallback(() => {
       if (!ref || !("current" in ref) || !ref.current) return;
 
-      console.log("--");
+      // console.log("--");
 
       const bounds = ref.current.getBoundingClientRect();
       const boundsI: DOMRect = {
@@ -151,17 +151,17 @@ const ContextMenuElement = React.memo(
         ] as const
       ).forEach(({ x, y, width, height, right, bottom }) => {
         if (position[x] + displayOffset[x] < 0) {
-          console.log("resize", { x }, "too far up");
+          // console.log("resize", { x }, "too far up");
           newOffset[x] = -displayOffset[x];
         } else if (
           position[x] + displayOffset[x] + bounds[width] >
           documentBounds[width]
         ) {
-          console.log("resize", { x }, "too far down");
+          // console.log("resize", { x }, "too far down");
 
           const otherSideX = position[x] - bounds[width] - displayOffset[x];
           if (otherSideX >= 0) {
-            console.log(">", "other side");
+            // console.log(">", "other side");
 
             if (
               position[x] +
@@ -188,10 +188,10 @@ const ContextMenuElement = React.memo(
             newOffset[x] = -position[x];
 
             if (tryBottom - bounds[height] >= 0) {
-              console.log("on top");
+              // console.log("on top");
               newOffset[y] = currentTop - currentBottom - displayOffsetI[y];
             } else {
-              console.log("on bottom");
+              // console.log("on bottom");
               newOffset[y] = displayOffsetI[y];
             }
           }
@@ -200,7 +200,7 @@ const ContextMenuElement = React.memo(
         }
 
         if (bounds[width] > documentBounds[width]) {
-          console.log("resize", { x }, "too big");
+          // console.log("resize", { x }, "too big");
           newSize[width] = documentBounds[width];
           newOffset[x] = -displayOffset[x];
         } else {
