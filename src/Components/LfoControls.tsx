@@ -43,7 +43,7 @@ export default React.memo(function LfoControls({ control }: Props) {
           ))}
         </select>
       </div>
-      {!["sequence", "sine Relative", "square Relative", "sawtooth Relative", "reverse Sawtooth Relative", "random Relative", "triangle Relative"].includes(modifyingLfo.type) && (
+      {!["sequence", "midi Sequence", "sine Relative", "square Relative", "sawtooth Relative", "reverse Sawtooth Relative", "random Relative", "triangle Relative"].includes(modifyingLfo.type) && (
         <>
           <div className="controlRow">
             <span className="label">Min:</span>
@@ -67,7 +67,7 @@ export default React.memo(function LfoControls({ control }: Props) {
           </div>
         </>
       )}
-      {modifyingLfo.type !== "square Relative" && modifyingLfo.type !== "square" && modifyingLfo.type !== "midi Control" && modifyingLfo.type !== "random" && (
+      {modifyingLfo.type !== "square Relative" && modifyingLfo.type !== "square" && modifyingLfo.type !== "midi Control" && modifyingLfo.type !== "midi Sequence" && modifyingLfo.type !== "random" && (
         <div className="controlRow">
           <span className="label">Period:</span>
           <NumberInput
@@ -104,7 +104,7 @@ export default React.memo(function LfoControls({ control }: Props) {
         </>
       )}
 	  
-	  {(modifyingLfo.type === "midi Control") && (
+	  {(modifyingLfo.type === "midi Control" || modifyingLfo.type === "midi Sequence" ) && (
         <>
           <div className="controlRow">
             <span className="label">MIDI CC:</span>
@@ -133,7 +133,7 @@ export default React.memo(function LfoControls({ control }: Props) {
           </div>
         </>
       )}
-      {modifyingLfo.type === "sequence" && (
+      {(modifyingLfo.type === "sequence" || modifyingLfo.type === "midi Sequence" ) && (
         <div className="sequence">
           <div>Sequence:</div>
           {modifyingLfo.sequence.map((value, i) => (

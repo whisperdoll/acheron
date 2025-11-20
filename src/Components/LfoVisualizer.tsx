@@ -25,11 +25,11 @@ export default React.memo(function LfoVisualizer({
     const ctx = waveCanvasRef.current?.getContext("2d");
     if (!ctx) return;
 
-    if (lfo.type === "sequence" && !lfo.sequence.length) return;
+    if ((lfo.type === "sequence" || lfo.type === "midi Sequence") && !lfo.sequence.length) return;
 
     const resolution = periodMs / 10;
     const [min, max] =
-      lfo.type === "sequence" ? minAndMax(lfo.sequence) : [lfo.min, lfo.max];
+      (lfo.type === "sequence" || lfo.type === "midi Sequence" ) ? minAndMax(lfo.sequence) : [lfo.min, lfo.max];
     const amp = max - min;
 
     ctx.lineWidth = 2;

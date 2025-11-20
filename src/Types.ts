@@ -376,6 +376,7 @@ export const LfoTypes = [
   "reverse Sawtooth Relative",
   "sequence",
   "midi Control",
+  "midi Sequence",
 ] as const;
 export type LfoType = (typeof LfoTypes)[number];
 
@@ -455,9 +456,18 @@ export function getLfoValue(
     case "sequence": {
       return lfo.sequence[Math.floor((t / period) * lfo.sequence.length)] ?? 0;
     }
+    case "midi Sequence": {
+		  var lfoval = ((Midi.cCArr[lfo.control] / 128));
+			if (Midi.cCArr[0] != undefined && !Number.isNaN(Midi.cCArr[0])) {
+			return lfo.sequence[Math.floor(lfoval * lfo.sequence.length)] ?? 0;
+		}
+		else {
+			return 1;
+		}
+    }
 	case "midi Control": {
       const amp = (lfo.max - lfo.min) / 2;
-	  var lfoval = ((Midi.cCArr[lfo.control] / 127) * amp) * 2 + lfo.min;
+	  var lfoval = ((Midi.cCArr[lfo.control] / 128) * amp) * 2 + lfo.min;
 			if (Midi.cCArr[0] != undefined && !Number.isNaN(Midi.cCArr[0])) {
 			return lfoval;
 		}

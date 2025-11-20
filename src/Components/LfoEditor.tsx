@@ -59,7 +59,7 @@ export default function LfoEditor() {
             ))}
           </select>
         </div>
-        {!["sequence", "sine Relative", "square Relative", "sawtooth Relative", "reverse Sawtooth Relative", "random Relative", "triangle Relative"].includes(modifyingLfo.type) && (
+        {!["sequence", "midi Sequence", "sine Relative", "square Relative", "sawtooth Relative", "reverse Sawtooth Relative", "random Relative", "triangle Relative"].includes(modifyingLfo.type) && (
           <>
             <div className="row">
               <span>Min Value:</span>
@@ -84,7 +84,7 @@ export default function LfoEditor() {
           </>
         )}
         {modifyingLfo.type !== "square" && modifyingLfo.type !== "square Relative" &&
-          modifyingLfo.type !== "midi Control" && (
+          modifyingLfo.type !== "midi Control" && modifyingLfo.type !== "midi Sequence" && (
             <div className="row">
               <span>Period (seconds):</span>
               <NumberInput
@@ -97,7 +97,7 @@ export default function LfoEditor() {
               />
             </div>
           )}
-		  {modifyingLfo.type === "midi Control" && (<>
+		  {(modifyingLfo.type === "midi Control" || modifyingLfo.type === "midi Sequence" )&& (<>
 			<div className="row">
                 <span>MIDI CC:</span>
                 <NumberInput
@@ -151,7 +151,7 @@ export default function LfoEditor() {
             </div>
           </>
         )}
-        {modifyingLfo.type === "sequence" && (
+        {(modifyingLfo.type === "sequence" || modifyingLfo.type === "midi Sequence" ) && (
           <div className="sequence">
             <div>Sequence:</div>
             {modifyingLfo.sequence.map((value, i) => (

@@ -27,7 +27,8 @@ interface LfoV1 {
     | "sawtooth Relative"
     | "reverse Sawtooth Relative"
     | "sequence"
-    | "midi Control";
+    | "midi Control"
+    | "midi Sequence";
   min: number;
   max: number;
   lowPeriod: number;
