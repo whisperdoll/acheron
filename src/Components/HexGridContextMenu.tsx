@@ -3,10 +3,11 @@ import settings from "../state/AppSettings";
 import { Token, TokenStore, TokenUID } from "../Types";
 import TokenControl from "./TokenControl";
 import { confirmPrompt } from "../utils/desktop";
-import { camelCaseToSentence, capitalize } from "../lib/utils";
+import { camelCaseToSentence, capitalize, mod } from "../lib/utils";
 import GoogleIconButton from "./GoogleIconButton";
 import state from "../state/AppState";
 import { tokenDefinitionsMap } from "../Tokens";
+import List from "../lib/list";
 
 interface Props {
   onHide: () => void;
@@ -80,15 +81,53 @@ export default function HexGridContextMenu({ onHide: hide }: Props) {
       let value = state.getControlValue(control);
       if (typeof value === "number") {
         value = Math.round(value * 100) / 100;
+      } else if (typeof value === "boolean") {
+        value = value ? "True" : "False";
       }
 
       return (
         <div key={control.key}>
-          {control.label}: {value} (
-          {camelCaseToSentence(control.currentValueType)})
+          {control.label}: {value}{" "}
+          {control.currentValueType !== "fixed" &&
+            `(${camelCaseToSentence(control.currentValueType)})`}
         </div>
       );
     });
+  }
+
+  function moveToken(index: number, offset: number) {
+    if (state.values.selectedHex.hexIndex === -1) return;
+
+    const numTokens =
+      state.values.layers[state.values.selectedHex.layerIndex].tokenIds[
+        state.values.selectedHex.hexIndex
+      ].length;
+    const destinationIndex = mod(index + offset, numTokens);
+    state.set(
+      (s) => ({
+        layers: List.withIndexReplaced(
+          s.layers,
+          s.selectedHex.layerIndex,
+          (layer) => ({
+            ...layer,
+            tokenIds: List.withIndexReplaced(
+              layer.tokenIds,
+              s.selectedHex.hexIndex,
+              (oldTokenIds) => {
+                const newTokenIds = List.copy(oldTokenIds);
+                const [toBeMoved] = newTokenIds.splice(index, 1);
+                // console.log(List.copy(newLayer.tokenIds));
+                // console.log(`${toBeMoved} -> ${destinationIndex}`);
+                newTokenIds.splice(destinationIndex, 0, toBeMoved);
+                // console.log(List.copy(newLayer.tokenIds));
+                return newTokenIds;
+              }
+            ),
+          })
+        ),
+      }),
+      "move token"
+    );
   }
 
   return (
@@ -144,7 +183,31 @@ export default function HexGridContextMenu({ onHide: hide }: Props) {
                     >
                       <span className="title">
                         <span className="mono">{token.symbol}</span>{" "}
-                        {token.label}
+                        <span className="fill">{token.label}</span>
+                        <GoogleIconButton
+                          buttonStyle="rounded"
+                          icon="arrow_upward"
+                          fill
+                          opticalSize={20}
+                          title="Delete token"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            moveToken(i, -1);
+                          }}
+                          className="nostyle remove"
+                        />
+                        <GoogleIconButton
+                          buttonStyle="rounded"
+                          icon="arrow_downward"
+                          fill
+                          opticalSize={20}
+                          title="Delete token"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            moveToken(i, 1);
+                          }}
+                          className="nostyle remove"
+                        />
                         <GoogleIconButton
                           buttonStyle="rounded"
                           icon="delete"

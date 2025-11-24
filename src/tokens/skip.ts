@@ -66,8 +66,6 @@ const SkipToken: TokenDefinition<Store> = {
       }
 
       playheads.forEach((playhead, playheadIndex) => {
-        if (playhead.age === 0) return;
-
         if (gateOn + gateOff === 0) {
           tryPerformSkip(playheadIndex);
         } else {

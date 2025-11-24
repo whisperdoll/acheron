@@ -16,7 +16,7 @@ import state from "../state/AppState";
       - toggle for copying vs moving
 */
 
-export const touchModeDescriptions: Record<
+const touchModeDescriptions: Record<
   TouchMode,
   { title: string; description: React.ReactNode; icon: CodePoint }
 > = {
@@ -26,7 +26,7 @@ export const touchModeDescriptions: Record<
     icon: "piano",
   },
   generate: {
-    title: "Generate",
+    title: "Generate (not working yet)",
     description: (
       <>
         <span>Tap to generate playheads.</span>
@@ -103,6 +103,10 @@ export default function TouchModeMenu() {
                   (s) => ({
                     ...s,
                     isShowingTouchModeMenu: false,
+                    selectedHex: {
+                      hexIndex: -1,
+                      layerIndex: s.selectedHex.layerIndex,
+                    },
                   }),
                   "hide touch mode menu"
                 );

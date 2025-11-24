@@ -1,6 +1,7 @@
 import { buildLayer } from "./Layers";
 import { migrateSerializedComposition } from "./Migrators";
 import { AppState, LayerState } from "./state/AppState";
+import { tokenDefinitionsMap } from "./Tokens";
 import { ControlState, Lfo, Token } from "./Types";
 import {
   buildFromDefs,
@@ -92,7 +93,7 @@ function buildTokenFromSerialized(
     uid: serialized.uid,
     store: {},
     symbol: def.symbol,
-    callbacks: { ...appState.tokens[serialized.uid].callbacks },
+    callbacks: { ...tokenDefinitionsMap[serialized.uid].callbacks },
     controlIds: Object.keys(controls as Record<string, ControlState>),
     controls,
   };

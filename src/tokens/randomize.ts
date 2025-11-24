@@ -77,7 +77,7 @@ const RandomizeToken: TokenDefinition<Store> = {
               ? Math.floor(helpers.getNumLayers() * Math.random())
               : helpers.getLayer();
             const newLocation = randomLocation
-              ? Math.floor(204 * Math.random())
+              ? Math.floor(helpers.getNumHexes() * Math.random())
               : helpers.getHexIndex();
             helpers.warpPlayhead(playheadIndex, newLocation, newLayer);
           }
@@ -91,8 +91,6 @@ const RandomizeToken: TokenDefinition<Store> = {
       }
 
       playheads.forEach((playhead, playheadIndex) => {
-        if (playhead.age === 0) return;
-
         if (gateOn + gateOff === 0) {
           tryPerformRandomize(playheadIndex);
         } else {

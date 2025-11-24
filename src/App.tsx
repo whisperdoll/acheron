@@ -12,9 +12,7 @@ import Inspector from "./Components/Inspector";
 import PlayerSettings from "./Components/PlayerSettings";
 import LayerSettings from "./Components/LayerSettings";
 import { Driver } from "./utils/driver";
-import { coerceControlValueToNumber, ControlState } from "./Types";
 import Midi from "./utils/midi";
-import { hexNotes, transposeNote } from "./utils/elysiumutils";
 import Settings from "./Components/Settings";
 import LfoEditor from "./Components/LfoEditor";
 import { buildMenu } from "./Menu";
@@ -99,11 +97,15 @@ export default function App() {
     return addKeyboardShortcutEventListeners(Object.values(zipped));
   }, [keyboardShortcuts]);
 
+  const driver = useMemo(() => {
+    return new Driver(new SimpleAppState(state.values));
+  }, []);
+
   const [startTimer, stopTimer] = useTimer({
     onTick: (deltaMs: number) => {
       // console.time("tick");
 
-      const driver = new Driver(new SimpleAppState(state.values));
+      driver.state = new SimpleAppState(state.values);
 
       if (stopped.current && state.values.isPlaying) {
         driver.start();

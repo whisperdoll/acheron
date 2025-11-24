@@ -159,7 +159,6 @@ const WormholeToken: TokenDefinition<Store> = {
         if (playheadStore.lastWarpedAt === helpers.getCurrentBeat(false) - 1) {
           return;
         }
-        if (playhead.age === 0) return;
 
         if (gateOn + gateOff === 0) {
           tryPerformWormhole(playheadIndex);

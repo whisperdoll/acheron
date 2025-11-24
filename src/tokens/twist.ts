@@ -62,8 +62,6 @@ const TwistToken: TokenDefinition<Store> = {
       }
 
       playheads.forEach((playhead, playheadIndex) => {
-        if (playhead.age === 0) return;
-
         const direction = playheads[playheadIndex].direction + twistAmount;
 
         if (gateOn + gateOff === 0) {

@@ -1,32 +1,21 @@
+import { KeyMap, LayerNote, PerformanceNote, Playhead, Token } from "../Types";
 import {
-  ControlDataType,
-  ControlState,
-  getControlValue,
-  KeyMap,
-  LayerNote,
-  PerformanceNote,
-  Playhead,
-  Token,
-} from "../Types";
-import {
+  generateGridNotes,
   getAdjacentHex,
   getNoteParts,
   hexIndexesFromNote,
-  hexNotes,
   noteArray,
-  NumHexes,
   transposeNote,
 } from "./elysiumutils";
 import {
   array_copy,
   createEmpty2dArray,
   mod,
-  msToS,
   objectWithoutKeys,
 } from "./utils";
-import Midi, { MidiScheduler, NoteOffOptions } from "./midi";
+import Midi, { MidiScheduler } from "./midi";
 import { LayerControlKey } from "./DefaultDefinitions";
-import { AppState, AppStateStore, LayerState } from "../state/AppState";
+import { AppState, LayerState } from "../state/AppState";
 import settings from "../state/AppSettings";
 import Dict from "../lib/dict";
 import List from "../lib/list";
@@ -108,15 +97,15 @@ export class Driver {
     additionalTranspose?: number;
     layerIndex?: number;
   }) {
-    let {
-      state,
-      hexIndex,
-      triad,
-      durationMs,
-      velocity,
-      additionalTranspose,
-      layerIndex,
-    } = opts;
+    const { state, hexIndex, durationMs, additionalTranspose, layerIndex } =
+      opts;
+
+    const hexNotes = generateGridNotes(
+      state.values.gridStartingNote,
+      state.values.gridRows,
+      state.values.gridCols
+    );
+    let { triad, velocity } = opts;
     let notes: string[] = [hexNotes[hexIndex]];
     triad = mod(triad, 7);
 
@@ -128,8 +117,26 @@ export class Driver {
     }
 
     if (triad > 0) {
-      notes.push(hexNotes[getAdjacentHex(hexIndex, triad - 1)]);
-      notes.push(hexNotes[getAdjacentHex(hexIndex, triad)]);
+      notes.push(
+        hexNotes[
+          getAdjacentHex(
+            hexIndex,
+            triad - 1,
+            state.values.gridRows,
+            state.values.gridCols
+          )
+        ]
+      );
+      notes.push(
+        hexNotes[
+          getAdjacentHex(
+            hexIndex,
+            triad,
+            state.values.gridRows,
+            state.values.gridCols
+          )
+        ]
+      );
     }
 
     const key = state.getControlValue({
@@ -139,6 +146,7 @@ export class Driver {
     const permittedNotes = KeyMap[key].map((ni) => noteArray[ni]);
 
     let unpermitted: string[];
+    // eslint-disable-next-line prefer-const
     [notes, unpermitted] = List.partition2(notes, (note) =>
       permittedNotes.includes(getNoteParts(note).name)
     );
@@ -211,7 +219,14 @@ export class Driver {
     hexIndex: number,
     token: Token
   ) {
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     const self = this;
+
+    const hexNotes = generateGridNotes(
+      state.values.gridStartingNote,
+      state.values.gridRows,
+      state.values.gridCols
+    );
 
     const helpers = {
       getControlValue(key: string) {
@@ -235,13 +250,13 @@ export class Driver {
         );
       },
       getOtherTokenInstances() {
-        const ret: Record<string, any>[] = [];
+        const ret: Record<string, unknown>[] = [];
         state.values.layers.forEach((layer, li) => {
           layer.tokenIds.forEach((tidArray, hi) => {
             tidArray.forEach((tid) => {
               const t = state.values.tokens[tid];
               if (t.uid === token.uid && t.id !== token.id) {
-                const toAdd: Record<string, any> = {};
+                const toAdd: Record<string, unknown> = {};
                 toAdd.hexIndex = hi;
                 toAdd.layerIndex = li;
                 t.controlIds.forEach((cid) => {
@@ -261,7 +276,15 @@ export class Driver {
         direction: 0 | 1 | 2 | 3 | 4 | 5,
         offset: number = 0
       ) {
-        newPlayheads[getAdjacentHex(hexIndex, direction, offset)].push({
+        newPlayheads[
+          getAdjacentHex(
+            hexIndex,
+            direction,
+            state.values.gridRows,
+            state.values.gridCols,
+            offset
+          )
+        ].push({
           age: 0,
           direction,
           lifespan: timeToLive,
@@ -273,7 +296,14 @@ export class Driver {
       },
       isMidiPlaying() {
         return state.values.layers[layerIndex].midiBuffer.some((n) =>
-          hexIndexesFromNote(n.name).includes(hexIndex)
+          hexIndexesFromNote(
+            n.name,
+            generateGridNotes(
+              state.values.gridStartingNote,
+              state.values.gridRows,
+              state.values.gridCols
+            )
+          ).includes(hexIndex)
         );
       },
       modifyPlayhead(playheadIndex: number, newPlayheadDef: Partial<Playhead>) {
@@ -303,7 +333,7 @@ export class Driver {
       ) {
         if (playheadIndex < 0 || playheadIndex >= newPlayheads[hexIndex].length)
           return;
-        newLayerIndex = newLayerIndex ?? layerIndex;
+        newLayerIndex ??= layerIndex;
         if (newLayerIndex >= state.values.layers.length || newLayerIndex < 0)
           return;
 
@@ -328,6 +358,7 @@ export class Driver {
 
         if (existingIndex === -1) {
           self.scheduledForMove.push(newMoveInfo);
+          console.log(self);
         } else {
           self.scheduledForMove[existingIndex] = newMoveInfo;
         }
@@ -347,7 +378,13 @@ export class Driver {
             layerIndex,
           },
           dest: {
-            hexIndex: getAdjacentHex(hexIndex, direction, skipAmount),
+            hexIndex: getAdjacentHex(
+              hexIndex,
+              direction,
+              state.values.gridRows,
+              state.values.gridCols,
+              skipAmount
+            ),
             layerIndex,
           },
         });
@@ -373,8 +410,26 @@ export class Driver {
         triad = mod(triad, 7);
 
         if (triad > 0) {
-          notes.push(hexNotes[getAdjacentHex(hexIndex, triad - 1)]);
-          notes.push(hexNotes[getAdjacentHex(hexIndex, triad)]);
+          notes.push(
+            hexNotes[
+              getAdjacentHex(
+                hexIndex,
+                triad - 1,
+                state.values.gridRows,
+                state.values.gridCols
+              )
+            ]
+          );
+          notes.push(
+            hexNotes[
+              getAdjacentHex(
+                hexIndex,
+                triad,
+                state.values.gridRows,
+                state.values.gridCols
+              )
+            ]
+          );
         }
 
         const key = state.getControlValue({
@@ -445,6 +500,9 @@ export class Driver {
       getNumLayers(): number {
         return state.values.layers.length;
       },
+      getNumHexes(): number {
+        return state.values.gridCols * state.values.gridRows;
+      },
     };
 
     return helpers;
@@ -452,10 +510,12 @@ export class Driver {
 
   private performStartCallbacks(state: SimpleAppState): AppState {
     const newLayers = array_copy(state.values.layers);
-    let newTokens = { ...state.values.tokens };
+    const newTokens = { ...state.values.tokens };
 
     state.values.layers.forEach((layer, layerIndex) => {
-      let newPlayheads: Playhead[][] = createEmpty2dArray(NumHexes);
+      const newPlayheads: Playhead[][] = createEmpty2dArray(
+        state.values.gridRows * state.values.gridCols
+      );
 
       // do token stuff //
       layer.tokenIds.forEach((hex, hexIndex) => {
@@ -499,10 +559,12 @@ export class Driver {
 
   private performStopCallbacks(state: SimpleAppState): AppState {
     const newLayers = array_copy(state.values.layers);
-    let newTokens = { ...state.values.tokens };
+    const newTokens = { ...state.values.tokens };
 
     state.values.layers.forEach((layer, layerIndex) => {
-      let newPlayheads: Playhead[][] = createEmpty2dArray(NumHexes);
+      const newPlayheads: Playhead[][] = createEmpty2dArray(
+        state.values.gridRows * state.values.gridCols
+      );
 
       // do token stuff //
       layer.tokenIds.forEach((hex, hexIndex) => {
@@ -596,8 +658,10 @@ export class Driver {
     }
 
     const newLayers = array_copy(state.values.layers);
-    let newTokens = { ...state.values.tokens };
-    let newPlayheads: Playhead[][] = createEmpty2dArray(NumHexes);
+    const newTokens = { ...state.values.tokens };
+    let newPlayheads: Playhead[][] = createEmpty2dArray(
+      state.values.gridRows * state.values.gridCols
+    );
     const layer = state.values.layers[layerIndex];
     const bpm = state.getControlValue<"decimal">(layer.tempo, {
       layer,
@@ -631,15 +695,19 @@ export class Driver {
               age: playhead.age + 1,
             };
 
+            console.log(this);
             const moveInfoIndex = this.scheduledForMove.findIndex(
               (m) =>
                 m.src.layerIndex === layerIndex &&
                 m.src.hexIndex === hexIndex &&
                 m.playheadIndex === playheadIndex
             );
+            console.log({ moveInfoIndex });
+            console.log({ scheduledForMove: this.scheduledForMove });
 
             if (moveInfoIndex !== -1) {
               const moveInfo = this.scheduledForMove[moveInfoIndex];
+              console.log({ moveInfo });
               if (moveInfo.dest.layerIndex === layerIndex) {
                 newPlayheads[moveInfo.dest.hexIndex].push(newPlayhead);
               } else {
@@ -650,7 +718,12 @@ export class Driver {
               }
               this.scheduledForMove.splice(moveInfoIndex, 1);
             } else {
-              const adj = getAdjacentHex(hexIndex, playhead.direction);
+              const adj = getAdjacentHex(
+                hexIndex,
+                playhead.direction,
+                state.values.gridRows,
+                state.values.gridCols
+              );
 
               if (!settings.values.wrapPlayheads) {
                 if ([1, 2].includes(playhead.direction)) {
@@ -667,7 +740,8 @@ export class Driver {
                 }
                 if ([4, 5].includes(playhead.direction)) {
                   // left
-                  if (adj >= NumHexes - 12) return;
+                  if (adj >= state.values.gridRows * state.values.gridCols - 12)
+                    return;
                 }
               }
 
@@ -715,6 +789,7 @@ export class Driver {
 
             // console.log(token.store);
 
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const debug = token.callbacks.onTick.bind(null)(
               token.store,
               helpers,

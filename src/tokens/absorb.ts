@@ -57,8 +57,6 @@ const AbsorbToken: TokenDefinition<Store> = {
       }
 
       playheads.forEach((playhead, playheadIndex) => {
-        if (playhead.age === 0) return;
-
         if (gateOn + gateOff === 0) {
           tryPerformAbsorb(playheadIndex);
         } else {

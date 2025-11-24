@@ -1,31 +1,23 @@
-import React, { useContext, useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { ControlState, KeyMap, PerformanceNote } from "../Types";
 import { Canvas } from "../utils/canvas";
 import {
   generateGridNotes,
   getNoteParts,
-  hexNotes,
+  hexIndexesFromNote,
+  indexFromNote,
   noteArray,
   noteColors,
-  NumHexes,
 } from "../utils/elysiumutils";
 import Point from "../utils/point";
-import {
-  Menu,
-  MenuItemOptions,
-  PredefinedMenuItem,
-} from "@tauri-apps/api/menu";
 import state, { AppState } from "../state/AppState";
 import settings from "../state/AppSettings";
 import Dict from "../lib/dict";
 import { confirmPrompt } from "../utils/desktop";
-import useContextMenu, {
-  ContextMenuItem,
-  SeparatorItem,
-} from "../Hooks/useContextMenu";
+import useContextMenu from "../Hooks/useContextMenu";
 import { Driver } from "../utils/driver";
 import SimpleAppState from "../state/SimpleAppState";
-import { mapTouches, mod, pointArray } from "../lib/utils";
+import { mapTouches } from "../lib/utils";
 import Midi from "../utils/midi";
 import HexGridContextMenu from "./HexGridContextMenu";
 import Color from "colorjs.io";
@@ -47,8 +39,6 @@ export default function HexGrid(props: Props) {
   const hexPoints = useRef<Point[]>([]);
   const mouseLocation = useRef<Point | null>(null);
 
-  const rows = state.values.gridRows;
-  const cols = state.values.gridCols;
   const start = noteArray.indexOf("D#") + noteArray.length * 7;
   const hexRadius = 38;
   const lineWidth = 2;
@@ -102,6 +92,51 @@ export default function HexGrid(props: Props) {
 
     return hexIndex;
   }
+
+  function resizeCanvases() {
+    const size = new Point(
+      state.values.gridCols * ((3 / 2) * hexOuterRadius) +
+        (1 / 2) * hexOuterRadius +
+        lineWidth,
+      (state.values.gridRows + 0.5) *
+        (2 * hexOuterRadius * Math.sin((2 * Math.PI) / 6)) +
+        lineWidth * state.values.gridRows +
+        (1 / state.values.gridRows) * 5
+    ).rounded;
+
+    [canvas.current, backCanvas.current, hexCanvas.current].forEach((c) => {
+      if (!c) return;
+
+      c.resize(size, false);
+    });
+
+    const pts = hexCanvas.current?.drawHexagonGrid({
+      location: startPosition,
+      size: new Point(state.values.gridCols, state.values.gridRows),
+      hexRadius,
+      startHigh: false,
+      outlineColor: colors["hexOutlineColor"],
+      outlineWidth: lineWidth,
+      textColor: colors["hexTextColor"],
+      tokenTextColor: colors["hexTokenTextColor"],
+      backgroundColor: colors["hexBackgroundColor"],
+      notes: generateGridNotes(
+        state.values.gridStartingNote,
+        state.values.gridRows,
+        state.values.gridCols
+      ).map(getNoteParts),
+    });
+
+    if (pts) {
+      hexPoints.current = pts;
+    }
+  }
+
+  state.useSubscription(
+    resizeCanvases,
+    [props.layerIndex],
+    state.filters.deepEqual((s) => [s.gridRows, s.gridCols])
+  );
 
   // keyboard controls
   useEffect(() => {
@@ -184,16 +219,17 @@ export default function HexGrid(props: Props) {
     };
   }, [props.layerIndex]);
 
+  /*
+    (hexRadius * 2 * cols)) / 1.3076923076923077 + lineWidth * 2 + 1
+    (hexRadius * 2 * rows) / 1.0971428571428572 + lineWidth * 2 + 1
+  */
   // setup
+  const hexOuterRadius = hexRadius;
   useEffect(() => {
     canvas.current = new Canvas({
       canvasElement: canvasEl.current!,
       opaque: false,
       pixelated: false,
-      size: new Point(
-        (hexRadius * 2 * cols) / 1.3076923076923077 + lineWidth * 2 + 1,
-        (hexRadius * 2 * rows) / 1.0971428571428572 + lineWidth * 2 + 1
-      ).rounded,
     });
 
     backCanvas.current = new Canvas({
@@ -201,7 +237,6 @@ export default function HexGrid(props: Props) {
       deepCalc: false,
       opaque: false,
       pixelated: false,
-      size: canvas.current.size,
     });
 
     hexCanvas.current = new Canvas({
@@ -209,25 +244,9 @@ export default function HexGrid(props: Props) {
       deepCalc: false,
       opaque: false,
       pixelated: false,
-      size: canvas.current.size,
     });
 
-    const pts = hexCanvas.current.drawHexagonGrid({
-      location: startPosition,
-      size: new Point(cols, rows),
-      hexRadius,
-      startHigh: false,
-      outlineColor: colors["hexOutlineColor"],
-      outlineWidth: lineWidth,
-      textColor: colors["hexTextColor"],
-      tokenTextColor: colors["hexTokenTextColor"],
-      backgroundColor: colors["hexBackgroundColor"],
-      notes: hexNotes.map(getNoteParts),
-    });
-
-    if (pts) {
-      hexPoints.current = pts;
-    }
+    resizeCanvases();
 
     function anim() {
       animationCallback.current();
@@ -256,21 +275,34 @@ export default function HexGrid(props: Props) {
       canvas.current?.clear();
       canvas.current?.drawHexagonGridDecorations({
         location: startPosition,
-        size: new Point(cols, rows),
+        size: new Point(state.values.gridCols, state.values.gridRows),
         hexRadius,
         startHigh: false,
         textColor: colors["hexTextColor"],
         tokenTextColor: colors["hexTokenTextColor"],
-        labels: generateGridNotes("D#7", rows, cols).map((hexNote, i) => {
+        labels: generateGridNotes(
+          state.values.gridStartingNote,
+          state.values.gridRows,
+          state.values.gridCols
+        ).map((hexNote, i) => {
           const symbols = state.values.layers[props.layerIndex].tokenIds[i].map(
             (tokenId) => state.values.tokens[tokenId].symbol
           );
-          return `${i}\n${hexNote}`;
+          // return `${i}\n${hexNote}`;
           return symbols.length > 0
             ? hexNote + "\n" + symbols.join("")
             : hexNote;
         }),
-        directions: hexNotes.map((hexNote, i) => {
+        directions: generateGridNotes(
+          state.values.gridStartingNote,
+          state.values.gridRows,
+          state.values.gridCols
+        ).map((hexNote, i) => {
+          // console.log({
+          //   hexNote,
+          //   i,
+          //   tokenIds: state.values.layers[props.layerIndex].tokenIds,
+          // });
           const tokens = state.values.layers[props.layerIndex].tokenIds[i].map(
             (tokenId) => state.values.tokens[tokenId]
           );
@@ -303,6 +335,9 @@ export default function HexGrid(props: Props) {
       Math.floor(s.layers[props.layerIndex]?.currentBeat),
       s.controls,
       s.layers[props.layerIndex]?.tokenIds,
+      s.gridCols,
+      s.gridRows,
+      s.gridStartingNote,
     ])
   );
 
@@ -326,8 +361,8 @@ export default function HexGrid(props: Props) {
   useEffect(() => {
     const mouseUp = (
       pos: Point,
-      originalPos: Point,
-      e: MouseEvent | TouchEvent
+      _originalPos: Point,
+      _e: MouseEvent | TouchEvent
     ) => {
       if (
         state.values.isDragging &&
@@ -410,7 +445,7 @@ export default function HexGrid(props: Props) {
 
       if (settings.values.touchMode === "edit") {
         state.set(
-          (s) => ({
+          (_s) => ({
             isDragging: false,
             draggingDestHex: { hexIndex: -1, layerIndex: -1 },
             draggingSourceHex: { hexIndex: -1, layerIndex: -1 },
@@ -444,17 +479,17 @@ export default function HexGrid(props: Props) {
             }))
           : [{ hexIndex, identifier: -1 }];
 
+        const tempo = state.getControlValue<"decimal">({
+          layerControl: "tempo",
+          layer: props.layerIndex,
+        });
+        const durationMs = (1 / (tempo / 60)) * 1000;
         touches.forEach(({ hexIndex, identifier }) => {
           const [newNotes, unpermitted] = Driver.playTriad({
             state: new SimpleAppState(state.values),
             hexIndex,
             triad: 0,
-            durationMs:
-              1 /
-              state.getControlValue<"decimal">({
-                layerControl: "tempo",
-                layer: props.layerIndex,
-              }),
+            durationMs,
           });
           notes.push(
             ...newNotes.map<PerformanceNote>((n) => ({
@@ -481,7 +516,7 @@ export default function HexGrid(props: Props) {
 
       if (settings.values.touchMode === "edit") {
         state.set(
-          (s) => ({
+          () => ({
             selectedHex: {
               hexIndex: hexIndex,
               layerIndex: props.layerIndex,
@@ -494,7 +529,7 @@ export default function HexGrid(props: Props) {
           return;
 
         state.set(
-          (s) => ({
+          () => ({
             draggingSourceHex: { hexIndex, layerIndex: props.layerIndex },
           }),
           "set drag src"
@@ -549,18 +584,20 @@ export default function HexGrid(props: Props) {
               });
             }
 
-            const [playedNotes, unpermittedPlayedNotes] = Driver.playTriad({
+            const [playedNotes] = Driver.playTriad({
               state: new SimpleAppState(state.values),
               hexIndex,
               triad: 0,
               layerIndex: props.layerIndex,
               velocity: note.velocity ?? undefined,
               durationMs:
-                1 /
-                state.getControlValue<"decimal">({
-                  layerControl: "tempo",
-                  layer: props.layerIndex,
-                }),
+                (1 /
+                  (state.getControlValue<"decimal">({
+                    layerControl: "tempo",
+                    layer: props.layerIndex,
+                  }) /
+                    60)) *
+                1000,
             });
 
             newNotes[noteIndex] = {
@@ -577,7 +614,7 @@ export default function HexGrid(props: Props) {
 
         if (changed) {
           state.set(
-            (s) => ({
+            () => ({
               performingNotes: newNotes,
             }),
             "set perform notes"
@@ -608,7 +645,7 @@ export default function HexGrid(props: Props) {
 
         if (hoveredHex !== -1 && !hoveredHexIsSourceHex) {
           state.set(
-            (s) => ({
+            () => ({
               isDragging: true,
               draggingDestHex: {
                 hexIndex: hoveredHex,
@@ -621,7 +658,7 @@ export default function HexGrid(props: Props) {
             state.values.draggingType === "copy" ? "copy" : "move";
         } else {
           state.set(
-            (s) => ({
+            (_s) => ({
               draggingDestHex: { hexIndex: -1, layerIndex: -1 },
             }),
             "clear dragging hex"
@@ -630,9 +667,9 @@ export default function HexGrid(props: Props) {
       }
     };
 
-    function mouseLeave(pos: Point, e: MouseEvent | TouchEvent) {
+    function mouseLeave(_pos: Point, _e: MouseEvent | TouchEvent) {
       state.set(
-        (s) => ({
+        () => ({
           draggingDestHex: { hexIndex: -1, layerIndex: -1 },
         }),
         "clear dragging hex"
@@ -684,6 +721,12 @@ export default function HexGrid(props: Props) {
     () => {
       if (!state.values.layers[props.layerIndex]?.tokenIds) return;
 
+      const hexNotes = generateGridNotes(
+        state.values.gridStartingNote,
+        state.values.gridRows,
+        state.values.gridCols
+      );
+
       backCanvas.current?.clear();
       // draw selected //
       // if (prevSelectedHex !== -1 && prevSelectedHex !== undefined && backCanvas.current)
@@ -702,12 +745,19 @@ export default function HexGrid(props: Props) {
       ) as keyof typeof KeyMap;
       if (key !== "None") {
         const notes = KeyMap[key].map((ni) => noteArray[ni]);
-        for (let i = 0; i < NumHexes; i++) {
+        for (
+          let i = 0;
+          i < state.values.gridRows * state.values.gridCols;
+          i++
+        ) {
           const hexNote = getNoteParts(hexNotes[i]).name;
           if (notes.includes(hexNote)) {
             backCanvas.current?.fillHexagonCell({
               gridLocation: startPosition,
-              cellCoordinate: new Point(~~(i / rows), i % rows),
+              cellCoordinate: new Point(
+                ~~(i / state.values.gridRows),
+                i % state.values.gridRows
+              ),
               color: colors["hexKeyBackgroundColor"],
               gridStartsHigh: false,
               hexRadius,
@@ -730,7 +780,10 @@ export default function HexGrid(props: Props) {
           if (hexNoteParts.name === note.name) {
             backCanvas.current?.fillHexagonCell({
               gridLocation: startPosition,
-              cellCoordinate: new Point(~~(i / rows), i % rows),
+              cellCoordinate: new Point(
+                ~~(i / state.values.gridRows),
+                i % state.values.gridRows
+              ),
               color: (i === state.values.selectedHex.hexIndex
                 ? color
                 : lightColor
@@ -744,31 +797,49 @@ export default function HexGrid(props: Props) {
 
       // draw midi notes //
       if (props.layerIndex === state.values.selectedHex.layerIndex) {
+        const toPlay: { hexIndex: number; velocity: number }[] = [];
         state.values.midiNotes.forEach((note) => {
-          const toPlay: { hexIndex: number; velocity: number }[] = [];
+          if (!note.isOn) return;
 
-          for (let i = 0; i < hexNotes.length; i++) {
-            if (note.isOn && hexNotes[i] === note.name) {
-              toPlay.push({ hexIndex: i, velocity: note.velocity });
-            }
-          }
+          hexIndexesFromNote(note.name, hexNotes).forEach((hexIndex) => {
+            toPlay.push({ hexIndex, velocity: note.velocity });
+          });
+        });
 
-          toPlay.forEach((data) => {
-            backCanvas.current?.fillHexagonCell({
-              gridLocation: startPosition,
-              cellCoordinate: new Point(
-                ~~(data.hexIndex / rows),
-                data.hexIndex % rows
-              ),
-              color: `rgba(40,${90 + (data.velocity / 127) * 20},${
-                30 + (data.velocity / 127) * 60
-              },${(data.velocity / 127) * 0.8 + 0.2})`,
-              gridStartsHigh: false,
-              hexRadius,
-            });
+        toPlay.forEach((data) => {
+          backCanvas.current?.fillHexagonCell({
+            gridLocation: startPosition,
+            cellCoordinate: new Point(
+              ~~(data.hexIndex / state.values.gridRows),
+              data.hexIndex % state.values.gridRows
+            ),
+            color: `rgba(40,${90 + (data.velocity / 127) * 20},${
+              30 + (data.velocity / 127) * 60
+            },${(data.velocity / 127) * 0.8 + 0.2})`,
+            gridStartsHigh: false,
+            hexRadius,
           });
         });
       }
+
+      // draw performing notes //
+      state.values.performingNotes.forEach((note) => {
+        if (!note.note || !note.velocity) return;
+
+        const color = new Color(noteColors[getNoteParts(note.note).name]);
+        color.alpha = 0.4;
+
+        backCanvas.current?.fillHexagonCell({
+          gridLocation: startPosition,
+          cellCoordinate: new Point(
+            ~~(note.hexIndex / state.values.gridRows),
+            note.hexIndex % state.values.gridRows
+          ),
+          color: color.toString(),
+          gridStartsHigh: false,
+          hexRadius,
+        });
+      });
 
       // draw dragging //
       if (
@@ -779,8 +850,8 @@ export default function HexGrid(props: Props) {
         backCanvas.current?.fillHexagonCell({
           gridLocation: startPosition,
           cellCoordinate: new Point(
-            ~~(state.values.draggingDestHex.hexIndex / rows),
-            state.values.draggingDestHex.hexIndex % rows
+            ~~(state.values.draggingDestHex.hexIndex / state.values.gridRows),
+            state.values.draggingDestHex.hexIndex % state.values.gridRows
           ),
           color: colors["hexBackgroundColorDrop"],
           gridStartsHigh: false,
@@ -797,7 +868,10 @@ export default function HexGrid(props: Props) {
 
           backCanvas.current?.fillHexagonCell({
             gridLocation: startPosition,
-            cellCoordinate: new Point(~~(hexIndex / rows), hexIndex % rows),
+            cellCoordinate: new Point(
+              ~~(hexIndex / state.values.gridRows),
+              hexIndex % state.values.gridRows
+            ),
             color:
               colors[
                 dying
@@ -818,6 +892,10 @@ export default function HexGrid(props: Props) {
       s.draggingDestHex,
       s.isDragging,
       s.midiNotes,
+      s.performingNotes,
+      s.gridCols,
+      s.gridRows,
+      s.gridStartingNote,
     ])
   );
 

@@ -62,8 +62,6 @@ const LifespanToken: TokenDefinition<Store> = {
       }
 
       playheads.forEach((playhead, playheadIndex) => {
-        if (playhead.age === 0) return;
-
         const lifespan = playhead.lifespan + amount;
 
         if (gateOn + gateOff === 0) {

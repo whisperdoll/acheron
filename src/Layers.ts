@@ -5,8 +5,8 @@ import {
   DefaultLayerControls,
   LayerControlKey,
 } from "./utils/DefaultDefinitions";
-import { NumHexes } from "./utils/elysiumutils";
 import { createEmpty2dArray, msToS } from "./utils/utils";
+import settings from "./state/AppSettings";
 
 export function buildLayer(appState: AppState): {
   layerState: LayerState;
@@ -22,8 +22,8 @@ export function buildLayer(appState: AppState): {
           id,
         ])
       ),
-      tokenIds: createEmpty2dArray(NumHexes),
-      playheads: createEmpty2dArray(NumHexes),
+      tokenIds: createEmpty2dArray(appState.gridCols * appState.gridRows),
+      playheads: createEmpty2dArray(appState.gridCols * appState.gridRows),
       name: "Layer " + (appState.layers.length + 1).toString(),
       currentBeat: appState.layers[0]?.currentBeat || 0,
       midiBuffer: [],

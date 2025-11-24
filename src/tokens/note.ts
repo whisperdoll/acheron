@@ -98,7 +98,7 @@ const NoteToken: TokenDefinition<Store> = {
       }
 
       playheads.forEach((playhead, playheadIndex) => {
-        if (playhead.age === 0 || hasPerformed) return;
+        if (hasPerformed) return;
 
         if (gateOn + gateOff === 0) {
           tryPerformNote(playheadIndex);

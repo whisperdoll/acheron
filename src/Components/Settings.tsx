@@ -81,14 +81,6 @@ export default function Settings(props: Props) {
         <label className="clicky">
           <input
             type="checkbox"
-            checked={reactiveSettings.playNoteOnClick}
-            onChange={(e) => handleCheckChanged(e, "playNoteOnClick")}
-          ></input>
-          <span>Play notes on click</span>
-        </label>
-        <label className="clicky">
-          <input
-            type="checkbox"
             checked={reactiveSettings.wrapPlayheads}
             onChange={(e) => handleCheckChanged(e, "wrapPlayheads")}
           ></input>

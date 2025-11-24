@@ -14,6 +14,12 @@ export default class List {
     return ret;
   }
 
+  static reversed<T>(list: T[]): T[] {
+    const newList = this.copy(list);
+    newList.reverse();
+    return newList;
+  }
+
   static shuffle(
     array: any[],
     rngGenerator: () => number = splitmix32(Date.now())
@@ -69,15 +75,27 @@ export default class List {
   }
 
   static range(opts: number): number[];
-  static range(opts: { to: number }): number[];
-  static range(opts: { toInclusive: number }): number[];
-  static range(opts: { toExclusive: number }): number[];
-  static range(opts: { length: number }): number[];
-  static range(opts: { from: number; to: number }): number[];
-  static range(opts: { from: number; toInclusive: number }): number[];
-  static range(opts: { from: number; toExclusive: number }): number[];
-  static range(opts: { from: number; length: number }): number[];
-  static range(opts: { from: number }): () => number;
+  static range(opts: { to: number; stride?: number }): number[];
+  static range(opts: { toInclusive: number; stride?: number }): number[];
+  static range(opts: { toExclusive: number; stride?: number }): number[];
+  static range(opts: { length: number; stride?: number }): number[];
+  static range(opts: { from: number; to: number; stride?: number }): number[];
+  static range(opts: {
+    from: number;
+    toInclusive: number;
+    stride?: number;
+  }): number[];
+  static range(opts: {
+    from: number;
+    toExclusive: number;
+    stride?: number;
+  }): number[];
+  static range(opts: {
+    from: number;
+    length: number;
+    stride?: number;
+  }): number[];
+  static range(opts: { from: number; stride?: number }): () => number;
   static range(
     opts:
       | number
@@ -87,27 +105,54 @@ export default class List {
           toExclusive?: number;
           toInclusive?: number;
           length?: number;
+          stride?: number;
         }
   ) {
     if (typeof opts === "number") {
       return this.fromGenerator((i) => i, opts);
     }
 
-    const { from = 0, to, toExclusive, toInclusive, length } = opts;
+    const { from = 0, to, toExclusive, toInclusive, length, stride = 1 } = opts;
 
     // priority here is arbitrary
-    // prettier-ignore
-    { // block is just for the prettier ignore lol, doesnt do anything
-      if (!isNullOrUndefined(toExclusive)) return this.fromGenerator((i) => i + from, toExclusive - from);
-      if (!isNullOrUndefined(toInclusive)) return this.fromGenerator((i) => i + from, toInclusive - from + 1);
-      if (!isNullOrUndefined(to))          return this.fromGenerator((i) => i + from, to - from);
-      if (!isNullOrUndefined(length))      return this.fromGenerator((i) => i + from, length);
+
+    if (!isNullOrUndefined(toExclusive)) {
+      let ret = [];
+      for (let i = from; i < toExclusive; i += stride) {
+        ret.push(i);
+      }
+      return ret;
+    }
+
+    if (!isNullOrUndefined(toInclusive)) {
+      let ret = [];
+      for (let i = from; i <= toInclusive; i += stride) {
+        ret.push(i);
+      }
+      return ret;
+    }
+
+    if (!isNullOrUndefined(to)) {
+      let ret = [];
+      for (let i = from; i < to; i += stride) {
+        ret.push(i);
+      }
+      return ret;
+    }
+
+    if (!isNullOrUndefined(length)) {
+      let ret = [];
+      for (let i = from, j = 0; j < length; i += stride, j++) {
+        ret.push(i);
+      }
+      return ret;
     }
 
     // only `from` specified - infinite generator
+
     let i = from;
 
-    return () => i++;
+    return () => (i += stride);
   }
 
   static copy<T>(source: T[]) {

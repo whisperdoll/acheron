@@ -177,7 +177,7 @@ export function midpoint(...points: Point[]): Point {
 }
 
 export function cx(
-  ...classes: (string | Record<string, boolean> | undefined | null | false)[]
+  ...classes: (string | Record<string, unknown> | undefined | null | false)[]
 ) {
   const ret: string[] = [];
 

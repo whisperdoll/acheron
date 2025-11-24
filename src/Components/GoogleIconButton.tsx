@@ -1,8 +1,10 @@
 import React from "react";
 import GoogleIcon, { Props as GoogleIconProps } from "./GoogleIcon";
+import { cx } from "../lib/utils";
 
 interface Props {
   iconElementProps?: React.JSX.IntrinsicElements["span"];
+  naked?: boolean;
 }
 
 const GoogleIconButton: React.FC<
@@ -20,11 +22,12 @@ const GoogleIconButton: React.FC<
     weight,
     iconElementProps,
     className,
+    naked,
     ...rest
   } = props;
 
   return (
-    <button className={`${className || ""} googleIconButton`} {...rest}>
+    <button className={cx(className, "googleIconButton", { naked })} {...rest}>
       <GoogleIcon
         {...{
           icon,

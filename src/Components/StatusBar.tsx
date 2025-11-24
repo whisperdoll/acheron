@@ -10,7 +10,8 @@ import useKeyboardShortcutStrings from "../Hooks/useKeyboardShortcutStrings";
 import env from "../lib/env";
 import { sliceObject } from "../utils/utils";
 import { cx } from "../lib/utils";
-import TouchModeMenu, { touchModeDescriptions } from "./TouchModeMenu";
+import GridSizeMenu from "./GridSizeMenu";
+import TouchModeMenu from "./TouchModeMenu";
 import { deserializeComposition, serializeComposition } from "../Serialization";
 
 interface Props {}
@@ -21,10 +22,11 @@ export default React.memo(function StatusBar(props: Props) {
     currentBeat: Math.floor(s.layers[s.selectedHex.layerIndex].currentBeat),
     isMultiLayerMode: s.isMultiLayerMode,
     isShowingTouchModeMenu: s.isShowingTouchModeMenu,
+    isShowingGridSizeMenu: s.isShowingGridSizeMenu,
   }));
   const keyboardShortcutStrings = useKeyboardShortcutStrings();
   const reactiveSettings = settings.useState((s) =>
-    sliceObject(s, ["playNoteOnClick", "wrapPlayheads", "touchMode"])
+    sliceObject(s, ["wrapPlayheads", "touchMode"])
   );
 
   const iconProps: Pick<
@@ -111,6 +113,20 @@ export default React.memo(function StatusBar(props: Props) {
           }
           {...iconProps}
           data-touch-mode-menu="1"
+        />
+        <GoogleIconButton
+          icon="grid_on"
+          title="Change grid size"
+          onClick={() =>
+            state.set(
+              (s) => ({
+                isShowingGridSizeMenu: !s.isShowingGridSizeMenu,
+              }),
+              "toggle grid mode menu"
+            )
+          }
+          {...iconProps}
+          data-grid-size-menu="1"
         />
         <GoogleIconButton
           icon="layers"
@@ -211,6 +227,7 @@ export default React.memo(function StatusBar(props: Props) {
         </div>
       </div>
       {reactiveState.isShowingTouchModeMenu && <TouchModeMenu />}
+      {reactiveState.isShowingGridSizeMenu && <GridSizeMenu />}
     </>
   );
 });

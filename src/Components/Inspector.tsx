@@ -1,5 +1,4 @@
-import { useContext, useEffect, useRef, useState } from "react";
-import { hexNotes } from "../utils/elysiumutils";
+import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import TokenAdder from "../Components/TokenAdder";
 import TokenControl from "./TokenControl";
 
@@ -9,6 +8,8 @@ import GoogleIconButton from "./GoogleIconButton";
 import GoogleIcon from "./GoogleIcon";
 import { confirmPrompt } from "../utils/desktop";
 import useKeyboardShortcutStrings from "../Hooks/useKeyboardShortcutStrings";
+import { generateGridNotes } from "../utils/elysiumutils";
+import List from "../lib/list";
 
 interface Props {
   layerIndex: number;
@@ -17,8 +18,7 @@ interface Props {
 export default function (props: Props) {
   const reactiveState = state.useState();
   const reactiveSettings = settings.useState();
-  const [toggledToken, setToggledToken] = useState("");
-  const oldTokenIds = useRef<string[]>([]);
+  const [collapsedTokens, setCollapsedTokens] = useState<string[]>([]);
   const keyboardShortcutStrings = useKeyboardShortcutStrings();
   const layerIndex =
     reactiveState.selectedHex.layerIndex !== -1
@@ -29,6 +29,18 @@ export default function (props: Props) {
     reactiveState.layers[layerIndex].tokenIds[
       reactiveState.selectedHex.hexIndex
     ];
+
+  const hexNotes = useMemo(() => {
+    return generateGridNotes(
+      reactiveState.gridStartingNote,
+      reactiveState.gridRows,
+      reactiveState.gridCols
+    );
+  }, [
+    reactiveState.gridStartingNote,
+    reactiveState.gridRows,
+    reactiveState.gridCols,
+  ]);
 
   async function handleRemove(tokenIndex: number) {
     if (
@@ -43,21 +55,6 @@ export default function (props: Props) {
       state.removeToken(tokenIds[tokenIndex], "remove token from inspector");
     }
   }
-
-  useEffect(() => {
-    if (reactiveState.selectedHex.hexIndex === -1 || tokenIds.length === 0) {
-      oldTokenIds.current = tokenIds;
-      return;
-    }
-
-    if (!tokenIds.includes(toggledToken)) {
-      setToggledToken(tokenIds[0]);
-    } else if (tokenIds.length > oldTokenIds.current.length) {
-      setToggledToken(tokenIds[tokenIds.length - 1]);
-    }
-
-    oldTokenIds.current = tokenIds;
-  }, [tokenIds]);
 
   return (
     <div className="inspector">
@@ -99,16 +96,19 @@ export default function (props: Props) {
           <div className="tokens">
             {tokenIds.map((tokenId, i) => (
               <TokenControl
+                i={i}
                 tokenId={tokenId}
                 onRemove={() => handleRemove(i)}
                 key={tokenId}
                 layerIndex={layerIndex}
-                isCollapsed={tokenId !== toggledToken}
-                onToggleCollapse={() =>
-                  toggledToken === tokenId
-                    ? setToggledToken("")
-                    : setToggledToken(tokenId)
-                }
+                isCollapsed={collapsedTokens.includes(tokenId)}
+                onToggleCollapse={() => {
+                  if (collapsedTokens.includes(tokenId)) {
+                    setCollapsedTokens(List.without(collapsedTokens, tokenId));
+                  } else {
+                    setCollapsedTokens(collapsedTokens.concat([tokenId]));
+                  }
+                }}
               />
             ))}
           </div>

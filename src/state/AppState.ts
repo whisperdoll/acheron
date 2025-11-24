@@ -75,6 +75,7 @@ export interface AppState {
   isEditingLayerName: boolean;
   isShowingSettings: boolean;
   isShowingTouchModeMenu: boolean;
+  isShowingGridSizeMenu: boolean;
   isMultiLayerMode: boolean;
   leftColumnWidth: number;
   inspectorWidth: number;
@@ -82,6 +83,7 @@ export interface AppState {
   performingNotes: PerformanceNote[];
   gridRows: number;
   gridCols: number;
+  gridStartingNote: string;
 }
 
 export interface LayerState {
@@ -108,6 +110,7 @@ export interface LayerState {
 
 const initialState: AppState = {
   selectedHex: { hexIndex: -1, layerIndex: 0 },
+  hoveredHex: { hexIndex: -1, layerIndex: 0 },
   controls: { ...DefaultPlayerControls }, // appended to after layer contruction
   tokens: {},
   barLength: Object.entries(DefaultPlayerControls).find(
@@ -161,13 +164,15 @@ const initialState: AppState = {
   isShowingLeftColumn: !env("debug"),
   isShowingSettings: false,
   isShowingTouchModeMenu: false,
+  isShowingGridSizeMenu: false,
   leftColumnTab: "player",
   multiLayerSize: 2,
   inspectorWidth: 300,
   leftColumnWidth: 300,
   performingNotes: [],
-  gridRows: 12,
-  gridCols: 17,
+  gridRows: 7,
+  gridCols: 12,
+  gridStartingNote: "D#7",
 };
 
 const initialLayer = buildLayer(initialState);
@@ -248,6 +253,7 @@ export class AppStateStore extends StateStore<AppState> {
     opts: MaybeGenerated<{ hexIndex: number; layerIndex: number }, [AppState]>
   ): AppState {
     const resolvedOpts = resolveMaybeGenerated(opts, state);
+    console.log({ state, tokenId, opts });
 
     return {
       ...state,
@@ -303,15 +309,6 @@ export class AppStateStore extends StateStore<AppState> {
         layerIndex,
       });
     }, "remove token bro");
-
-    this.removeTokenFromHex(
-      tokenId,
-      (state) => ({
-        hexIndex: state.selectedHex.hexIndex,
-        layerIndex: state.selectedHex.layerIndex,
-      }),
-      why
-    );
   }
 
   togglePlaying(why: string) {
