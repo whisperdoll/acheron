@@ -1,8 +1,9 @@
-import { NoteMessageEvent, WebMidi } from "webmidi";
+import { ControlChangeMessageEvent, NoteMessageEvent, WebMidi } from "webmidi";
 import { transposeNote } from "./elysiumutils";
 import { WebMidiInput, WebMidiPortEvent } from "../Types";
 import List from "../lib/list";
 import { MaybeGenerated, resolveMaybeGenerated } from "../lib/utils";
+import * as wm from "webmidi";
 
 export interface MidiDevice {
   name: string;
@@ -38,12 +39,11 @@ export interface MidiNote {
 
 let noteOnListener: (e: NoteMessageEvent) => void;
 let noteOffListener: (e: NoteMessageEvent) => void;
+let ccListener: (e: ControlChangeMessageEvent) => void;
 
 const allNotes = Array(128)
   .fill(0)
   .map((_, i) => i);
-export var cC = 0;
-export var cCNumber = 0;
 
 export default class Midi {
   private static enabledOutputNames: string[] = [];
@@ -54,7 +54,15 @@ export default class Midi {
   public static onInputsChanged: null | ((outputs: MidiDevice[]) => void) =
     null;
   public static onNotesChanged: null | ((notes: MidiNote[]) => void) = null;
+  public static onCC: (({
+    number,
+    value,
+  }: {
+    number: number;
+    value: number;
+  }) => void)[] = [];
   private static isEnabled = false;
+  private static ccValues: number[] = Array(128).fill(0); // 0-127
 
   private static _noteOnListener(e: NoteMessageEvent) {
     const index = this.notes.findIndex((n) => n.name === e.note.name);
@@ -92,10 +100,15 @@ export default class Midi {
     }
   }
 
-  private static _controlchangeListener(e: NoteMessageEvent) {
-    // TODO
-    // this.cC = e.rawValue;
-    // this.cCNumber = e.controller.number;
+  private static _CCListener(e: ControlChangeMessageEvent) {
+    this.ccValues[e.controller.number] = e.rawValue || 0;
+    this.onCC.forEach((fn) => {
+      fn({ number: e.controller.number, value: e.rawValue || 0 });
+    });
+  }
+
+  public static ccValue(ccNumber: number) {
+    return this.ccValues[ccNumber];
   }
 
   public static setEnabledOutputs(names: string[]) {
@@ -111,12 +124,14 @@ export default class Midi {
     if (!noteOnListener) {
       noteOnListener = this._noteOnListener.bind(this);
       noteOffListener = this._noteOffListener.bind(this);
+      ccListener = this._CCListener.bind(this);
     }
 
     if (!input.channels[1].hasListener("noteon", noteOnListener)) {
       for (let i = 0; i < 16; i++) {
         input.channels[i + 1].addListener("noteon", noteOnListener);
         input.channels[i + 1].addListener("noteoff", noteOffListener);
+        input.channels[i + 1].addListener("controlchange", ccListener);
       }
     }
   }

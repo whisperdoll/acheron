@@ -9,6 +9,7 @@ import { sliceObject } from "./utils/utils";
 import { PlayerControlKey } from "./utils/DefaultDefinitions";
 import { randomFloat } from "./lib/utils";
 import * as WebMidi from "webmidi";
+import Midi from "./utils/midi";
 
 type Entries<T> = {
   [K in keyof T]: [K, T[K]];
@@ -40,7 +41,8 @@ export type ControlValueType =
   | "modulate"
   | "inherit"
   | "multiply"
-  | "add";
+  | "add"
+  | "midi_cc";
 
 export type TokenUID = string;
 export type TokenInstanceId = string;
@@ -179,9 +181,10 @@ export interface ControlState<T extends ControlDataType = ControlDataType> {
   inherit?: string;
   showIf?: string;
   fixedValue: TypeForControlDataType<T>;
-  currentValueType: "fixed" | "modulate" | "inherit" | "multiply" | "add";
-  lfo: Lfo;
-  control?: number;
+  currentValueType: ControlValueType;
+  lfo: Lfo; // for currentValueType === 'modulate'
+  // control?: number;
+  midiCCNumber?: number; // for currentValueType === 'midi_cc'
 }
 
 export function copyControl(control: ControlState): ControlState {
@@ -290,6 +293,11 @@ export function getControlValue<
     return coerceControlValueFromNumber(value, opts.control);
   } else if (opts.control.currentValueType === "fixed") {
     return opts.control.fixedValue;
+  } else if (opts.control.currentValueType === "midi_cc") {
+    return coerceControlValueFromNumber(
+      Midi.ccValue(opts.control.midiCCNumber || 0),
+      opts.control
+    );
   } else {
     console.error("invalid control value type", opts, appStateStore.values);
     throw "invalid control value type";

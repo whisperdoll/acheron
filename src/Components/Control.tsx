@@ -1,4 +1,4 @@
-import React, { JSX, useContext, useMemo, useReducer } from "react";
+import React, { JSX, useContext, useEffect, useMemo, useReducer } from "react";
 import { ControlState, ControlValueType, getControlValue } from "../Types";
 import triad0 from "../../assets/triads/0.png";
 import triad1 from "../../assets/triads/1.png";
@@ -20,6 +20,9 @@ import { pluck, sliceObject } from "../utils/utils";
 import { PlayerControlKeys } from "../utils/DefaultDefinitions";
 import LfoVisualizer from "./LfoVisualizer";
 import LfoControls from "./LfoControls";
+import { tryParseInt } from "../lib/utils";
+import Midi from "../utils/midi";
+import List from "../lib/list";
 
 const directionIcons = [
   direction0,
@@ -51,6 +54,18 @@ export default React.memo(function Control(props: Props) {
     throw "bad control id";
   }
 
+  useEffect(() => {
+    const onCC: (typeof Midi.onCC)[number] = ({ number, value }) => {
+      forceUpdate();
+    };
+
+    Midi.onCC.push(onCC);
+
+    return () => {
+      Midi.onCC.splice(Midi.onCC.indexOf(onCC), 1);
+    };
+  }, []);
+
   const layerIndex = useMemo(() => {
     let index = reactiveState.layers.findIndex(
       (l) =>
@@ -73,8 +88,10 @@ export default React.memo(function Control(props: Props) {
   // const now = Math.floor(Date.now() / bpms) * bpms;
 
   const controlValueDeps = [
-    reactiveState.controls[props.controlId],
+    controlState,
     reactiveState.layers[layerIndex].currentBeat,
+    controlState.currentValueType === "midi_cc" &&
+      Midi.ccValue(controlState.midiCCNumber || 0),
   ];
   const controlValue = useMemo(() => {
     return state.getControlValue(controlState, {
@@ -275,9 +292,10 @@ export default React.memo(function Control(props: Props) {
         >
           <option value="fixed">Fixed</option>
           {controlState.inherit && <option value="inherit">Inherit</option>}
-          <option value="modulate">Modulate</option>
+          <option value="modulate">LFO</option>
           {controlState.inherit && <option value="multiply">Multiply</option>}
           {controlState.inherit && <option value="add">Add</option>}
+          <option value="midi_cc">MIDI CC</option>
         </select>
       </div>
       {controlState.currentValueType === "modulate" && (
@@ -289,6 +307,23 @@ export default React.memo(function Control(props: Props) {
             resolutionX={300}
             resolutionY={100}
           />
+        </>
+      )}
+      {controlState.currentValueType === "midi_cc" && (
+        <>
+          <div className="labelRow">
+            <div>&nbsp;&nbsp;</div>
+            <div className="label">CC Number:</div>
+            <div className="controlRow">
+              <NumberInput
+                min={0}
+                max={127}
+                step={1}
+                value={controlState.midiCCNumber || 0}
+                onChange={(value) => handleChange({ midiCCNumber: value })}
+              />
+            </div>
+          </div>
         </>
       )}
     </div>
