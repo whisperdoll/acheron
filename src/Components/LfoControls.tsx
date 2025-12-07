@@ -48,7 +48,7 @@ export default React.memo(function LfoControls({ control }: Props) {
           ))}
         </select>
       </div>
-      {modifyingLfo.type !== "sequence" && (
+      {(modifyingLfo.type !== "sequence" && modifyingLfo.type !== "midi Sequence") &&(
         <>
           <div className="lfoControlRow">
             <div className="group">
@@ -75,6 +75,7 @@ export default React.memo(function LfoControls({ control }: Props) {
       )}
       {modifyingLfo.type !== "square" &&
         modifyingLfo.type !== "midi Control" &&
+		modifyingLfo.type !== "midi Sequence" &&
         modifyingLfo.type !== "random" && (
           <div className="lfoControlRow">
             <span className="label">Period:</span>
@@ -117,7 +118,23 @@ export default React.memo(function LfoControls({ control }: Props) {
           </div>
         </>
       )}
-      {modifyingLfo.type === "sequence" && (
+	  
+	 {(modifyingLfo.type === "midi Control" || modifyingLfo.type === "midi Sequence" ) && (
+        <>
+          <div className="controlRow">
+            <span className="label">MIDI CC:</span>
+            <NumberInput
+              value={modifyingLfo.control}
+              min={0}
+              max={127}
+              onChange={(newValue) => modifyLfo({ control : Math.max(newValue) })}
+              step={1}
+            />
+          </div>
+        </>
+      )}
+	  
+      {(modifyingLfo.type === "sequence" || modifyingLfo.type === "midi Sequence") && (
         <div className="sequence">
           <div>Sequence:</div>
           {modifyingLfo.sequence.map((value, i) => (

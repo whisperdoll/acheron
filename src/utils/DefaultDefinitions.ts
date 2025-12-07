@@ -374,6 +374,7 @@ export function buildLfo(type: ControlDataType, n_min?: number, n_max?: number, 
     lowPeriod: 1,
     max: max + +(type !== "decimal"),
     min,
+	control: 0,
     sequence: [],
     type: "sawtooth",
   };

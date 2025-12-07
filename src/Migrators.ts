@@ -22,13 +22,15 @@ interface LfoV1 {
     | "sequence"
     | "sawtooth"
     | "reverse Sawtooth"
-    | "midi Control";
+    | "midi Control"
+	| "midi Sequence";
   min: number;
   max: number;
   lowPeriod: number;
   hiPeriod: number;
   period: number;
   sequence: any[];
+  control: number;
 }
 
 interface SerializedCompositionControlV1 {

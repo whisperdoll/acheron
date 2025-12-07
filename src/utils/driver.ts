@@ -503,6 +503,12 @@ export class Driver {
       getNumHexes(): number {
         return state.values.gridCols * state.values.gridRows;
       },
+	  getCols(): number {
+        return state.values.gridCols;
+      },
+	  getRows(): number {
+        return state.values.gridRows;
+      },
     };
 
     return helpers;

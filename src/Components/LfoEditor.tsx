@@ -58,7 +58,7 @@ export default function LfoEditor() {
             ))}
           </select>
         </div>
-        {modifyingLfo.type !== "sequence" && (
+        {modifyingLfo.type !== "sequence" && modifyingLfo.type !==  "midi Sequence" && (
           <>
             <div className="row">
               <span>Min Value:</span>
@@ -83,7 +83,7 @@ export default function LfoEditor() {
           </>
         )}
         {modifyingLfo.type !== "square" &&
-          modifyingLfo.type !== "midi Control" && (
+          modifyingLfo.type !== "midi Control" && modifyingLfo.type !== "midi Sequence" && (
             <div className="row">
               <span>Period (seconds):</span>
               <NumberInput
@@ -96,6 +96,19 @@ export default function LfoEditor() {
               />
             </div>
           )}
+		  	{(modifyingLfo.type === "midi Control" || modifyingLfo.type === "midi Sequence" )&& (<>
+			<div className="row">
+                <span>MIDI CC:</span>
+                <NumberInput
+                    min={0}
+                    max={127}
+                    value={modifyingLfo.control}
+                    coerce={coerce}
+                    onChange={(newValue) => modifyLfo({ control : Math.max(newValue) })}
+					step={1}
+                        />
+                    </div>
+			</>)}
         {modifyingLfo.type === "square" && (
           <>
             <div className="row">
@@ -122,7 +135,7 @@ export default function LfoEditor() {
             </div>
           </>
         )}
-        {modifyingLfo.type === "sequence" && (
+    {(modifyingLfo.type === "sequence" || modifyingLfo.type === "midi Sequence") && (
           <div className="sequence">
             <div>Sequence:</div>
             {modifyingLfo.sequence.map((value, i) => (

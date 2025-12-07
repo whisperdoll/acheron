@@ -16,6 +16,7 @@ import RandomizeToken from "./tokens/randomize.ts";
 import ReboundToken from "./tokens/rebound.ts";
 import SkipToken from "./tokens/skip.ts";
 import SplitToken from "./tokens/split.ts";
+import ShiftToken from "./tokens/shift.ts";
 import TwistToken from "./tokens/twist.ts";
 import WormholeToken from "./tokens/wormhole.ts";
 import { AppState } from "./state/AppState.ts";
@@ -32,6 +33,7 @@ export const tokenDefinitions: TokenDefinition[] = [
   WormholeToken,
   AbsorbToken,
   LifespanToken,
+  ShiftToken,
 ] as TokenDefinition[];
 
 export const tokenDefinitionsMap = List.indexBy(tokenDefinitions, (d) => d.uid);

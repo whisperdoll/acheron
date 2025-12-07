@@ -38,12 +38,16 @@ export interface MidiNote {
 
 let noteOnListener: (e: NoteMessageEvent) => void;
 let noteOffListener: (e: NoteMessageEvent) => void;
+let controlchangeListener: (e: any) => any;										   
 
 const allNotes = Array(128)
   .fill(0)
   .map((_, i) => i);
 export var cC = 0;
-export var cCNumber = 0;
+export var cCArr = [1];
+for (let i = 0; i < 127; i++) {
+    cCArr[i] = 1;
+  };
 
 export default class Midi {
   private static enabledOutputNames: string[] = [];
@@ -92,11 +96,16 @@ export default class Midi {
     }
   }
 
-  private static _controlchangeListener(e: NoteMessageEvent) {
-    // TODO
-    // this.cC = e.rawValue;
-    // this.cCNumber = e.controller.number;
-  }
+    private static _controlchangeListener(e: any)
+    {
+		for (let i = 0; i < 127; i++) {
+		if (cCArr[i] === undefined) {
+		cCArr[i] = 1;
+		}
+		if (i === e.controller.number)
+		cCArr[i] = e.rawValue;
+		}
+    }
 
   public static setEnabledOutputs(names: string[]) {
     this.enabledOutputNames = names;
@@ -111,12 +120,14 @@ export default class Midi {
     if (!noteOnListener) {
       noteOnListener = this._noteOnListener.bind(this);
       noteOffListener = this._noteOffListener.bind(this);
+	  controlchangeListener = this._controlchangeListener.bind(this);														  
     }
 
     if (!input.channels[1].hasListener("noteon", noteOnListener)) {
       for (let i = 0; i < 16; i++) {
         input.channels[i + 1].addListener("noteon", noteOnListener);
         input.channels[i + 1].addListener("noteoff", noteOffListener);
+        input.channels[i + 1].addListener("controlchange", controlchangeListener);													
       }
     }
   }

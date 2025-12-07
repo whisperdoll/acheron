@@ -9,6 +9,7 @@ import { sliceObject } from "./utils/utils";
 import { PlayerControlKey } from "./utils/DefaultDefinitions";
 import { randomFloat } from "./lib/utils";
 import * as WebMidi from "webmidi";
+import * as Midi from "./utils/midi";									 
 
 type Entries<T> = {
   [K in keyof T]: [K, T[K]];
@@ -327,6 +328,7 @@ export const LfoTypes = [
   "reverse Sawtooth",
   "sequence",
   "midi Control",
+  "midi Sequence",
 ] as const;
 export type LfoType = (typeof LfoTypes)[number];
 
@@ -338,6 +340,7 @@ export interface Lfo {
   hiPeriod: number;
   period: number;
   sequence: number[];
+  control: number;
 }
 
 export function getLfoValue(
@@ -365,11 +368,11 @@ export function getLfoValue(
       return lfo.max - (t / period) * (lfo.max - lfo.min);
     }
     case "triangle": {
-      return (
-        2 *
-        (t / period <= 0.5
-          ? lfo.min + (t / period) * (lfo.max - lfo.min)
-          : lfo.max - (t / period) * (lfo.max - lfo.min))
+return (
+	  
+        t / period <= 0.5
+          ? lfo.min + (t / period) * ((lfo.max - lfo.min) * 2)
+          : lfo.max - ((t / period) - 0.5) * ((lfo.max - lfo.min) * 2)
       );
     }
     case "sine": {
@@ -381,6 +384,25 @@ export function getLfoValue(
     }
     case "sequence": {
       return lfo.sequence[Math.floor((t / period) * lfo.sequence.length)] ?? 0;
+    }
+	case "midi Sequence": {
+		  var lfoval = ((Midi.cCArr[lfo.control] / 128));
+			if (Midi.cCArr[0] != undefined && !Number.isNaN(Midi.cCArr[0])) {
+			return lfo.sequence[Math.floor(lfoval * lfo.sequence.length)] ?? 0;
+		}
+		else {
+			return 1;
+		}
+    }
+	case "midi Control": {
+      const amp = (lfo.max - lfo.min) / 2;
+	  var lfoval = ((Midi.cCArr[lfo.control] / 128) * amp) * 2 + lfo.min;
+			if (Midi.cCArr[0] != undefined && !Number.isNaN(Midi.cCArr[0])) {
+			return lfoval;
+		}
+		else {
+			return 1;
+		}
     }
     default: {
       throw "lfo error";
