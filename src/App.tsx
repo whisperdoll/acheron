@@ -17,7 +17,7 @@ import Settings from "./Components/Settings";
 import LfoEditor from "./Components/LfoEditor";
 import { buildMenu } from "./Menu";
 import { deserializeComposition } from "./Serialization";
-import state from "./state/AppState";
+import state, { AppStateStore } from "./state/AppState";
 import settings, { AppSettings } from "./state/AppSettings";
 import useTimer from "./Hooks/useTimer";
 import StatusBar from "./Components/StatusBar";
@@ -36,7 +36,7 @@ import {
 } from "./lib/keyboard";
 import Dict from "./lib/dict";
 import useLazyRef from "./useLazyRef";
-import SimpleAppState from "./state/SimpleAppState";
+import ModChainWorkspace from "./Components/ModChainWorkspace";
 
 export default function App() {
   const reactiveState = state.useState();
@@ -45,7 +45,9 @@ export default function App() {
     () => Dict.transformedValues(keyboardShortcuts, keyboardShortcutString),
     [keyboardShortcuts]
   );
-  const resizing = useRef<"leftColumn" | "inspector" | null>(null);
+  const resizing = useRef<
+    "leftColumn" | "inspector" | "modChainWorkspace" | null
+  >(null);
   const lastTick = useRef(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const stopped = useRef(true);
@@ -98,14 +100,14 @@ export default function App() {
   }, [keyboardShortcuts]);
 
   const driver = useMemo(() => {
-    return new Driver(new SimpleAppState(state.values));
+    return new Driver(new AppStateStore(state.values, true));
   }, []);
 
   const [startTimer, stopTimer] = useTimer({
     onTick: (deltaMs: number) => {
       // console.time("tick");
 
-      driver.state = new SimpleAppState(state.values);
+      driver.state = new AppStateStore(state.values, true);
 
       if (stopped.current && state.values.isPlaying) {
         driver.start();
@@ -147,6 +149,13 @@ export default function App() {
     );
   }
 
+  function updateModChainWorkspaceHeight() {
+    document.documentElement.style.setProperty(
+      "--modChainWorkspaceHeight",
+      `${state.values.modChainWorkspaceHeight}px`
+    );
+  }
+
   state.useSubscription(
     updateInspectorWidth,
     [],
@@ -156,6 +165,11 @@ export default function App() {
     updateLeftColumnWidth,
     [],
     state.filters.deepEqual((s) => s.leftColumnWidth)
+  );
+  state.useSubscription(
+    updateModChainWorkspaceHeight,
+    [],
+    state.filters.deepEqual((s) => s.modChainWorkspaceHeight)
   );
 
   useLayoutEffect(() => {
@@ -176,6 +190,16 @@ export default function App() {
             inspectorWidth: Math.max(s.inspectorWidth - e.movementX, 100),
           }),
           "resize inspector"
+        );
+      } else if (resizing.current === "modChainWorkspace") {
+        state.set(
+          (s) => ({
+            modChainWorkspaceHeight: Math.max(
+              s.modChainWorkspaceHeight - e.movementY,
+              100
+            ),
+          }),
+          "resize modChainWorkspaceHeight"
         );
       }
     }
@@ -580,6 +604,19 @@ export default function App() {
 
         {inspector}
       </div>
+      {reactiveState.modChainControl && (
+        <>
+          <div
+            className="resizeHandle-alt"
+            onPointerDown={(e) => {
+              e.preventDefault();
+              document.documentElement.style.cursor = "ns-resize";
+              resizing.current = "modChainWorkspace";
+            }}
+          ></div>
+          <ModChainWorkspace />
+        </>
+      )}
       <StatusBar />
       <ModalController />
     </div>

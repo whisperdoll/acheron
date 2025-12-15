@@ -4,7 +4,11 @@ import {
   getInheritParts,
   noteArray,
 } from "./utils/elysiumutils";
-import appStateStore, { AppState, LayerState } from "./state/AppState";
+import appStateStore, {
+  AppState,
+  AppStateStore,
+  LayerState,
+} from "./state/AppState";
 import { sliceObject } from "./utils/utils";
 import { PlayerControlKey } from "./utils/DefaultDefinitions";
 import { randomFloat } from "./lib/utils";
@@ -187,6 +191,12 @@ export interface ControlState<T extends ControlDataType = ControlDataType> {
   midiCCNumber?: number; // for currentValueType === 'midi_cc'
 }
 
+export type ShallowControlState<T extends ControlDataType = ControlDataType> =
+  Pick<
+    ControlState<T>,
+    "fixedValue" | "inherit" | "max" | "min" | "step" | "type" | "options"
+  >;
+
 export function copyControl(control: ControlState): ControlState {
   const ret = {
     ...control,
@@ -229,7 +239,7 @@ export function coerceControlValueToNumber<
   T extends ControlDataType = ControlDataType
 >(
   value: TypeForControlDataType<ControlDataType>,
-  control: ControlState<T>
+  control: ShallowControlState<T>
 ): number {
   if (control.type === "select") {
     return control.options!.findIndex((o) => o.value === value);
@@ -239,70 +249,6 @@ export function coerceControlValueToNumber<
 }
 
 const inheritableTypes: ControlValueType[] = ["inherit", "add", "multiply"];
-export function getControlValue<
-  T extends ControlDataType = ControlDataType
->(opts: {
-  control: ControlState<T>;
-  layer: LayerState;
-  currentBeat: number;
-  currentTimeMs: number;
-  controls: AppState["controls"];
-  playerControls: Pick<AppState, PlayerControlKey>;
-}): TypeForControlDataType<T> {
-  if (inheritableTypes.includes(opts.control.currentValueType)) {
-    const inheritParts = getInheritParts(opts.control.inherit);
-    if (!inheritParts) {
-      console.error("inherit failed", opts, appStateStore.values);
-      throw "inherit fail";
-    }
-
-    const inheritedControl = getControlFromInheritParts(
-      opts.controls,
-      opts.playerControls,
-      opts.layer,
-      inheritParts
-    );
-    let inheritedValue = coerceControlValueToNumber(
-      getControlValue({ ...opts, control: inheritedControl }),
-      inheritedControl
-    );
-    if (opts.control.currentValueType === "add") {
-      inheritedValue += coerceControlValueToNumber(
-        opts.control.fixedValue,
-        opts.control
-      );
-    } else if (opts.control.currentValueType === "multiply") {
-      inheritedValue *= coerceControlValueToNumber(
-        opts.control.fixedValue,
-        opts.control
-      );
-    }
-    return coerceControlValueFromNumber(
-      Math.max(Math.min(+inheritedValue, opts.control.max), opts.control.min),
-      opts.control
-    );
-  } else if (opts.control.currentValueType === "modulate") {
-    const value = getLfoValue(
-      opts.control.lfo,
-      {
-        beat: opts.currentBeat,
-        ms: opts.currentTimeMs,
-      },
-      "ms"
-    );
-    return coerceControlValueFromNumber(value, opts.control);
-  } else if (opts.control.currentValueType === "fixed") {
-    return opts.control.fixedValue;
-  } else if (opts.control.currentValueType === "midi_cc") {
-    return coerceControlValueFromNumber(
-      Midi.ccValue(opts.control.midiCCNumber || 0),
-      opts.control
-    );
-  } else {
-    console.error("invalid control value type", opts, appStateStore.values);
-    throw "invalid control value type";
-  }
-}
 
 export interface TokenCallbacks<StoreType extends TokenStore = TokenStore> {
   onStart?: StartCallback<Partial<StoreType>>;
@@ -338,6 +284,11 @@ export const LfoTypes = [
 ] as const;
 export type LfoType = (typeof LfoTypes)[number];
 
+export interface ModInputInfo {
+  modChainId: string;
+  modItemId: string;
+}
+
 export interface Lfo {
   type: LfoType;
   min: number;
@@ -346,6 +297,30 @@ export interface Lfo {
   hiPeriod: number;
   period: number;
   sequence: number[];
+}
+export type LfoConnectableProperty =
+  | "min"
+  | "max"
+  | "lowPeriod"
+  | "hiPeriod"
+  | "period";
+
+export function findPropertyConnection(
+  modChainItemId: ModChainItemID,
+  property: LfoConnectableProperty
+) {
+  Object.values(appStateStore.values.modChains).forEach((modChain) => {
+    modChain.connections.forEach((connection) => {
+      if (
+        connection.to === modChainItemId &&
+        connection.property === property
+      ) {
+        return connection;
+      }
+    });
+  });
+
+  return null;
 }
 
 export function getLfoValue(
@@ -357,6 +332,7 @@ export function getLfoValue(
     align === "ms"
       ? currentTime.ms
       : Math.floor(currentTime.ms / currentTime.beat) * currentTime.ms;
+
   const lowPeriod = lfo.lowPeriod * 1000;
   const hiPeriod = lfo.hiPeriod * 1000;
   const period = lfo.period * 1000;
@@ -413,4 +389,68 @@ export interface PerformanceNote {
   identifier: Touch["identifier"];
   hexIndex: number;
   device: string | string[];
+}
+
+export const ModOutput = Symbol("mod output");
+
+export type LFOMod = {
+  __type: "lfo";
+  type: LfoType;
+  min: number;
+  max: number;
+  lowPeriod: number; // for square wave
+  hiPeriod: number; // for square wave
+  period: number;
+  sequence: number[]; // for sequence ...
+};
+
+export type ControlValueMod = {
+  __type: "controlValue";
+  controlId: string;
+};
+
+export type FixedValueMod = {
+  __type: "fixedValue";
+  value: number;
+};
+
+export type FixedControlValueMod = {
+  __type: "fixedControlValue";
+  value: number;
+  controlId: string;
+};
+
+type ModChainItemID = string;
+export type ModChainItem =
+  | LFOMod
+  | ControlValueMod
+  | FixedValueMod
+  | FixedControlValueMod;
+export type ModChain = {
+  input: ControlInstanceId;
+  mods: Record<ModChainItemID, ModChainItem>;
+  output: null | ModChainItemID; // null will just connect input -> output
+  connections: { from: ModChainItemID; to: ModChainItemID; property: string }[];
+};
+
+export function defaultModChain({
+  controlId,
+  controlValue,
+}: {
+  controlId: string;
+  controlValue: number;
+}): ModChain {
+  const id = uuidv4();
+  return {
+    mods: {
+      [id]: {
+        __type: "fixedControlValue",
+        controlId,
+        value: controlValue,
+      },
+    },
+    input: controlId,
+    output: null,
+    connections: [],
+  };
 }

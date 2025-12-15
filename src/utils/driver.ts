@@ -15,11 +15,10 @@ import {
 } from "./utils";
 import Midi, { MidiScheduler } from "./midi";
 import { LayerControlKey } from "./DefaultDefinitions";
-import { AppState, LayerState } from "../state/AppState";
+import { AppState, AppStateStore, LayerState } from "../state/AppState";
 import settings from "../state/AppSettings";
 import Dict from "../lib/dict";
 import List from "../lib/list";
-import SimpleAppState from "../state/SimpleAppState";
 
 export class Driver {
   private scheduledForMove: {
@@ -32,22 +31,22 @@ export class Driver {
     playhead: Playhead;
   }[] = [];
   private notesToAdd: LayerNote[] = [];
-  public state: SimpleAppState;
+  public state: AppStateStore;
   private initializedTokens: Set<string> = new Set<string>();
 
-  constructor(state: SimpleAppState) {
+  constructor(state: AppStateStore) {
     this.state = state;
   }
 
   public start() {
-    this.state.set(
-      this.performStartCallbacks(new SimpleAppState(this.state.values))
+    this.state.dangerouslyReplaceValues(
+      this.performStartCallbacks(new AppStateStore(this.state.values, true))
     );
   }
 
   public stop() {
-    this.state.set(
-      this.performStopCallbacks(new SimpleAppState(this.state.values))
+    this.state.dangerouslyReplaceValues(
+      this.performStopCallbacks(new AppStateStore(this.state.values, true))
     );
     Midi.allNotesOff();
   }
@@ -55,7 +54,7 @@ export class Driver {
   public step(ms: number) {
     if (!this.state.values.isPlaying) return;
 
-    const workingState = new SimpleAppState(this.state.values);
+    const workingState = new AppStateStore(this.state.values, true);
     const allStartedNotes: LayerNote[][] = List.fromGenerator(
       () => [],
       workingState.values.layers.length
@@ -73,13 +72,15 @@ export class Driver {
       );
       allStartedNotes[i].push(...notesStarted);
       allStoppedNotes[i].push(...notesStopped);
-      workingState.set(resultingState);
+      workingState.dangerouslyReplaceValues(resultingState);
     }
     for (let i = 0; i < workingState.values.layers.length; i++) {
-      workingState.set(this.performTransfers(workingState, i));
+      workingState.dangerouslyReplaceValues(
+        this.performTransfers(workingState, i)
+      );
     }
 
-    this.state.set(workingState.values);
+    this.state.dangerouslyReplaceValues(workingState.values);
 
     return {
       notesStarted: allStartedNotes,
@@ -89,7 +90,7 @@ export class Driver {
   }
 
   public static playTriad(opts: {
-    state: SimpleAppState;
+    state: AppStateStore;
     hexIndex: number;
     triad: number;
     durationMs: number;
@@ -211,7 +212,7 @@ export class Driver {
   }
 
   private buildHelpers(
-    state: SimpleAppState,
+    state: AppStateStore,
     layerIndex: number,
     currentBeat: number,
     currentMs: number,
@@ -358,7 +359,6 @@ export class Driver {
 
         if (existingIndex === -1) {
           self.scheduledForMove.push(newMoveInfo);
-          console.log(self);
         } else {
           self.scheduledForMove[existingIndex] = newMoveInfo;
         }
@@ -508,7 +508,7 @@ export class Driver {
     return helpers;
   }
 
-  private performStartCallbacks(state: SimpleAppState): AppState {
+  private performStartCallbacks(state: AppStateStore): AppState {
     const newLayers = array_copy(state.values.layers);
     const newTokens = { ...state.values.tokens };
 
@@ -557,7 +557,7 @@ export class Driver {
     };
   }
 
-  private performStopCallbacks(state: SimpleAppState): AppState {
+  private performStopCallbacks(state: AppStateStore): AppState {
     const newLayers = array_copy(state.values.layers);
     const newTokens = { ...state.values.tokens };
 
@@ -606,10 +606,7 @@ export class Driver {
     };
   }
 
-  private performTransfers(
-    state: SimpleAppState,
-    layerIndex: number
-  ): AppState {
+  private performTransfers(state: AppStateStore, layerIndex: number): AppState {
     const newPlayheads = state.values.layers[layerIndex].playheads.slice(0);
     let changeMade = false;
 
@@ -641,7 +638,7 @@ export class Driver {
   }
 
   private progressLayer(
-    state: SimpleAppState,
+    state: AppStateStore,
     deltaMs: number,
     layerIndex: number
   ): {
@@ -663,10 +660,7 @@ export class Driver {
       state.values.gridRows * state.values.gridCols
     );
     const layer = state.values.layers[layerIndex];
-    const bpm = state.getControlValue<"decimal">(layer.tempo, {
-      layer,
-      controls: state.values.controls,
-    });
+    const bpm = state.getControlValue<"decimal">(layer.tempo);
     const bps = bpm / 60;
     const bpms = bps / 1000;
     // console.log({
@@ -695,19 +689,15 @@ export class Driver {
               age: playhead.age + 1,
             };
 
-            console.log(this);
             const moveInfoIndex = this.scheduledForMove.findIndex(
               (m) =>
                 m.src.layerIndex === layerIndex &&
                 m.src.hexIndex === hexIndex &&
                 m.playheadIndex === playheadIndex
             );
-            console.log({ moveInfoIndex });
-            console.log({ scheduledForMove: this.scheduledForMove });
 
             if (moveInfoIndex !== -1) {
               const moveInfo = this.scheduledForMove[moveInfoIndex];
-              console.log({ moveInfo });
               if (moveInfo.dest.layerIndex === layerIndex) {
                 newPlayheads[moveInfo.dest.hexIndex].push(newPlayhead);
               } else {
@@ -877,7 +867,7 @@ export class Driver {
 //   static stepMs: number = 2;
 
 //   public static initialize(base: AppState) {
-//     this.state = new AppStateStore(base);
+//     this.state = new AppStateStore(base, true);
 //   }
 
 //   public static get currentTimeMs(): number | null {

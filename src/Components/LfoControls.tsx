@@ -1,159 +1,223 @@
-import React from "react";
-import { ControlState, Lfo, LfoType, LfoTypes } from "../Types";
+import React, { useContext, useMemo } from "react";
+import {
+  ControlState,
+  Lfo,
+  LfoConnectableProperty,
+  LfoType,
+  LfoTypes,
+} from "../Types";
 import state from "../state/AppState";
 import { capitalize } from "../utils/utils";
 import NumberInput from "./NumberInput";
+import ModChainInputNode from "./ModChainInputNode";
+import { ModChainWorkspaceContext } from "../state/ModChainWorkspaceContext";
+import { isNil } from "../lib/utils";
 
 interface Props {
-  control: ControlState;
+  control?: ControlState;
+  lfo: Lfo;
+  onUpdate: (newLfo: Lfo) => unknown;
+  modItemId?: string;
 }
 
-export default React.memo(function LfoControls({ control }: Props) {
-  const modifyingLfo = control.lfo;
+const emptyArray: {
+  from: string;
+  to: string;
+  property: string;
+}[] = [];
+
+export default React.memo(function LfoControls({
+  control,
+  lfo,
+  onUpdate,
+  modItemId,
+}: Props) {
+  const modChainWorkspaceContext = useContext(ModChainWorkspaceContext);
+  const modChain = state.useState((s) =>
+    s.modChainControl ? s.modChains[s.modChainControl] : null
+  );
+  const now = state.useState((s) => Math.round(s.layers[0].currentTimeMs / 60));
+
+  const inputValues = useMemo(() => {
+    const ret: Partial<Record<LfoConnectableProperty, number>> = {};
+
+    if (!modItemId || !modChain) return ret;
+
+    modChain.connections.forEach((connection) => {
+      if (connection.to === modItemId) {
+        ret[connection.property as LfoConnectableProperty] =
+          state.resolveModItem(modChain, connection.from);
+      }
+    });
+
+    return ret;
+  }, [lfo, modItemId, modChain, now]);
 
   function modifyLfo(partial: Partial<Lfo>) {
-    state.set(
-      (prev) => ({
-        controls: {
-          ...prev.controls,
-          [control.id]: {
-            ...prev.controls[control.id],
-            lfo: {
-              ...prev.controls[control.id].lfo,
-              ...partial,
-            },
-          },
-        },
-      }),
-      "modify lfo"
-    );
+    onUpdate({ ...lfo, ...partial });
   }
 
-  const coerce = control.type === "decimal" ? (v: number) => v : Math.floor;
+  const coerce =
+    !control || control.type === "decimal" ? (v: number) => v : Math.floor;
 
   return (
     <>
-      <div className="lfoControlRow">
-        <span className="label">Type:</span>
-        <select
-          onChange={(e) =>
-            modifyLfo({ type: e.currentTarget.value as LfoType })
-          }
-          value={modifyingLfo.type}
-        >
-          {LfoTypes.map((lfoType) => (
-            <option key={lfoType} value={lfoType}>
-              {capitalize(lfoType)}
-            </option>
-          ))}
-        </select>
-      </div>
-      {modifyingLfo.type !== "sequence" && (
-        <>
-          <div className="lfoControlRow">
-            <div className="group">
+      <div className="lfoControls">
+        <div className="typePart">
+          <span className="label">Type:</span>
+          <select
+            onChange={(e) =>
+              modifyLfo({ type: e.currentTarget.value as LfoType })
+            }
+            value={lfo.type}
+          >
+            {LfoTypes.map((lfoType) => (
+              <option key={lfoType} value={lfoType}>
+                {capitalize(lfoType)}
+              </option>
+            ))}
+          </select>
+        </div>
+        {lfo.type !== "sequence" && (
+          <>
+            <div className="minPart">
+              {modItemId && (
+                <ModChainInputNode modItemId={modItemId} property="min" />
+              )}
               <span className="label">Min:</span>
-              <NumberInput
-                value={modifyingLfo.min}
-                coerce={coerce}
-                onChange={(value) => modifyLfo({ min: value })}
-              />
+              {!isNil(inputValues.min) ? (
+                <div className="inputValue">{inputValues.min}</div>
+              ) : (
+                <NumberInput
+                  value={lfo.min}
+                  coerce={coerce}
+                  onChange={(value) => modifyLfo({ min: value })}
+                  min={-9999}
+                  max={9999}
+                />
+              )}
             </div>
 
-            <div className="group">
+            <div className="maxPart">
+              {modItemId && (
+                <ModChainInputNode modItemId={modItemId} property="max" />
+              )}
               <span className="label">Max:</span>
-              <NumberInput
-                min={-99999}
-                max={99999}
-                value={modifyingLfo.max}
-                coerce={coerce}
-                onChange={(value) => modifyLfo({ max: value })}
-              />
+              {!isNil(inputValues.max) ? (
+                <div className="inputValue">{inputValues.max}</div>
+              ) : (
+                <NumberInput
+                  min={-9999}
+                  max={9999}
+                  value={lfo.max}
+                  coerce={coerce}
+                  onChange={(value) => modifyLfo({ max: value })}
+                />
+              )}
             </div>
-          </div>
-        </>
-      )}
-      {modifyingLfo.type !== "square" &&
-        modifyingLfo.type !== "midi Control" &&
-        modifyingLfo.type !== "random" && (
-          <div className="lfoControlRow">
-            <span className="label">Period:</span>
-            <NumberInput
-              value={modifyingLfo.period}
-              max={10000}
-              min={0.1}
-              onChange={(newValue) => modifyLfo({ period: Math.max(newValue) })}
-              step={0.1}
-            />
+          </>
+        )}
+        {lfo.type !== "square" &&
+          lfo.type !== "midi Control" &&
+          lfo.type !== "random" && (
+            <div className="periodPart">
+              {modItemId && (
+                <ModChainInputNode modItemId={modItemId} property="period" />
+              )}
+              <span className="label">Period:</span>
+              {!isNil(inputValues.period) ? (
+                <div className="inputValue">{inputValues.period}</div>
+              ) : (
+                <NumberInput
+                  value={lfo.period}
+                  max={9999}
+                  min={0.1}
+                  onChange={(newValue) =>
+                    modifyLfo({ period: Math.max(newValue) })
+                  }
+                  step={0.1}
+                />
+              )}
+            </div>
+          )}
+        {lfo.type === "square" && (
+          <>
+            <div className="loPeriodPart">
+              {modItemId && (
+                <ModChainInputNode modItemId={modItemId} property="lowPeriod" />
+              )}
+              <span className="label">Lo Period:</span>
+              {!isNil(inputValues.lowPeriod) ? (
+                <div className="inputValue">{inputValues.lowPeriod}</div>
+              ) : (
+                <NumberInput
+                  value={lfo.lowPeriod}
+                  min={0.1}
+                  max={9999}
+                  onChange={(newValue) =>
+                    modifyLfo({ lowPeriod: Math.max(newValue) })
+                  }
+                  step={0.1}
+                />
+              )}
+            </div>
+            <div className="hiPeriodPart">
+              {modItemId && (
+                <ModChainInputNode modItemId={modItemId} property="hiPeriod" />
+              )}
+              <span className="label">Hi Period:</span>
+              {!isNil(inputValues.hiPeriod) ? (
+                <div className="inputValue">{inputValues.hiPeriod}</div>
+              ) : (
+                <NumberInput
+                  value={lfo.hiPeriod}
+                  min={0.1}
+                  max={9999}
+                  onChange={(newValue) =>
+                    modifyLfo({ hiPeriod: Math.max(newValue) })
+                  }
+                  step={0.1}
+                />
+              )}
+            </div>
+          </>
+        )}
+        {lfo.type === "sequence" && (
+          <div className="sequencePart">
+            <div>Sequence:</div>
+            {lfo.sequence.map((value, i) => (
+              <div className="row">
+                <NumberInput
+                  min={control?.min ?? -99999}
+                  max={control?.max ?? 99999}
+                  value={value}
+                  onChange={(newValue) =>
+                    modifyLfo({
+                      sequence: lfo.sequence.map((v, vi) =>
+                        vi === i ? coerce(newValue) : v
+                      ),
+                    })
+                  }
+                />
+                <button
+                  onClick={() =>
+                    modifyLfo({
+                      sequence: lfo.sequence.filter((_, vi) => vi !== i),
+                    })
+                  }
+                >
+                  ✖ Remove
+                </button>
+              </div>
+            ))}
+            <button
+              onClick={() => modifyLfo({ sequence: lfo.sequence.concat([0]) })}
+            >
+              + Add Value
+            </button>
           </div>
         )}
-      {modifyingLfo.type === "square" && (
-        <>
-          <div className="lfoControlRow">
-            <div className="group">
-              <span className="label">Lo Period:</span>
-              <NumberInput
-                value={modifyingLfo.lowPeriod}
-                min={0.1}
-                max={10000}
-                onChange={(newValue) =>
-                  modifyLfo({ lowPeriod: Math.max(newValue) })
-                }
-                step={0.1}
-              />
-            </div>
-            <div className="group">
-              <span className="label">Hi Period:</span>
-              <NumberInput
-                value={modifyingLfo.hiPeriod}
-                min={0.1}
-                max={10000}
-                onChange={(newValue) =>
-                  modifyLfo({ hiPeriod: Math.max(newValue) })
-                }
-                step={0.1}
-              />
-            </div>
-          </div>
-        </>
-      )}
-      {modifyingLfo.type === "sequence" && (
-        <div className="sequence">
-          <div>Sequence:</div>
-          {modifyingLfo.sequence.map((value, i) => (
-            <div className="row">
-              <NumberInput
-                min={control.min}
-                max={control.max}
-                value={value}
-                onChange={(newValue) =>
-                  modifyLfo({
-                    sequence: modifyingLfo.sequence.map((v, vi) =>
-                      vi === i ? coerce(newValue) : v
-                    ),
-                  })
-                }
-              />
-              <button
-                onClick={() =>
-                  modifyLfo({
-                    sequence: modifyingLfo.sequence.filter((_, vi) => vi !== i),
-                  })
-                }
-              >
-                ✖ Remove
-              </button>
-            </div>
-          ))}
-          <button
-            onClick={() =>
-              modifyLfo({ sequence: modifyingLfo.sequence.concat([0]) })
-            }
-          >
-            + Add Value
-          </button>
-        </div>
-      )}
+      </div>
     </>
   );
 });

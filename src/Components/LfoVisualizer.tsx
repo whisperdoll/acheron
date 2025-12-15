@@ -1,21 +1,49 @@
 import React, { useEffect, useMemo, useRef } from "react";
-import { getLfoValue, Lfo } from "../Types";
+import { getLfoValue, Lfo, LfoConnectableProperty } from "../Types";
 import Point from "../utils/point";
 import { clamp, minAndMax } from "../lib/utils";
+import state from "../state/AppState";
 
 interface Props {
   lfo: Lfo;
   currentTimeMs: number;
   resolutionX: number;
   resolutionY: number;
+  modItemId: string;
 }
 
 export default React.memo(function LfoVisualizer({
-  lfo,
+  lfo: baseLfo,
   currentTimeMs,
   resolutionX,
   resolutionY,
+  modItemId,
 }: Props) {
+  const modChain = state.useState((s) =>
+    s.modChainControl ? s.modChains[s.modChainControl] : null
+  );
+  const now = Math.round(currentTimeMs / 60);
+
+  const inputValues = useMemo(() => {
+    const ret: Partial<Record<LfoConnectableProperty, number>> = {};
+
+    if (!modItemId || !modChain) return ret;
+
+    modChain.connections.forEach((connection) => {
+      if (connection.to === modItemId) {
+        ret[connection.property as LfoConnectableProperty] =
+          state.resolveModItem(modChain, connection.from);
+      }
+    });
+
+    return ret;
+  }, [baseLfo, modItemId, modChain, now]);
+
+  const lfo: Lfo = useMemo(
+    () => ({ ...baseLfo, ...inputValues }),
+    [baseLfo, inputValues]
+  );
+
   const waveCanvasRef = useRef<HTMLCanvasElement>(null);
   const progressCanvasRef = useRef<HTMLCanvasElement>(null);
   const periodMs =

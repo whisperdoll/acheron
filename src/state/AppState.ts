@@ -15,9 +15,14 @@ import {
   ControlInstanceId,
   LayerNote,
   ControlDataType,
-  getControlValue,
   TypeForControlDataType,
   PerformanceNote,
+  ModChain,
+  ModOutput,
+  getLfoValue,
+  coerceControlValueToNumber,
+  LfoConnectableProperty,
+  coerceControlValueFromNumber,
 } from "../Types";
 import {
   DefaultPlayerControls,
@@ -38,6 +43,10 @@ import appSettingsStore from "./AppSettings.ts";
 import AbsorbToken from "../tokens/absorb.ts";
 import Dict from "../lib/dict.ts";
 import env from "../lib/env.ts";
+import {
+  getControlFromInheritParts,
+  getInheritParts,
+} from "../utils/elysiumutils.ts";
 
 export interface AppState {
   selectedHex: { hexIndex: number; layerIndex: number };
@@ -79,11 +88,14 @@ export interface AppState {
   isMultiLayerMode: boolean;
   leftColumnWidth: number;
   inspectorWidth: number;
+  modChainWorkspaceHeight: number;
   multiLayerSize: number;
   performingNotes: PerformanceNote[];
   gridRows: number;
   gridCols: number;
   gridStartingNote: string;
+  modChainControl?: ControlInstanceId;
+  modChains: Record<ControlInstanceId, ModChain>;
 }
 
 export interface LayerState {
@@ -169,10 +181,13 @@ const initialState: AppState = {
   multiLayerSize: 2,
   inspectorWidth: 300,
   leftColumnWidth: 300,
+  modChainWorkspaceHeight: 400,
   performingNotes: [],
   gridRows: 7,
   gridCols: 12,
   gridStartingNote: "D#7",
+  modChains: {},
+  modChainControl: undefined,
 };
 
 const initialLayer = buildLayer(initialState);
@@ -181,8 +196,8 @@ initialState.controls = { ...initialState.controls, ...initialLayer.controls };
 initialState.layers = [initialLayer.layerState];
 
 export class AppStateStore extends StateStore<AppState> {
-  constructor(initialState: AppState) {
-    super(() => initialState);
+  constructor(initialState: AppState, simple?: boolean) {
+    super(initialState, simple);
   }
 
   setLayer(
@@ -596,26 +611,7 @@ export class AppStateStore extends StateStore<AppState> {
           layerControl: LayerControlKey;
           layer: LayerState | number | "current";
         }
-      | { layerControl: LayerControlKey }
-      | { playerControl: PlayerControlKey },
-    opts:
-      | {
-          currentBeat: number | "current";
-          currentTimeMs: number | "current";
-          controls: AppState["controls"] | "current";
-          playerControls: Pick<AppState, PlayerControlKey> | "current";
-          layer: LayerState | number | "current";
-        }
-      | {
-          layer: LayerState;
-          controls: AppState["controls"];
-        } = {
-      controls: "current",
-      currentBeat: "current",
-      currentTimeMs: "current",
-      playerControls: "current",
-      layer: "current",
-    }
+      | { playerControl: PlayerControlKey }
   ): TypeForControlDataType<T> {
     const resolveLayer = (
       layer: LayerState | number | "current" | undefined
@@ -630,45 +626,150 @@ export class AppStateStore extends StateStore<AppState> {
     const resolvedLayer =
       typeof control === "object" && "layer" in control
         ? resolveLayer(control.layer)
-        : resolveLayer(opts.layer);
+        : resolveLayer("current");
 
-    const controls =
-      opts.controls === "current" ? this.values.controls : opts.controls;
+    const resolvedControl: ControlState<T> =
+      typeof control === "string"
+        ? (this.values.controls[control] as ControlState<T>)
+        : "layerControl" in control
+        ? (this.values.controls[
+            resolvedLayer[control.layerControl]
+          ] as ControlState<T>)
+        : "playerControl" in control
+        ? (this.values.controls[
+            this.playerControls[control.playerControl]
+          ] as ControlState<T>)
+        : control;
 
-    const playerControls =
-      "playerControls" in opts
-        ? opts.playerControls === "current"
-          ? this.playerControls
-          : opts.playerControls
-        : this.playerControls;
+    if (resolvedControl.currentValueType === "fixed") {
+      if (this.values.modChains[resolvedControl.id]) {
+        return coerceControlValueFromNumber<T>(
+          this.resolveModChain(resolvedControl.id),
+          resolvedControl
+        );
+      } else {
+        return resolvedControl.fixedValue;
+      }
+    } else {
+      const inheritParts = getInheritParts(resolvedControl.inherit);
+      if (!inheritParts) {
+        console.error("inherit failed", { control });
+        throw "inherit fail";
+      }
 
-    const newOpts: Parameters<typeof getControlValue>[0] = {
-      control:
-        typeof control === "string"
-          ? this.values.controls[control]
-          : "layerControl" in control
-          ? controls[resolvedLayer[control.layerControl]]
-          : "playerControl" in control
-          ? controls[playerControls[control.playerControl]]
-          : control,
-      layer: resolvedLayer,
-      currentBeat:
-        "currentBeat" in opts
-          ? opts.currentBeat === "current"
-            ? this.values.currentBeat
-            : opts.currentBeat
-          : resolvedLayer.currentBeat,
-      currentTimeMs:
-        "currentTimeMs" in opts
-          ? opts.currentTimeMs === "current"
-            ? resolvedLayer.currentTimeMs
-            : opts.currentTimeMs
-          : resolvedLayer.currentTimeMs,
-      controls:
-        opts.controls === "current" ? this.values.controls : opts.controls,
-      playerControls,
-    };
-    return getControlValue(newOpts) as TypeForControlDataType<T>;
+      const inheritedControl = getControlFromInheritParts(
+        this.values.controls,
+        this.playerControls,
+        resolvedLayer,
+        inheritParts
+      );
+      let inheritedValue = coerceControlValueToNumber(
+        this.getControlValue(inheritedControl),
+        inheritedControl
+      );
+      return coerceControlValueFromNumber<T>(
+        Math.max(
+          Math.min(+inheritedValue, resolvedControl.max),
+          resolvedControl.min
+        ),
+        resolvedControl
+      );
+    }
+  }
+
+  resolveModItem(modChain: ModChain, modItemId: string): number {
+    const modItem = modChain.mods[modItemId];
+
+    switch (modItem.__type) {
+      case "controlValue":
+        return coerceControlValueToNumber(
+          this.getControlValue(this.values.controls[modItem.controlId]),
+          this.values.controls[modItem.controlId]
+        );
+      case "fixedControlValue":
+        return modItem.value;
+      case "fixedValue":
+        return modItem.value;
+      case "lfo":
+        const props = { ...modItem } as Lfo;
+        modChain.connections.forEach(({ from, to, property }) => {
+          if (to === modItemId) {
+            props[property as LfoConnectableProperty] = this.resolveModItem(
+              modChain,
+              from
+            );
+          }
+        });
+        return getLfoValue(
+          props,
+          {
+            beat: this.values.layers[0].currentBeat,
+            ms: this.values.layers[0].currentTimeMs,
+          },
+          "ms"
+        );
+    }
+  }
+
+  resolveModChain(modChainId: string): number {
+    const modChain = this.values.modChains[modChainId];
+    const inputValue = this.values.controls[modChain.input].fixedValue;
+
+    if (modChain.output) {
+      return this.resolveModItem(modChain, modChain.output);
+    } else {
+      return coerceControlValueToNumber(
+        inputValue,
+        this.values.controls[modChain.input]
+      );
+    }
+  }
+
+  connectModItems(
+    modChainId: string,
+    outputItemId: string,
+    inputItemId: string | typeof ModOutput,
+    inputItemProperty?: string
+  ) {
+    const modChain = this.values.modChains[modChainId];
+    const outputItem = modChain.mods[outputItemId];
+
+    if (inputItemId === ModOutput) {
+      this.set((prev) => {
+        return {
+          modChains: {
+            ...prev.modChains,
+            [modChainId]: {
+              ...modChain,
+              output: outputItemId,
+            },
+          },
+        };
+      }, "connect mod item to output");
+    } else {
+      if (!inputItemProperty) {
+        throw new Error("inputItemProperty is required");
+      }
+
+      this.set((prev) => {
+        return {
+          modChains: {
+            ...prev.modChains,
+            [modChainId]: {
+              ...modChain,
+              connections: [
+                ...modChain.connections,
+                {
+                  from: outputItemId,
+                  to: inputItemId,
+                  property: inputItemProperty,
+                },
+              ],
+            },
+          },
+        };
+      }, "connect mod item to another mod item");
+    }
   }
 }
 

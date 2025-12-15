@@ -10,13 +10,12 @@ import {
   noteColors,
 } from "../utils/elysiumutils";
 import Point from "../utils/point";
-import state, { AppState } from "../state/AppState";
+import state, { AppState, AppStateStore } from "../state/AppState";
 import settings from "../state/AppSettings";
 import Dict from "../lib/dict";
 import { confirmPrompt } from "../utils/desktop";
 import useContextMenu from "../Hooks/useContextMenu";
 import { Driver } from "../utils/driver";
-import SimpleAppState from "../state/SimpleAppState";
 import { mapTouches } from "../lib/utils";
 import Midi from "../utils/midi";
 import HexGridContextMenu from "./HexGridContextMenu";
@@ -316,12 +315,7 @@ export default function HexGrid(props: Props) {
             controls
               .filter((c) => c.type === "direction")
               .forEach((c) =>
-                ret.push(
-                  state.getControlValue(c as ControlState<"direction">, {
-                    controls: state.values.controls,
-                    layer: state.values.layers[props.layerIndex],
-                  })
-                )
+                ret.push(state.getControlValue(c as ControlState<"direction">))
               );
           });
 
@@ -486,7 +480,7 @@ export default function HexGrid(props: Props) {
         const durationMs = (1 / (tempo / 60)) * 1000;
         touches.forEach(({ hexIndex, identifier }) => {
           const [newNotes, unpermitted] = Driver.playTriad({
-            state: new SimpleAppState(state.values),
+            state: new AppStateStore(state.values, true),
             hexIndex,
             triad: 0,
             durationMs,
@@ -585,7 +579,7 @@ export default function HexGrid(props: Props) {
             }
 
             const [playedNotes] = Driver.playTriad({
-              state: new SimpleAppState(state.values),
+              state: new AppStateStore(state.values, true),
               hexIndex,
               triad: 0,
               layerIndex: props.layerIndex,
@@ -736,13 +730,10 @@ export default function HexGrid(props: Props) {
 
       // draw key //
       // console.log(state);
-      const key: keyof typeof KeyMap = state.getControlValue(
-        { layerControl: "key" },
-        {
-          layer: state.values.layers[props.layerIndex],
-          controls: state.values.controls,
-        }
-      ) as keyof typeof KeyMap;
+      const key: keyof typeof KeyMap = state.getControlValue({
+        layerControl: "key",
+        layer: props.layerIndex,
+      }) as keyof typeof KeyMap;
       if (key !== "None") {
         const notes = KeyMap[key].map((ni) => noteArray[ni]);
         for (

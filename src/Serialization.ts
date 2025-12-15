@@ -12,7 +12,13 @@ import {
 export interface SerializedCompositionControl {
   key: string;
   id: string;
-  currentValueType: "fixed" | "modulate" | "inherit" | "multiply" | "add";
+  currentValueType:
+    | "fixed"
+    | "modulate"
+    | "inherit"
+    | "multiply"
+    | "add"
+    | "midi_cc";
   inherit?: string;
   showIf?: string;
   fixedValue: any;

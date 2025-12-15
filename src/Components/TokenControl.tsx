@@ -114,13 +114,7 @@ export default function (props: Props) {
       )}
       {!props.isCollapsed &&
         token.controlIds.map((controlId) => {
-          const ret = (
-            <Control
-              controlId={controlId}
-              key={controlId}
-              layerIndex={props.layerIndex}
-            />
-          );
+          const ret = <Control controlId={controlId} key={controlId} />;
 
           const control = controls[controlId];
           if (control.showIf !== undefined) {
@@ -134,10 +128,7 @@ export default function (props: Props) {
 
             if (index !== -1) {
               const bool = Boolean(
-                state.getControlValue(token.controlIds[index], {
-                  layer: layers[props.layerIndex],
-                  controls: controls,
-                })
+                state.getControlValue(token.controlIds[index])
               );
               return bool !== shouldNegate ? ret : undefined;
             } else {

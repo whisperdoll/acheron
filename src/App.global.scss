@@ -225,6 +225,8 @@ button.delete {
   padding: 0;
   margin: 0;
   position: relative;
+  display: flex;
+  flex-direction: column;
 }
 
 .mono {
@@ -409,7 +411,6 @@ $statusBarHeight: 2rem;
   margin: 0;
   position: relative;
   flex-grow: 1;
-  height: calc(100% - #{$statusBarHeight});
   overflow: auto;
 
   @media only screen and (max-width: 768px) {
@@ -418,6 +419,7 @@ $statusBarHeight: 2rem;
 }
 
 .statusBar {
+  flex-shrink: 0;
   height: $statusBarHeight;
   background-color: var(--status-bar-background-color);
   display: flex;
@@ -689,6 +691,152 @@ $statusBarHeight: 2rem;
   }
 }
 
+.lfoVisualizer {
+  position: relative;
+  display: flex;
+
+  canvas {
+    &:first-child {
+      position: relative;
+    }
+
+    width: 100%;
+
+    border: 1px solid var(--outline-color);
+    position: absolute;
+    left: 0;
+    top: 0;
+  }
+}
+
+.lfoControls {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+
+  select,
+  .numberInput-container {
+    flex-grow: 1;
+  }
+
+  @mixin row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: stretch;
+    gap: 0.5rem;
+  }
+
+  .typePart {
+    grid-column: 1 / -1;
+    @include row;
+  }
+
+  .minPart {
+    @include row;
+  }
+
+  .maxPart {
+    @include row;
+  }
+
+  .periodPart {
+    grid-column: 1 / -1;
+    @include row;
+  }
+
+  .loPeriodPart {
+    @include row;
+  }
+
+  .hiPeriodPart {
+    @include row;
+  }
+
+  .inputValue {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.lfoControlRow {
+  display: flex;
+  flex-direction: row;
+  justify-content: stretch;
+  align-items: center;
+  gap: 0.5rem;
+  flex-grow: 1;
+
+  &:has(.group) {
+    gap: 1rem;
+  }
+
+  .group {
+    display: inherit;
+    flex-direction: inherit;
+    align-items: inherit;
+    justify-content: inherit;
+    flex-grow: 1;
+    gap: 0.5rem;
+
+    input,
+    .numberInput-container,
+    select {
+      flex-grow: 1;
+      min-width: 0;
+    }
+
+    .numberInput-container {
+      width: 4rem;
+    }
+  }
+
+  input,
+  .numberInput-container,
+  select {
+    flex-grow: 1;
+    min-width: 0;
+  }
+}
+
+.directionRow {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  flex-wrap: wrap;
+  border: 1px solid var(--outline-color);
+  border-radius: 5px;
+  overflow: hidden;
+
+  button {
+    flex-basis: calc(100% / 3);
+    min-width: 1rem;
+    padding: 0;
+    height: 2.25rem;
+    flex-grow: 1;
+    margin: 0;
+    background-color: transparent;
+    background-position: center;
+    background-repeat: no-repeat;
+    border-left-width: 0;
+    border-right-width: 0;
+
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    &.selected {
+      background-color: rgba(200, 50, 200, 0.5);
+    }
+  }
+
+  &.disabled button {
+    &:hover:not(.selected) {
+      background-color: transparent;
+    }
+  }
+}
+
 .control {
   display: flex;
   align-items: stretch;
@@ -701,7 +849,7 @@ $statusBarHeight: 2rem;
     background-color: rgba(255, 255, 255, 0);
   }
 
-  .labelRow {
+  .row {
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -730,43 +878,6 @@ $statusBarHeight: 2rem;
     }
   }
 
-  .lfoControlRow {
-    display: flex;
-    flex-direction: row;
-    justify-content: stretch;
-    align-items: center;
-    gap: 0.5rem;
-    flex-grow: 1;
-
-    &:has(.group) {
-      gap: 1rem;
-    }
-
-    .group {
-      display: inherit;
-      flex-direction: inherit;
-      align-items: inherit;
-      justify-content: inherit;
-      flex-grow: 1;
-      gap: 0.5rem;
-
-      input,
-      .numberInput-container,
-      select {
-        flex-grow: 1;
-        min-width: 0;
-        width: 0;
-      }
-    }
-
-    input,
-    .numberInput-container,
-    select {
-      flex-grow: 1;
-      min-width: 0;
-    }
-  }
-
   .sequence {
     border: 1px solid var(--outline-color);
     padding: 0.5rem;
@@ -782,63 +893,7 @@ $statusBarHeight: 2rem;
     border: 1px solid var(--outline-color);
   }
 
-  .lfoVisualizer {
-    position: relative;
-    display: flex;
-
-    canvas {
-      &:first-child {
-        position: relative;
-      }
-
-      width: 100%;
-
-      border: 1px solid var(--outline-color);
-      position: absolute;
-      left: 0;
-      top: 0;
-    }
-  }
-
   .readonly {
-  }
-
-  .directionRow {
-    display: flex;
-    flex-direction: row;
-    width: 100%;
-    flex-wrap: wrap;
-    border: 1px solid var(--outline-color);
-    border-radius: 5px;
-    overflow: hidden;
-
-    button {
-      flex-basis: calc(100% / 3);
-      min-width: 1rem;
-      padding: 0;
-      height: 2.25rem;
-      flex-grow: 1;
-      margin: 0;
-      background-color: transparent;
-      background-position: center;
-      background-repeat: no-repeat;
-      border-left-width: 0;
-      border-right-width: 0;
-
-      &:hover {
-        background-color: rgba(255, 255, 255, 0.1);
-      }
-
-      &.selected {
-        background-color: rgba(200, 50, 200, 0.5);
-      }
-    }
-
-    &.disabled button {
-      &:hover:not(.selected) {
-        background-color: transparent;
-      }
-    }
   }
 
   .triadRow {
@@ -905,15 +960,15 @@ button.showInspector {
 }
 
 .resizeHandle {
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+  }
+
   @media only screen and (min-width: 768px) {
     max-width: 1rem;
     min-width: 1rem;
     height: 100%;
     cursor: ew-resize;
-
-    &:hover {
-      background-color: rgba(255, 255, 255, 0.2);
-    }
   }
 
   @media only screen and (max-width: 768px) {
@@ -921,6 +976,27 @@ button.showInspector {
     min-height: 0;
     width: 100%;
     cursor: ns-resize;
+  }
+}
+
+.resizeHandle-alt {
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+  }
+
+  @media only screen and (min-width: 768px) {
+    max-height: 1rem;
+    min-height: 1rem;
+    margin-top: -1rem;
+    width: 100%;
+    cursor: ns-resize;
+  }
+
+  @media only screen and (max-width: 768px) {
+    max-width: 0;
+    min-width: 0;
+    height: 100%;
+    cursor: ew-resize;
   }
 }
 
@@ -1359,6 +1435,186 @@ button.showInspector {
       display: flex;
       flex-direction: column;
       justify-content: stretch;
+    }
+  }
+}
+
+.modChainWorkspace {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--outline-color);
+
+  min-height: var(--modChainWorkspaceHeight);
+  max-height: var(--modChainWorkspaceHeight);
+  // overflow: auto;
+
+  .header {
+    z-index: 1;
+    display: flex;
+    flex-direction: row;
+    gap: 0.25rem;
+    align-items: center;
+    padding: 0.25rem 0.5rem;
+    padding-right: 0rem;
+    background-color: var(--header-background-color);
+  }
+
+  .addButtons {
+    display: flex;
+    flex-direction: row;
+    padding: 1rem 1rem;
+    padding-top: 0;
+  }
+
+  .row {
+    display: flex;
+    flex-direction: row;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  .modChainOutputNode {
+    min-width: 1rem;
+    min-height: 1rem;
+    border: 1px solid var(--outline-color);
+    background-color: var(--button-background-color);
+    cursor: pointer;
+    transform: rotate(45deg);
+
+    &:hover,
+    &.connected {
+      background-color: var(--button-background-color-hover);
+    }
+  }
+
+  .modChainInputNode {
+    min-width: 1rem;
+    min-height: 1rem;
+    border: 1px solid var(--outline-color);
+    border-radius: 50%;
+    background-color: var(--button-background-color);
+
+    // &:hover {
+    //   background-color: var(--button-background-color-hover);
+    // }
+
+    &.connected {
+      background-color: #c3a600;
+      border-color: #ffd700;
+      cursor: pointer;
+    }
+
+    @at-root {
+      .listeningForConnections#{&}:hover {
+        cursor: pointer;
+        background-color: #c3a600;
+        border-color: #ffd700;
+      }
+    }
+  }
+
+  .mainRow {
+    display: flex;
+    flex-direction: row;
+    padding: 1rem;
+    gap: 1rem;
+    min-height: 0;
+
+    .scrollPart {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
+      flex-grow: 1;
+      gap: inherit;
+      overflow-y: auto;
+
+      & > * {
+        min-width: min-content;
+        width: min-content;
+
+        &.lfo {
+          max-width: 20rem;
+          min-width: 20rem;
+        }
+      }
+    }
+
+    .fixedPart {
+      display: flex;
+      position: relative;
+
+      .modChainWorkspaceOutput {
+        color: color-mix(in oklab, var(--text-color), transparent);
+
+        &.connected {
+          color: var(--text-color);
+        }
+
+        @at-root {
+          .listeningForConnections#{&}:hover {
+            color: color-mix(in oklab, var(--text-color) 75%, transparent);
+          }
+        }
+      }
+    }
+
+    .modChainItem {
+      display: flex;
+      flex-direction: column;
+      border: 1px solid var(--outline-color);
+      border-radius: 4px;
+      overflow: hidden;
+
+      .header {
+        background-color: var(--header-background-color);
+        color: white;
+        padding: 0.25rem 0.5rem;
+      }
+
+      .contents {
+        gap: 0.5rem;
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        justify-content: center;
+
+        .sequence {
+          border: 1px solid var(--outline-color);
+          padding: 0.5rem;
+          display: flex;
+          flex-direction: column;
+          align-items: stretch;
+          gap: 0.5rem;
+
+          .row {
+            display: flex;
+            flex-direction: row;
+            gap: 0.5rem;
+            align-items: stretch;
+
+            input,
+            .numberInput-container {
+              flex-grow: 1;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  .modChainWorkspaceWires {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+
+    svg {
+      position: absolute;
+      left: 0;
+      top: 0;
     }
   }
 }

@@ -35,6 +35,7 @@ export default class StateStore<StateType extends Record<string, any>> {
     reject: (err: string) => void;
   }[] = [];
   private busy: boolean = false;
+  private simple: boolean;
 
   public filters = {
     deepEqual: (
@@ -48,8 +49,13 @@ export default class StateStore<StateType extends Record<string, any>> {
     },
   };
 
-  constructor(defaults: typeof this.generator) {
+  constructor(defaults: typeof this.generator, simple?: boolean) {
     this.generator = defaults;
+    this.simple = !!simple;
+
+    if (this.simple) {
+      this.initializeSync();
+    }
   }
 
   initializeSync(): this {
@@ -62,6 +68,8 @@ export default class StateStore<StateType extends Record<string, any>> {
       throw new Error("generator returned a promise");
     }
 
+    this._values = g;
+    this.initialized = true;
     return this;
   }
 
@@ -105,22 +113,20 @@ export default class StateStore<StateType extends Record<string, any>> {
   }
 
   async processNextItemInQueue() {
-    const initialState = rfdc()(this.values);
-    this._prevValues = initialState;
-
     while (this.queue.length) {
+      const initialState = rfdc()(this.values);
+      this._prevValues = initialState;
       const { newState, why, resolve, reject } = this.queue.shift()!;
 
       const resolvedNewState = await resolveMaybeGeneratedPromise(
         newState,
-        this._prevValues
+        this.values
       );
 
       Object.assign(this.values, resolvedNewState);
 
       if (equal(this._prevValues, this.values)) {
         resolve(this.values);
-        this._prevValues = { ...this.values };
         continue;
       }
 
@@ -133,7 +139,6 @@ export default class StateStore<StateType extends Record<string, any>> {
 
       resolve(this.values);
       this.notifySubscribers(initialState, this.values);
-      this._prevValues = { ...this.values };
     }
 
     this.busy = false;
@@ -175,19 +180,24 @@ export default class StateStore<StateType extends Record<string, any>> {
     }, dependencyArray);
   }
 
-  useState<T>(selector: (state: StateType) => T): T;
-  useState(): StateType;
-  useState<T>(selector?: (state: StateType) => T) {
+  useState<T>(selector: (state: StateType) => T, dependencyArray?: any[]): T;
+  useState(dependencyArray?: any[]): StateType;
+  useState<T>(
+    selector?: ((state: StateType) => T) | any[],
+    dependencyArray?: any[]
+  ) {
     const [stateValue, setStateValue] = useState(() =>
-      selector ? selector(this.values) : { ...this.values }
+      isFunction(selector) ? selector(this.values) : { ...this.values }
     );
 
     this.useSubscription(
       (_, newState) => {
-        setStateValue(selector ? selector(newState) : { ...newState });
+        setStateValue(
+          isFunction(selector) ? selector(newState) : { ...newState }
+        );
       },
-      [setStateValue],
-      selector && this.filters.deepEqual(selector)
+      [setStateValue].concat(dependencyArray || []),
+      isFunction(selector) ? this.filters.deepEqual(selector) : undefined
     );
 
     return stateValue;

@@ -198,6 +198,15 @@ export function cx(
   return ret.join(" ");
 }
 
+export function round(n: number, places: number): number {
+  const pow = Math.pow(10, places);
+  return Math.round(n * pow) / pow;
+}
+
+export function isNil(x: any): x is null | undefined {
+  return x == null;
+}
+
 export function rectContainsPoint(rect: Rect, point: Point) {
   const right = rect.x + rect.w;
   const bottom = rect.y + rect.h;
