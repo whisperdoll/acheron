@@ -9,6 +9,7 @@ import settings from "../state/AppSettings";
 import Dict from "../lib/dict";
 
 interface Props {
+  layerIndex: number;
 }
 
 export default function PlayerSettings() {
