@@ -140,10 +140,16 @@ export class Driver {
       );
     }
 
-    const key = state.getControlValue({
-      layerControl: "key",
-      layer: layerIndex || "current",
-    }) as keyof typeof KeyMap;
+
+      const key: keyof typeof KeyMap = 
+	  (state.getControlValue({
+        layerControl: "key",
+        layer: layerIndex || "current",
+      }) + " " + state.getControlValue({
+        layerControl: "scale",
+        layer: layerIndex || "current",
+      })) as keyof typeof KeyMap;
+
     const permittedNotes = KeyMap[key].map((ni) => noteArray[ni]);
 
     let unpermitted: string[];
@@ -432,10 +438,15 @@ export class Driver {
           );
         }
 
-        const key = state.getControlValue({
-          layerControl: "key",
-          layer: layerIndex,
-        }) as keyof typeof KeyMap;
+      const key: keyof typeof KeyMap = 
+	  (state.getControlValue({
+        layerControl: "key",
+        layer: layerIndex || "current",
+      }) + " " + state.getControlValue({
+        layerControl: "scale",
+        layer: layerIndex || "current",
+      })) as keyof typeof KeyMap;
+	  
         const permittedNotes = KeyMap[key].map((ni) => noteArray[ni]);
 
         notes = notes.filter((note) => {
@@ -502,6 +513,12 @@ export class Driver {
       },
       getNumHexes(): number {
         return state.values.gridCols * state.values.gridRows;
+      },
+	  getCols(): number {
+        return state.values.gridCols;
+      },
+	  getRows(): number {
+        return state.values.gridRows;
       },
     };
 

@@ -1,5 +1,4 @@
 import { TokenDefinition } from "../Types";
-import AppState from "../state/AppState";
 
 interface Store {
   gateCounter: number;
@@ -63,7 +62,7 @@ const ShiftToken: TokenDefinition<Store> = {
 
       function tryPerformShift(playheadIndex: number) {
         if (probability / 100 > Math.random()) {
-            const newLocation = Math.max(Math.min(helpers.getHexIndex() + (shift * 2) * (helpers.getRows() / helpers.getCols() ), helpers.getNumHexes()), 0);
+            const newLocation = Math.max(Math.min(helpers.getHexIndex() + ((shift * 2) * helpers.getRows()), helpers.getNumHexes() - 1), 0);
             helpers.warpPlayhead(playheadIndex, newLocation, helpers.getLayer());
         }
       }
