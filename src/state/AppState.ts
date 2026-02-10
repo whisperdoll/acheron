@@ -55,6 +55,7 @@ export interface AppState {
   tokens: Record<TokenInstanceId, Token>;
   tokenDefinitions: Record<TokenUID, TokenDefinition>;
   key: ControlInstanceId;
+  scale: ControlInstanceId;
   transpose: ControlInstanceId;
   tempo: ControlInstanceId;
   barLength: ControlInstanceId;
@@ -105,6 +106,7 @@ export interface LayerState {
   enabled: ControlInstanceId;
   midiChannel: ControlInstanceId;
   key: ControlInstanceId;
+  scale: ControlInstanceId;
   transpose: ControlInstanceId;
   tempo: ControlInstanceId;
   barLength: ControlInstanceId;
@@ -148,6 +150,9 @@ const initialState: AppState = {
   )![0],
   key: Object.entries(DefaultPlayerControls).find(
     (e) => e[1].key === "key"
+  )![0],
+  scale: Object.entries(DefaultPlayerControls).find(
+    (e) => e[1].key === "scale"
   )![0],
   transpose: Object.entries(DefaultPlayerControls).find(
     (e) => e[1].key === "transpose"

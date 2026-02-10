@@ -17,6 +17,7 @@ export default function (props: Props) {
     //        "enabled",
     "midiChannel",
     "key",
+	"scale",
   ];
 
   const noteControls: LayerControlKey[] = [
@@ -35,7 +36,7 @@ export default function (props: Props) {
       <Control
         controlId={reactiveState.layers[props.layerIndex][controlKey]}
         key={controlKey}
-        layerIndex={props.layerIndex}
+//        layerIndex={props.layerIndex}
       />
     );
   }

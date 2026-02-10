@@ -37,6 +37,7 @@ export interface SerializedCompositionLayer {
   enabled: SerializedCompositionControl;
   midiChannel: SerializedCompositionControl;
   key: SerializedCompositionControl;
+  scale: SerializedCompositionControl;
   transpose: SerializedCompositionControl;
   tempo: SerializedCompositionControl;
   barLength: SerializedCompositionControl;
@@ -54,6 +55,7 @@ export interface SerializedComposition {
   tokens: SerializedCompositionToken[];
   global: {
     key: SerializedCompositionControl;
+	scale: SerializedCompositionControl;
     transpose: SerializedCompositionControl;
     tempo: SerializedCompositionControl;
     tempoSync: SerializedCompositionControl;
@@ -144,6 +146,7 @@ export function serializeComposition(
     tokens: tokenMap,
     global: {
       key: serializeControl(appState.controls[appState.key]),
+	  scale: serializeControl(appState.controls[appState.scale]),
       transpose: serializeControl(appState.controls[appState.transpose]),
       tempo: serializeControl(appState.controls[appState.tempo]),
       tempoSync: serializeControl(appState.controls[appState.tempoSync]),
@@ -161,6 +164,7 @@ export function serializeComposition(
         enabled: serializeControl(appState.controls[layer.enabled]),
         midiChannel: serializeControl(appState.controls[layer.midiChannel]),
         key: serializeControl(appState.controls[layer.key]),
+        scale: serializeControl(appState.controls[layer.scale]),
         transpose: serializeControl(appState.controls[layer.transpose]),
         tempo: serializeControl(appState.controls[layer.tempo]),
         barLength: serializeControl(appState.controls[layer.barLength]),
@@ -255,6 +259,7 @@ export async function deserializeComposition(
       enabled: layer.enabled.id,
       midiChannel: layer.midiChannel.id,
       key: layer.key.id,
+	  scale: layer.scale.id,
       transpose: layer.transpose.id,
       tempo: layer.tempo.id,
       barLength: layer.barLength.id,
@@ -284,6 +289,7 @@ export async function deserializeComposition(
   return {
     ...appState,
     key: c.global.key.id,
+	scale: c.global.scale.id,
     transpose: c.global.transpose.id,
     tempo: c.global.tempo.id,
     barLength: c.global.barLength.id,

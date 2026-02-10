@@ -8,12 +8,18 @@ import state from "../state/AppState";
 import settings from "../state/AppSettings";
 import Dict from "../lib/dict";
 
+interface Props {
+}
+
 export default function PlayerSettings() {
   const controlStates = Dict.fromArray(
     PlayerControlKeys.map((key) => [key, state.useState((s) => s[key])])
   );
   const reactiveSettings = settings.useState();
-  const layerControls: PlayerControlKey[] = ["key"];
+  const layerControls: PlayerControlKey[] = [
+  "key",
+  "scale",
+  ];
 
   const noteControls: PlayerControlKey[] = [
     "transpose",

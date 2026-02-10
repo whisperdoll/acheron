@@ -51,6 +51,7 @@ const directionOrder = [5, 0, 1, 4, 3, 2];
 
 interface Props {
   controlId: string;
+  layerIndex?: number;
   bald?: boolean; // if bald, act as a plain wrapper
 }
 

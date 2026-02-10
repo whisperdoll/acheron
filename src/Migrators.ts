@@ -6,7 +6,7 @@ import {
 } from "./Serialization";
 import { AppSettings, TokenSettings } from "./state/AppSettings";
 import { tokenDefinitions } from "./Tokens";
-import { KeyMap, TokenUID } from "./Types";
+import { KeyMap, ScaleMap, TokenUID } from "./Types";
 import {
   buildLfo,
   DefaultPlayerControls,
@@ -57,6 +57,7 @@ interface SerializedCompositionLayerV1 {
   enabled: boolean;
   midiChannel: number;
   key: number;
+  scale: number;
   transpose: SerializedCompositionControlV1;
   tempo: SerializedCompositionControlV1;
   barLength: SerializedCompositionControlV1;
@@ -78,6 +79,7 @@ interface SerializedCompositionV1 {
   tokens: SerializedCompositionTokenV1[];
   global: {
     key: number;
+	scale: number;
     transpose: SerializedCompositionControlV1;
     tempo: SerializedCompositionControlV1;
     tempoSync?: boolean;
@@ -179,6 +181,18 @@ function migrateSerializedLayer(
         ),
         fixedValue: Object.keys(KeyMap)[serialized.key],
       },
+      scale: {
+        id: "",
+        currentValueType: "fixed",
+        key: "scale",
+        lfo: buildLfo(
+          "select",
+          undefined,
+          undefined,
+          Object.keys(ScaleMap).map((scale) => ({ label: scale, value: scale }))
+        ),
+        fixedValue: Object.keys(ScaleMap)[serialized.scale],
+      },
       tempoSync: {
         id: "",
         currentValueType: "fixed",
@@ -256,6 +270,21 @@ export async function migrateSerializedComposition(
             fixedValue: serialized.global.key,
           }
         : serialized.global.key,
+	scale:
+	  typeof serialized.global.scale === "number"
+        ? {
+            id: "",
+            currentValueType: "fixed",
+            key: "scale",
+            lfo: buildLfo(
+              "select",
+              undefined,
+              undefined,
+              DefaultPlayerControls.scale.options
+            ),
+            fixedValue: serialized.global.scale,
+          }
+        : serialized.global.scale,
     tempoSync:
       typeof serialized.global.tempoSync !== "object"
         ? {

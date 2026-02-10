@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { ControlState, KeyMap, PerformanceNote } from "../Types";
+import { ControlState, KeyMap, ScaleMap, PerformanceNote, major, minor, harmmajor, harmminor, melominor, doubleharmonicmajor, doubleharmonicminor, neapolitanmajor, neapolitanminor, enigmatic } from "../Types";
 import { Canvas } from "../utils/canvas";
 import {
   generateGridNotes,
@@ -730,11 +730,24 @@ export default function HexGrid(props: Props) {
 
       // draw key //
       // console.log(state);
-      const key: keyof typeof KeyMap = state.getControlValue({
+	  
+	  
+//	  major(noteArray.indexOf("A"))
+	  
+	  
+      const key: keyof typeof KeyMap = 
+	  (state.getControlValue({
         layerControl: "key",
         layer: props.layerIndex,
-      }) as keyof typeof KeyMap;
-      if (key !== "None") {
+      }) + " " + state.getControlValue({
+        layerControl: "scale",
+        layer: props.layerIndex,
+      })) as keyof typeof KeyMap;
+	  
+	  
+
+	  
+        if (!key.endsWith("None")) {
         const notes = KeyMap[key].map((ni) => noteArray[ni]);
         for (
           let i = 0;
@@ -756,6 +769,7 @@ export default function HexGrid(props: Props) {
           }
         }
       }
+	  
 
       // draw selected //
       if (hexIsSelected(state.values)) {

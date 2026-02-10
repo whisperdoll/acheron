@@ -52,7 +52,7 @@ export type TokenUID = string;
 export type TokenInstanceId = string;
 export type ControlInstanceId = string;
 
-function major(root: number) {
+export function major(root: number) {
   return [
     root,
     root + 2,
@@ -64,7 +64,19 @@ function major(root: number) {
   ].map((n) => n % 12);
 }
 
-function minor(root: number) {
+export function harmmajor(root: number) {
+  return [
+    root,
+    root + 2,
+    root + 4,
+    root + 5,
+    root + 7,
+    root + 8,
+    root + 11,
+  ].map((n) => n % 12);
+}
+
+export function minor(root: number) {
   return [
     root,
     root + 2,
@@ -76,40 +88,227 @@ function minor(root: number) {
   ].map((n) => n % 12);
 }
 
+export function harmminor(root: number) {
+  return [
+    root,
+    root + 2,
+    root + 3,
+    root + 5,
+    root + 7,
+    root + 8,
+    root + 11,
+  ].map((n) => n % 12);
+}
+
+export function melominor(root: number) {
+  return [
+    root,
+    root + 2,
+    root + 3,
+    root + 5,
+    root + 7,
+    root + 9,
+    root + 11,
+  ].map((n) => n % 12);
+}
+
+export function doubleharmonicminor(root: number) {
+  return [
+    root,
+    root + 2,
+    root + 3,
+    root + 6,
+    root + 7,
+    root + 8,
+    root + 11,
+  ].map((n) => n % 12);
+}
+
+export function doubleharmonicmajor(root: number) {
+  return [
+    root,
+    root + 1,
+    root + 4,
+    root + 5,
+    root + 7,
+    root + 8,
+    root + 11,
+  ].map((n) => n % 12);
+}
+
+export function enigmatic(root: number) {
+  return [
+    root,
+    root + 1,
+    root + 4,
+    root + 6,
+    root + 8,
+    root + 10,
+    root + 11,
+  ].map((n) => n % 12);
+}
+
+export function neapolitanmajor(root: number) {
+  return [
+    root,
+    root + 1,
+    root + 3,
+    root + 5,
+    root + 7,
+    root + 9,
+    root + 11,
+  ].map((n) => n % 12);
+}
+
+export function neapolitanminor(root: number) {
+  return [
+    root,
+    root + 1,
+    root + 3,
+    root + 5,
+    root + 7,
+    root + 8,
+    root + 11,
+  ].map((n) => n % 12);
+}
+
+
 export const KeyMap = {
-  None: noteArray.map((n, i) => i),
-  "A major": major(noteArray.indexOf("A")),
-  "A minor": minor(noteArray.indexOf("A")),
-  "A flat major": major(noteArray.indexOf("G#")),
-  "A flat minor": minor(noteArray.indexOf("G#")),
-  "A sharp minor": minor(noteArray.indexOf("A#")),
-  "B major": major(noteArray.indexOf("B")),
-  "B minor": minor(noteArray.indexOf("B")),
-  "B flat major": major(noteArray.indexOf("A#")),
-  "B flat minor": minor(noteArray.indexOf("A#")),
-  "C major": major(noteArray.indexOf("C")),
-  "C minor": minor(noteArray.indexOf("C")),
-  "C flat major": major(noteArray.indexOf("B")),
-  "C sharp major": major(noteArray.indexOf("C#")),
-  "C sharp minor": minor(noteArray.indexOf("C#")),
-  "D major": major(noteArray.indexOf("D")),
-  "D minor": minor(noteArray.indexOf("D")),
-  "D flat major": major(noteArray.indexOf("C#")),
-  "D flat minor": minor(noteArray.indexOf("C#")),
-  "D sharp minor": minor(noteArray.indexOf("D#")),
-  "E major": major(noteArray.indexOf("E")),
-  "E minor": minor(noteArray.indexOf("E")),
-  "E flat major": major(noteArray.indexOf("D#")),
-  "E flat minor": minor(noteArray.indexOf("D#")),
-  "F major": major(noteArray.indexOf("F")),
-  "F minor": minor(noteArray.indexOf("F")),
-  "F flat major": major(noteArray.indexOf("E")),
-  "F sharp major": major(noteArray.indexOf("F#")),
-  "F sharp minor": minor(noteArray.indexOf("F#")),
-  "G major": major(noteArray.indexOf("G")),
-  "G minor": minor(noteArray.indexOf("G")),
-  "G flat minor": minor(noteArray.indexOf("F#")),
-  "G sharp minor": minor(noteArray.indexOf("G#")),
+  "None": noteArray.map((n, i) => i),
+  "A Major": major(noteArray.indexOf("A")),
+  "A# Major": major(noteArray.indexOf("A#")),
+  "B Major": major(noteArray.indexOf("B")),
+  "C Major": major(noteArray.indexOf("C")),
+  "C# Major": major(noteArray.indexOf("C#")),
+  "D Major": major(noteArray.indexOf("D")),
+  "D# Major": major(noteArray.indexOf("D#")),
+  "E Major": major(noteArray.indexOf("E")),
+  "F Major": major(noteArray.indexOf("F")),
+  "F# Major": major(noteArray.indexOf("F#")),
+  "G Major": major(noteArray.indexOf("G")),
+  "G# Major": major(noteArray.indexOf("G#")),
+  "A Minor": minor(noteArray.indexOf("A")),
+  "A# Minor": minor(noteArray.indexOf("A#")),
+  "B Minor": minor(noteArray.indexOf("B")),
+  "C Minor": minor(noteArray.indexOf("C")),
+  "C# Minor": minor(noteArray.indexOf("C#")),
+  "D Minor": minor(noteArray.indexOf("D")),
+  "D# Minor": minor(noteArray.indexOf("D#")),
+  "E Minor": minor(noteArray.indexOf("E")),
+  "F Minor": minor(noteArray.indexOf("F")),
+  "F# Minor": minor(noteArray.indexOf("F#")),
+  "G Minor": minor(noteArray.indexOf("G")),
+  "G# Minor": minor(noteArray.indexOf("G#")),
+  "A Harmonic Minor": harmminor(noteArray.indexOf("A")),
+  "A# Harmonic Minor": harmminor(noteArray.indexOf("A#")),
+  "B Harmonic Minor": harmminor(noteArray.indexOf("B")),
+  "C Harmonic Minor": harmminor(noteArray.indexOf("C")),
+  "C# Harmonic Minor": harmminor(noteArray.indexOf("C#")),
+  "D Harmonic Minor": harmminor(noteArray.indexOf("D")),
+  "D# Harmonic Minor": harmminor(noteArray.indexOf("D#")),
+  "E Harmonic Minor": harmminor(noteArray.indexOf("E")),
+  "F Harmonic Minor": harmminor(noteArray.indexOf("F")),
+  "F# Harmonic Minor": harmminor(noteArray.indexOf("F#")),
+  "G Harmonic Minor": harmminor(noteArray.indexOf("G")),
+  "G# Harmonic Minor": harmminor(noteArray.indexOf("G#")),
+  "A Harmonic Major": harmmajor(noteArray.indexOf("A")),
+  "A# Harmonic Major": harmmajor(noteArray.indexOf("A#")),
+  "B Harmonic Major": harmmajor(noteArray.indexOf("B")),
+  "C Harmonic Major": harmmajor(noteArray.indexOf("C")),
+  "C# Harmonic Major": harmmajor(noteArray.indexOf("C#")),
+  "D Harmonic Major": harmmajor(noteArray.indexOf("D")),
+  "D# Harmonic Major": harmmajor(noteArray.indexOf("D#")),
+  "E Harmonic Major": harmmajor(noteArray.indexOf("E")),
+  "F Harmonic Major": harmmajor(noteArray.indexOf("F")),
+  "F# Harmonic Major": harmmajor(noteArray.indexOf("F#")),
+  "G Harmonic Major": harmmajor(noteArray.indexOf("G")),
+  "G# Harmonic Major": harmmajor(noteArray.indexOf("G#")),
+  "A Neapolitan Major": neapolitanmajor(noteArray.indexOf("A")),
+  "A# Neapolitan Major": neapolitanmajor(noteArray.indexOf("A#")),
+  "B Neapolitan Major": neapolitanmajor(noteArray.indexOf("B")),
+  "C Neapolitan Major": neapolitanmajor(noteArray.indexOf("C")),
+  "C# Neapolitan Major": neapolitanmajor(noteArray.indexOf("C#")),
+  "D Neapolitan Major": neapolitanmajor(noteArray.indexOf("D")),
+  "D# Neapolitan Major": neapolitanmajor(noteArray.indexOf("D#")),
+  "E Neapolitan Major": neapolitanmajor(noteArray.indexOf("E")),
+  "F Neapolitan Major": neapolitanmajor(noteArray.indexOf("F")),
+  "F# Neapolitan Major": neapolitanmajor(noteArray.indexOf("F#")),
+  "G Neapolitan Major": neapolitanmajor(noteArray.indexOf("G")),
+  "G# Neapolitan Major": neapolitanmajor(noteArray.indexOf("G#")),
+  "A Neapolitan Minor": neapolitanminor(noteArray.indexOf("A")),
+  "A# Neapolitan Minor": neapolitanminor(noteArray.indexOf("A#")),
+  "B Neapolitan Minor": neapolitanminor(noteArray.indexOf("B")),
+  "C Neapolitan Minor": neapolitanminor(noteArray.indexOf("C")),
+  "C# Neapolitan Minor": neapolitanminor(noteArray.indexOf("C#")),
+  "D Neapolitan Minor": neapolitanminor(noteArray.indexOf("D")),
+  "D# Neapolitan Minor": neapolitanminor(noteArray.indexOf("D#")),
+  "E Neapolitan Minor": neapolitanminor(noteArray.indexOf("E")),
+  "F Neapolitan Minor": neapolitanminor(noteArray.indexOf("F")),
+  "F# Neapolitan Minor": neapolitanminor(noteArray.indexOf("F#")),
+  "G Neapolitan Minor": neapolitanminor(noteArray.indexOf("G")),
+  "G# Neapolitan Minor": neapolitanminor(noteArray.indexOf("G#")),
+  "A Melodic Minor": melominor(noteArray.indexOf("A")),
+  "A# Melodic Minor": melominor(noteArray.indexOf("A#")),
+  "B Melodic Minor": melominor(noteArray.indexOf("B")),
+  "C Melodic Minor": melominor(noteArray.indexOf("C")),
+  "C# Melodic Minor": melominor(noteArray.indexOf("C#")),
+  "D Melodic Minor": melominor(noteArray.indexOf("D")),
+  "D# Melodic Minor": melominor(noteArray.indexOf("D#")),
+  "E Melodic Minor": melominor(noteArray.indexOf("E")),
+  "F Melodic Minor": melominor(noteArray.indexOf("F")),
+  "F# Melodic Minor": melominor(noteArray.indexOf("F#")),
+  "G Melodic Minor": melominor(noteArray.indexOf("G")),
+  "G# Melodic Minor": melominor(noteArray.indexOf("G#")),
+  "A Double Harmonic Minor": doubleharmonicminor(noteArray.indexOf("A")),
+  "A# Double Harmonic Minor": doubleharmonicminor(noteArray.indexOf("A#")),
+  "B Double Harmonic Minor": doubleharmonicminor(noteArray.indexOf("B")),
+  "C Double Harmonic Minor": doubleharmonicminor(noteArray.indexOf("C")),
+  "C# Double Harmonic Minor": doubleharmonicminor(noteArray.indexOf("C#")),
+  "D Double Harmonic Minor": doubleharmonicminor(noteArray.indexOf("D")),
+  "D# Double Harmonic Minor": doubleharmonicminor(noteArray.indexOf("D#")),
+  "E Double Harmonic Minor": doubleharmonicminor(noteArray.indexOf("E")),
+  "F Double Harmonic Minor": doubleharmonicminor(noteArray.indexOf("F")),
+  "F# Double Harmonic Minor": doubleharmonicminor(noteArray.indexOf("F#")),
+  "G Double Harmonic Minor": doubleharmonicminor(noteArray.indexOf("G")),
+  "G# Double Harmonic Minor": doubleharmonicminor(noteArray.indexOf("G#")),
+  "A Double Harmonic Major": doubleharmonicmajor(noteArray.indexOf("A")),
+  "A# Double Harmonic Major": doubleharmonicmajor(noteArray.indexOf("A#")),
+  "B Double Harmonic Major": doubleharmonicmajor(noteArray.indexOf("B")),
+  "C Double Harmonic Major": doubleharmonicmajor(noteArray.indexOf("C")),
+  "C# Double Harmonic Major": doubleharmonicmajor(noteArray.indexOf("C#")),
+  "D Double Harmonic Major": doubleharmonicmajor(noteArray.indexOf("D")),
+  "D# Double Harmonic Major": doubleharmonicmajor(noteArray.indexOf("D#")),
+  "E Double Harmonic Major": doubleharmonicmajor(noteArray.indexOf("E")),
+  "F Double Harmonic Major": doubleharmonicmajor(noteArray.indexOf("F")),
+  "F# Double Harmonic Major": doubleharmonicmajor(noteArray.indexOf("F#")),
+  "G Double Harmonic Major": doubleharmonicmajor(noteArray.indexOf("G")),
+  "G# Double Harmonic Major": doubleharmonicmajor(noteArray.indexOf("G#")),
+  "A Enigmatic": enigmatic(noteArray.indexOf("A")),
+  "A# Enigmatic": enigmatic(noteArray.indexOf("A#")),
+  "B Enigmatic": enigmatic(noteArray.indexOf("B")),
+  "C Enigmatic": enigmatic(noteArray.indexOf("C")),
+  "C# Enigmatic": enigmatic(noteArray.indexOf("C#")),
+  "D Enigmatic": enigmatic(noteArray.indexOf("D")),
+  "D# Enigmatic": enigmatic(noteArray.indexOf("D#")),
+  "E Enigmatic": enigmatic(noteArray.indexOf("E")),
+  "F Enigmatic": enigmatic(noteArray.indexOf("F")),
+  "F# Enigmatic": enigmatic(noteArray.indexOf("F#")),
+  "G Enigmatic": enigmatic(noteArray.indexOf("G")),
+  "G# Enigmatic": enigmatic(noteArray.indexOf("G#")),
+};
+
+export const ScaleMap = {
+  "None": "None",
+  "Major": "Major",
+  "Minor": "Minor",
+  "Harmonic Major": "Harmonic Major",
+  "Harmonic Minor": "Harmonic Minor",
+  "Neapolitan Major": "Neapolitan Major",
+  "Neapolitan Minor": "Neapolitan Minor",
+  "Melodic Minor": "Melodic Minor",
+  "Double Harmonic Major": "Double Harmonic Major",
+  "Double Harmonic Minor": "Double Harmonic Minor",
+  "Enigmatic": "Enigmatic",
 };
 
 export type Direction = 0 | 1 | 2 | 3 | 4 | 5;
