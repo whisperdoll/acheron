@@ -175,6 +175,18 @@ export function neapolitanminor(root: number) {
 
 export const KeyMap = {
   "None": noteArray.map((n, i) => i),
+  "A None": noteArray.map((n, i) => i),
+  "A# None": noteArray.map((n, i) => i),
+  "B None": noteArray.map((n, i) => i),
+  "C None": noteArray.map((n, i) => i),
+  "C# None": noteArray.map((n, i) => i),
+  "D None": noteArray.map((n, i) => i),
+  "D# None": noteArray.map((n, i) => i),
+  "E None": noteArray.map((n, i) => i),
+  "F None": noteArray.map((n, i) => i),
+  "F# None": noteArray.map((n, i) => i),
+  "G None": noteArray.map((n, i) => i),
+  "G# None": noteArray.map((n, i) => i),
   "A Major": major(noteArray.indexOf("A")),
   "A# Major": major(noteArray.indexOf("A#")),
   "B Major": major(noteArray.indexOf("B")),
