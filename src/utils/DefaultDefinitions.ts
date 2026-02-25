@@ -6,6 +6,16 @@ import {
   ControlDataType,
   TokenUID,
   TokenInstanceId,
+  major,
+  minor,
+  harmmajor,
+  harmminor,
+  melominor,
+  doubleharmonicmajor,
+  doubleharmonicminor,
+  neapolitanmajor,
+  neapolitanminor,
+  enigmatic, 
 } from "../Types";
 import { v4 as uuidv4 } from "uuid";
 import { getInheritParts } from "./elysiumutils";
@@ -17,6 +27,7 @@ import { NumMIDIChannels } from "../constants";
 
 export const PlayerControlKeys = [
   "key",
+  "scale",
   "transpose",
   "barLength",
   "tempo",
@@ -43,13 +54,13 @@ export const noteArray: string[] = [
   "B", // 11
 ];
 
-function major(root: number) {
-  return [root, root + 2, root + 4, root + 5, root + 7, root + 9, root + 11].map((n) => n % 12);
-}
-
-function minor(root: number) {
-  return [root, root + 2, root + 3, root + 5, root + 7, root + 8, root + 10].map((n) => n % 12);
-}
+//function major(root: number) {
+//  return [root, root + 2, root + 4, root + 5, root + 7, root + 9, root + 11].map((n) => n % 12);
+//}
+//
+//function minor(root: number) {
+//  return [root, root + 2, root + 3, root + 5, root + 7, root + 8, root + 10].map((n) => n % 12);
+//}
 
 export type PlayerControlKey = (typeof PlayerControlKeys)[number];
 
@@ -58,42 +69,41 @@ export const playerControlDefs: Record<PlayerControlKey, ControlDefinition> = {
     label: "Key",
     type: "select",
     options: Object.keys({
-      None: noteArray.map((n, i) => i),
-      "A major": major(noteArray.indexOf("A")),
-      "A minor": minor(noteArray.indexOf("A")),
-      "A flat major": major(noteArray.indexOf("G#")),
-      "A flat minor": minor(noteArray.indexOf("G#")),
-      "A sharp minor": minor(noteArray.indexOf("A#")),
-      "B major": major(noteArray.indexOf("B")),
-      "B minor": minor(noteArray.indexOf("B")),
-      "B flat major": major(noteArray.indexOf("A#")),
-      "B flat minor": minor(noteArray.indexOf("A#")),
-      "C major": major(noteArray.indexOf("C")),
-      "C minor": minor(noteArray.indexOf("C")),
-      "C flat major": major(noteArray.indexOf("B")),
-      "C sharp major": major(noteArray.indexOf("C#")),
-      "C sharp minor": minor(noteArray.indexOf("C#")),
-      "D major": major(noteArray.indexOf("D")),
-      "D minor": minor(noteArray.indexOf("D")),
-      "D flat major": major(noteArray.indexOf("C#")),
-      "D flat minor": minor(noteArray.indexOf("C#")),
-      "D sharp minor": minor(noteArray.indexOf("D#")),
-      "E major": major(noteArray.indexOf("E")),
-      "E minor": minor(noteArray.indexOf("E")),
-      "E flat major": major(noteArray.indexOf("D#")),
-      "E flat minor": minor(noteArray.indexOf("D#")),
-      "F major": major(noteArray.indexOf("F")),
-      "F minor": minor(noteArray.indexOf("F")),
-      "F flat major": major(noteArray.indexOf("E")),
-      "F sharp major": major(noteArray.indexOf("F#")),
-      "F sharp minor": minor(noteArray.indexOf("F#")),
-      "G major": major(noteArray.indexOf("G")),
-      "G minor": minor(noteArray.indexOf("G")),
-      "G flat minor": minor(noteArray.indexOf("F#")),
-      "G sharp minor": minor(noteArray.indexOf("G#")),
+      "A": "A",      
+	  "A#": "A#",
+	  "B": "B",
+	  "C": "C",	  
+	  "C#": "C#",
+	  "D": "D",	  
+	  "D#": "D#",
+	  "E": "E",
+	  "F": "F",	  
+	  "F#": "F#",
+	  "G": "G",
+	  "G#": "G#",
     }).map((key) => ({
       label: key,
       value: key,
+    })),
+  },
+  scale: {
+    label: "Scale",
+    type: "select",
+    options: Object.keys({
+      "None": "None",
+	  "Major": "Major",
+	  "Minor": "Minor",
+	  "Melodic Minor": "Melodic Minor",
+	  "Harmonic Minor": "Harmonic Minor",
+	  "Harmonic Major": "Harmonic Major",
+	  "Neapolitan Major": "Neapolitan Major",
+	  "Neapolitan Minor": "Neapolitan Minor",
+	  "Double Harmonic Minor": "Double Harmonic Minor",
+	  "Double Harmonic Major": "Double Harmonic Major",
+	  "Enigmatic": "Enigmatic",
+	  	}).map((scale) => ({
+      label: scale,
+      value: scale,
     })),
   },
   transpose: {
@@ -170,6 +180,7 @@ export const LayerControlTypes = [
   "enabled",
   "midiChannel",
   "key",
+  "scale",
   "barLength",
   "emphasis",
   "tempo",
@@ -200,6 +211,9 @@ function layerControlDefs(): Record<LayerControlKey, ControlDefinition> {
     },
     key: {
       inherit: "global.key",
+	},  
+    scale: {
+      inherit: "global.scale",
     },
     barLength: {
       inherit: "global.barLength",
@@ -228,8 +242,8 @@ function layerControlDefs(): Record<LayerControlKey, ControlDefinition> {
     timeToLive: {
       inherit: "global.timeToLive",
     },
-  };
-}
+  }
+};
 
 export function DefaultLayerControls(): Record<TokenInstanceId, ControlState> {
   return buildFromDefs(layerControlDefs());
