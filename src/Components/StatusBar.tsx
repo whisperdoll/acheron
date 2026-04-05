@@ -1,5 +1,4 @@
-import state from "../state/AppState";
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
 import settings from "../state/AppSettings";
 import GoogleIconButton from "./GoogleIconButton";
 import { Props as GoogleIconProps } from "./GoogleIcon";
@@ -13,20 +12,24 @@ import { cx } from "../lib/utils";
 import GridSizeMenu from "./GridSizeMenu";
 import TouchModeMenu from "./TouchModeMenu";
 import { deserializeComposition, serializeComposition } from "../Serialization";
+import { AppContext, togglePlaying } from "../state/AppState";
 
 interface Props {}
 
 export default React.memo(function StatusBar(props: Props) {
-  const reactiveState = state.useState((s) => ({
-    isPlaying: s.isPlaying,
-    currentBeat: Math.floor(s.layers[s.selectedHex.layerIndex].currentBeat),
-    isMultiLayerMode: s.isMultiLayerMode,
-    isShowingTouchModeMenu: s.isShowingTouchModeMenu,
-    isShowingGridSizeMenu: s.isShowingGridSizeMenu,
-  }));
+  const { state, setState } = useContext(AppContext)!;
+  const reactiveState = {
+    isPlaying: state.isPlaying,
+    currentBeat: Math.floor(
+      state.layers[state.selectedHex.layerIndex].currentBeat,
+    ),
+    isMultiLayerMode: state.isMultiLayerMode,
+    isShowingTouchModeMenu: state.isShowingTouchModeMenu,
+    isShowingGridSizeMenu: state.isShowingGridSizeMenu,
+  };
   const keyboardShortcutStrings = useKeyboardShortcutStrings();
   const reactiveSettings = settings.useState((s) =>
-    sliceObject(s, ["wrapPlayheads", "touchMode"])
+    sliceObject(s, ["wrapPlayheads", "touchMode"]),
   );
 
   const iconProps: Pick<
@@ -40,7 +43,7 @@ export default React.memo(function StatusBar(props: Props) {
 
   function withShortcut(
     str: string,
-    shortcut: keyof typeof keyboardShortcutStrings
+    shortcut: keyof typeof keyboardShortcutStrings,
   ): string {
     const shortcutString = keyboardShortcutStrings[shortcut];
     return shortcutString ? `${str} (${shortcutString})` : str;
@@ -56,7 +59,7 @@ export default React.memo(function StatusBar(props: Props) {
         ></div>
 
         <GoogleIconButton
-          onClick={() => saveComposition(serializeComposition(state.values))}
+          onClick={() => saveComposition(serializeComposition(state))}
           icon="save"
           title={"Save"}
           iconElementProps={{
@@ -71,10 +74,12 @@ export default React.memo(function StatusBar(props: Props) {
             const composition = await openComposition();
             if (!composition) return;
 
-            state.set(
-              (state) => deserializeComposition(state, composition),
-              "load"
+            const deserialized = await deserializeComposition(
+              state,
+              composition,
             );
+
+            setState(deserialized);
           }}
           icon="upload_file"
           title={"Load"}
@@ -87,10 +92,10 @@ export default React.memo(function StatusBar(props: Props) {
         />
         <GoogleIconButton
           icon={reactiveState.isPlaying ? "stop" : "play_arrow"}
-          onClick={() => state.togglePlaying("toggle play button")}
+          onClick={() => togglePlaying(setState, "toggle play button")}
           title={withShortcut(
             reactiveState.isPlaying ? "Stop" : "Play",
-            "play"
+            "play",
           )}
           iconElementProps={{
             style: {
@@ -104,12 +109,10 @@ export default React.memo(function StatusBar(props: Props) {
           icon={"touch_app"}
           title={`Change touch mode`}
           onClick={() =>
-            state.set(
-              (s) => ({
-                isShowingTouchModeMenu: !s.isShowingTouchModeMenu,
-              }),
-              "toggle touch mode menu"
-            )
+            setState((s) => ({
+              ...s,
+              isShowingTouchModeMenu: !s.isShowingTouchModeMenu,
+            }))
           }
           {...iconProps}
           data-touch-mode-menu="1"
@@ -118,12 +121,10 @@ export default React.memo(function StatusBar(props: Props) {
           icon="grid_on"
           title="Change grid size"
           onClick={() =>
-            state.set(
-              (s) => ({
-                isShowingGridSizeMenu: !s.isShowingGridSizeMenu,
-              }),
-              "toggle grid mode menu"
-            )
+            setState((s) => ({
+              ...s,
+              isShowingGridSizeMenu: !s.isShowingGridSizeMenu,
+            }))
           }
           {...iconProps}
           data-grid-size-menu="1"
@@ -132,10 +133,7 @@ export default React.memo(function StatusBar(props: Props) {
           icon="layers"
           title={withShortcut("Toggle MultiLayer Mode", "toggleMultilayerMode")}
           onClick={() =>
-            state.set(
-              (s) => ({ isMultiLayerMode: !s.isMultiLayerMode }),
-              "toggle multilayer mode"
-            )
+            setState((s) => ({ ...s, isMultiLayerMode: !s.isMultiLayerMode }))
           }
           {...iconProps}
           className={cx({
@@ -151,7 +149,7 @@ export default React.memo(function StatusBar(props: Props) {
           onClick={() =>
             settings.set(
               (s) => ({ wrapPlayheads: !s.wrapPlayheads }),
-              "toggle wrap playheads"
+              "toggle wrap playheads",
             )
           }
           {...iconProps}
@@ -162,9 +160,7 @@ export default React.memo(function StatusBar(props: Props) {
         />
 
         <GoogleIconButton
-          onClick={() =>
-            state.set({ isShowingSettings: true }, "show settings")
-          }
+          onClick={() => setState((s) => ({ ...s, isShowingSettings: true }))}
           icon="settings"
           title={withShortcut("Settings", "settings")}
           iconElementProps={{
@@ -179,7 +175,7 @@ export default React.memo(function StatusBar(props: Props) {
           title="Report a bug"
           onClick={() => {
             openUrl(
-              "https://github.com/whisperdoll/acheron/issues/new?assignees=&labels=bug&template=1-Bug_report.md"
+              "https://github.com/whisperdoll/acheron/issues/new?assignees=&labels=bug&template=1-Bug_report.md",
             );
           }}
           opticalSize={20}
@@ -203,7 +199,7 @@ export default React.memo(function StatusBar(props: Props) {
           title="Help"
           onClick={() =>
             openUrl(
-              "https://github.com/whisperdoll/acheron/wiki/Acheron-Documentation"
+              "https://github.com/whisperdoll/acheron/wiki/Acheron-Documentation",
             )
           }
           iconElementProps={{
@@ -217,7 +213,7 @@ export default React.memo(function StatusBar(props: Props) {
           {env("gitHash") && (
             <a
               href={`https://github.com/whisperdoll/acheron/commit/${env(
-                "gitHash"
+                "gitHash",
               )}`}
               target="_blank"
             >

@@ -1,19 +1,19 @@
 import React, { useContext } from "react";
 import { TokenUID } from "../Types";
-import state from "../state/AppState";
 import settings from "../state/AppSettings";
+import { AppContext } from "../state/AppState";
 
 interface Props {
   onHide: () => any;
 }
 
 export default function TokenManager(props: Props) {
-  const reactiveState = state.useState();
+  const { state, setState } = useContext(AppContext)!;
   const reactiveSettings = settings.useState();
 
   function handleShortcutKey(
     e: React.KeyboardEvent<HTMLInputElement>,
-    uid: TokenUID
+    uid: TokenUID,
   ) {
     if ([...e.key].length === 1) {
       settings.set(
@@ -23,7 +23,7 @@ export default function TokenManager(props: Props) {
             [uid]: { ...reactiveSettings.tokens[uid], shortcut: e.key },
           },
         },
-        "set token shortcut"
+        "set token shortcut",
       );
     } else if (e.key === "Delete" || e.key === "Backspace") {
       if ([...e.key].length === 1) {
@@ -34,7 +34,7 @@ export default function TokenManager(props: Props) {
               [uid]: { ...reactiveSettings.tokens[uid], shortcut: "" },
             },
           },
-          "clear token shortcut"
+          "clear token shortcut",
         );
       }
     }
@@ -49,7 +49,7 @@ export default function TokenManager(props: Props) {
         {Object.entries(reactiveSettings.tokens).map(([uid, settings]) => (
           <div className="tokenSetting" key={uid}>
             <div className="tokenLabel">
-              {reactiveState.tokenDefinitions[uid].label}
+              {state.tokenDefinitions[uid].label}
             </div>
             <div className="row">
               <span>Shortcut:</span>

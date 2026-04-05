@@ -1,13 +1,13 @@
 import React from "react";
 import { ControlChangeMessageEvent } from "webmidi";
-import appStateStore from "./AppState";
 import { ControlInstanceId } from "../Types";
+import { AppState } from "./AppState";
 
 export interface IControlContext {
-  controls: typeof appStateStore.values.controls;
-  layers: typeof appStateStore.values.layers;
-  tokens: typeof appStateStore.values.tokens;
-  selectedLayer: typeof appStateStore.values.selectedHex.layerIndex;
+  controls: AppState["controls"];
+  layers: AppState["layers"];
+  tokens: AppState["tokens"];
+  selectedLayer: AppState["selectedHex"]["layerIndex"];
   controlId: ControlInstanceId;
 }
 

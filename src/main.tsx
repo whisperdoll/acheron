@@ -2,6 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
 import Synth from "./Components/Synth";
+import { AppContextProvider } from "./state/AppState";
 
 // import { warn, debug, trace, info, error } from "@tauri-apps/plugin-log";
 
@@ -26,5 +27,5 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     <App />
     {/* <Synth /> */}
-  </React.StrictMode>
+  </React.StrictMode>,
 );

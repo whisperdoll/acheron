@@ -1,16 +1,17 @@
-import React, { useEffect, useRef } from "react";
-import state, { LayerState } from "../state/AppState";
+import React, { useContext, useEffect, useRef } from "react";
+import { AppContext, LayerState } from "../state/AppState";
 import GoogleIconButton from "./GoogleIconButton";
 import List from "../lib/list";
 
 export default function GridModeMenu() {
+  const { state, setState } = useContext(AppContext)!;
+
   const ref = useRef<HTMLDivElement>(null);
-  const reactiveState = state.useState();
 
   function addRow() {
     const newLayers: LayerState[] = [];
 
-    state.values.layers.forEach((layer, i) => {
+    state.layers.forEach((layer, i) => {
       const newLayer: typeof layer = {
         ...layer,
         tokenIds: List.copy(layer.tokenIds),
@@ -21,10 +22,10 @@ export default function GridModeMenu() {
       // 21...
       List.reversed(
         List.range({
-          from: state.values.gridRows,
-          length: state.values.gridCols,
-          stride: state.values.gridRows,
-        })
+          from: state.gridRows,
+          length: state.gridCols,
+          stride: state.gridRows,
+        }),
       ).forEach((indexToInsertInto) => {
         newLayer.tokenIds.splice(indexToInsertInto, 0, []);
         newLayer.playheads.splice(indexToInsertInto, 0, []);
@@ -33,25 +34,23 @@ export default function GridModeMenu() {
       newLayers.push(newLayer);
     });
 
-    state.set(
-      {
-        layers: newLayers,
-        gridRows: state.values.gridRows + 1,
-        selectedHex: {
-          hexIndex: -1,
-          layerIndex: state.values.selectedHex.layerIndex,
-        },
+    setState((s) => ({
+      ...s,
+      layers: newLayers,
+      gridRows: state.gridRows + 1,
+      selectedHex: {
+        hexIndex: -1,
+        layerIndex: state.selectedHex.layerIndex,
       },
-      "add row"
-    );
+    }));
   }
 
   function removeRow() {
-    if (state.values.gridRows === 1) return;
+    if (state.gridRows === 1) return;
 
     const newLayers: LayerState[] = [];
 
-    state.values.layers.forEach((layer, i) => {
+    state.layers.forEach((layer, i) => {
       const newLayer: typeof layer = {
         ...layer,
         tokenIds: List.copy(layer.tokenIds),
@@ -62,10 +61,10 @@ export default function GridModeMenu() {
       // 21...
       List.reversed(
         List.range({
-          from: state.values.gridRows - 1,
-          length: state.values.gridCols,
-          stride: state.values.gridRows,
-        })
+          from: state.gridRows - 1,
+          length: state.gridCols,
+          stride: state.gridRows,
+        }),
       ).forEach((indexToInsertInto) => {
         newLayer.tokenIds.splice(indexToInsertInto, 1);
         newLayer.playheads.splice(indexToInsertInto, 1);
@@ -74,30 +73,28 @@ export default function GridModeMenu() {
       newLayers.push(newLayer);
     });
 
-    state.set(
-      {
-        layers: newLayers,
-        gridRows: state.values.gridRows - 1,
-        selectedHex: {
-          hexIndex: -1,
-          layerIndex: state.values.selectedHex.layerIndex,
-        },
+    setState((s) => ({
+      ...s,
+      layers: newLayers,
+      gridRows: state.gridRows - 1,
+      selectedHex: {
+        hexIndex: -1,
+        layerIndex: state.selectedHex.layerIndex,
       },
-      "remove row"
-    );
+    }));
   }
 
   function addColumn() {
     const newLayers: LayerState[] = [];
 
-    state.values.layers.forEach((layer, i) => {
+    state.layers.forEach((layer, i) => {
       const newLayer: typeof layer = {
         ...layer,
         tokenIds: List.copy(layer.tokenIds),
         playheads: List.copy(layer.playheads),
       };
 
-      List.range(state.values.gridRows).forEach(() => {
+      List.range(state.gridRows).forEach(() => {
         newLayer.tokenIds.push([]);
         newLayer.playheads.push([]);
       });
@@ -105,23 +102,21 @@ export default function GridModeMenu() {
       newLayers.push(newLayer);
     });
 
-    state.set(
-      {
-        layers: newLayers,
-        gridCols: state.values.gridCols + 1,
-        selectedHex: {
-          hexIndex: -1,
-          layerIndex: state.values.selectedHex.layerIndex,
-        },
+    setState((s) => ({
+      ...s,
+      layers: newLayers,
+      gridCols: state.gridCols + 1,
+      selectedHex: {
+        hexIndex: -1,
+        layerIndex: state.selectedHex.layerIndex,
       },
-      "add col"
-    );
+    }));
   }
 
   function removeColumn() {
     const newLayers: LayerState[] = [];
 
-    state.values.layers.forEach((layer, i) => {
+    state.layers.forEach((layer, i) => {
       const newLayer: typeof layer = {
         ...layer,
         tokenIds: List.copy(layer.tokenIds),
@@ -129,28 +124,26 @@ export default function GridModeMenu() {
       };
 
       newLayer.tokenIds.splice(
-        state.values.gridCols * state.values.gridRows - state.values.gridRows,
-        state.values.gridRows
+        state.gridCols * state.gridRows - state.gridRows,
+        state.gridRows,
       );
       newLayer.playheads.splice(
-        state.values.gridCols * state.values.gridRows - state.values.gridRows,
-        state.values.gridRows
+        state.gridCols * state.gridRows - state.gridRows,
+        state.gridRows,
       );
 
       newLayers.push(newLayer);
     });
 
-    state.set(
-      {
-        layers: newLayers,
-        gridCols: state.values.gridCols - 1,
-        selectedHex: {
-          hexIndex: -1,
-          layerIndex: state.values.selectedHex.layerIndex,
-        },
+    setState((s) => ({
+      ...s,
+      layers: newLayers,
+      gridCols: state.gridCols - 1,
+      selectedHex: {
+        hexIndex: -1,
+        layerIndex: state.selectedHex.layerIndex,
       },
-      "remove col"
-    );
+    }));
   }
 
   useEffect(() => {
@@ -173,13 +166,10 @@ export default function GridModeMenu() {
         return;
       }
 
-      state.set(
-        (s) => ({
-          ...s,
-          isShowingGridSizeMenu: false,
-        }),
-        "toggle showing grid size menu"
-      );
+      setState((s) => ({
+        ...s,
+        isShowingGridSizeMenu: false,
+      }));
     }
 
     document.addEventListener("pointerdown", pointerDown);
@@ -198,7 +188,7 @@ export default function GridModeMenu() {
           size={1.5}
           onClick={() => removeRow()}
         />
-        Rows: {reactiveState.gridRows}
+        Rows: {state.gridRows}
         <GoogleIconButton
           icon="add"
           buttonStyle="rounded"
@@ -217,7 +207,7 @@ export default function GridModeMenu() {
           size={1.5}
           onClick={() => removeColumn()}
         />
-        Columns: {reactiveState.gridCols}
+        Columns: {state.gridCols}
         <GoogleIconButton
           icon="add"
           buttonStyle="rounded"

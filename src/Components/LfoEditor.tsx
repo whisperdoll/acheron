@@ -2,15 +2,14 @@ import { useContext } from "react";
 import { Lfo, LfoType, LfoTypes } from "../Types";
 import { capitalize } from "../utils/utils";
 import NumberInput from "./NumberInput";
-import state from "../state/AppState";
 import settings from "../state/AppSettings";
+import { AppContext, stopEditingLfo } from "../state/AppState";
 
 export default function LfoEditor() {
-  const reactiveState = state.useState();
+  const { state, setState } = useContext(AppContext)!;
   const reactiveSettings = settings.useState();
 
-  const modifyingControl =
-    reactiveState.controls[reactiveState.editingLfo!.controlId];
+  const modifyingControl = state.controls[state.editingLfo!.controlId];
   const modifyingLfo = modifyingControl.lfo;
 
   function modifyLfo(partial: Partial<Lfo>) {
@@ -19,21 +18,19 @@ export default function LfoEditor() {
       ...partial,
     };
 
-    state.set(
-      {
-        controls: {
-          ...reactiveState.controls,
-          [modifyingControl.id]: {
-            ...modifyingControl,
-            lfo: {
-              ...modifyingLfo,
-              ...partial,
-            },
+    setState((state) => ({
+      ...state,
+      controls: {
+        ...state.controls,
+        [modifyingControl.id]: {
+          ...modifyingControl,
+          lfo: {
+            ...modifyingLfo,
+            ...partial,
           },
         },
       },
-      "modify lfo"
-    );
+    }));
   }
 
   const coerce =
@@ -134,7 +131,7 @@ export default function LfoEditor() {
                   onChange={(newValue) =>
                     modifyLfo({
                       sequence: modifyingLfo.sequence.map((v, vi) =>
-                        vi === i ? coerce(newValue) : v
+                        vi === i ? coerce(newValue) : v,
                       ),
                     })
                   }
@@ -143,7 +140,7 @@ export default function LfoEditor() {
                   onClick={() =>
                     modifyLfo({
                       sequence: modifyingLfo.sequence.filter(
-                        (_, vi) => vi !== i
+                        (_, vi) => vi !== i,
                       ),
                     })
                   }
@@ -162,7 +159,7 @@ export default function LfoEditor() {
           </div>
         )}
         <div className="bottomButtons">
-          <button onClick={() => state.stopEditingLfo("stop editing lfo")}>
+          <button onClick={() => stopEditingLfo(setState, "stop editing lfo")}>
             OK
           </button>
         </div>

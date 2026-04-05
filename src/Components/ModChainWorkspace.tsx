@@ -1,5 +1,11 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import state from "../state/AppState";
+import {
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import * as Control from "./Control";
 import GoogleIconButton from "./GoogleIconButton";
 import { Lfo, ModChainItem } from "../Types";
@@ -14,17 +20,19 @@ import {
 } from "../state/ModChainWorkspaceContext";
 import ModChainWorkspaceWires from "./ModChainWorkspaceWires";
 import { cx, resolveMaybeGenerated } from "../lib/utils";
+import { AppContext } from "../state/AppState";
 
 interface Props {}
 
 export default function ModChainWorkspace(props: Props) {
+  const { state, setState } = useContext(AppContext)!;
   const containerRef = useRef<HTMLDivElement>(null);
   const scrollPartContainerRef = useRef<HTMLDivElement>(null);
-  const { modChainControl, control, modChain } = state.useState((s) => ({
-    modChainControl: s.modChainControl!,
-    control: s.controls[s.modChainControl!],
-    modChain: s.modChains[s.modChainControl!],
-  }));
+  const { modChainControl, control, modChain } = {
+    modChainControl: state.modChainControl!,
+    control: state.controls[state.modChainControl!],
+    modChain: state.modChains[state.modChainControl!],
+  };
 
   function calculateContainerBounds() {
     if (!containerRef.current || !scrollPartContainerRef.current) return;
@@ -62,7 +70,7 @@ export default function ModChainWorkspace(props: Props) {
         };
       });
     },
-    [_setModChainContext]
+    [_setModChainContext],
   );
 
   useEffect(() => {
@@ -96,21 +104,19 @@ export default function ModChainWorkspace(props: Props) {
 
   function addModChainItem(item: ModChainItem) {
     const id = uuidv4();
-    state.set(
-      (s) => ({
-        modChains: {
-          ...s.modChains,
-          [s.modChainControl!]: {
-            ...s.modChains[s.modChainControl!],
-            mods: {
-              ...s.modChains[s.modChainControl!].mods,
-              [id]: item,
-            },
+    setState((s) => ({
+      ...s,
+      modChains: {
+        ...s.modChains,
+        [s.modChainControl!]: {
+          ...s.modChains[s.modChainControl!],
+          mods: {
+            ...s.modChains[s.modChainControl!].mods,
+            [id]: item,
           },
         },
-      }),
-      `add ${item} to mod chain`
-    );
+      },
+    }));
   }
 
   function addLfo() {
@@ -152,7 +158,7 @@ export default function ModChainWorkspace(props: Props) {
                     controlId={modChainControl}
                   />
                 );
-              }
+              },
             )}
           </div>
           <div className="fixedPart">

@@ -17,7 +17,6 @@ import Settings from "./Components/Settings";
 import LfoEditor from "./Components/LfoEditor";
 import { buildMenu } from "./Menu";
 import { deserializeComposition } from "./Serialization";
-import state, { AppStateStore } from "./state/AppState";
 import settings, { AppSettings } from "./state/AppSettings";
 import useTimer from "./Hooks/useTimer";
 import StatusBar from "./Components/StatusBar";
@@ -37,13 +36,19 @@ import {
 import Dict from "./lib/dict";
 import useLazyRef from "./useLazyRef";
 import ModChainWorkspace from "./Components/ModChainWorkspace";
+import {
+  addLayer,
+  initialState,
+  removeLayer,
+  togglePlaying,
+} from "./state/AppState";
 
 export default function App() {
-  const reactiveState = state.useState();
+  const [state, setState] = useState(initialState);
   const keyboardShortcuts = settings.useState((s) => s.keyboardShortcuts);
   const keyboardShortcutStrings = useMemo(
     () => Dict.transformedValues(keyboardShortcuts, keyboardShortcutString),
-    [keyboardShortcuts]
+    [keyboardShortcuts],
   );
   const resizing = useRef<
     "leftColumn" | "inspector" | "modChainWorkspace" | null
@@ -59,39 +64,33 @@ export default function App() {
     > = {
       addNewLayer: {
         onTrigger: () =>
-          state.addLayer(true, "add layer via keyboard shortcut"),
+          addLayer(setState, true, "add layer via keyboard shortcut"),
       },
       play: {
         onTrigger: () =>
-          state.togglePlaying("toggle play via keyboard shortcut"),
+          togglePlaying(setState, "toggle play via keyboard shortcut"),
       },
       settings: {
         onTrigger: () =>
-          state.set(
-            { isShowingSettings: true },
-            "show settings via keyboard shortcut"
-          ),
+          setState((state) => ({ ...state, isShowingSettings: true })),
       },
       toggleMultilayerMode: {
         onTrigger: () =>
-          state.set(
-            (s) => ({ isMultiLayerMode: !s.isMultiLayerMode }),
-            "toggle multilayer mode via keyboard shortcut"
-          ),
+          setState((s) => ({ ...s, isMultiLayerMode: !s.isMultiLayerMode })),
       },
       toggleShowInspector: {
         onTrigger: () =>
-          state.set(
-            (s) => ({ isShowingInspector: !s.isShowingInspector }),
-            "toggle showing inspector via keyboard shortcut"
-          ),
+          setState((s) => ({
+            ...s,
+            isShowingInspector: !s.isShowingInspector,
+          })),
       },
       toggleShowLeftColumn: {
         onTrigger: () =>
-          state.set(
-            (s) => ({ isShowingLeftColumn: !s.isShowingLeftColumn }),
-            "toggle showing left column via keyboard shortcut"
-          ),
+          setState((s) => ({
+            ...s,
+            isShowingLeftColumn: !s.isShowingLeftColumn,
+          })),
       },
     };
 
@@ -100,16 +99,17 @@ export default function App() {
   }, [keyboardShortcuts]);
 
   const driver = useMemo(() => {
-    return new Driver(new AppStateStore(state.values, true));
+    return new Driver(state);
   }, []);
 
   const [startTimer, stopTimer] = useTimer({
     onTick: (deltaMs: number) => {
       // console.time("tick");
 
-      driver.state = new AppStateStore(state.values, true);
+      // driver.state = new AppStateStore(state, true);
+      driver.state = state;
 
-      if (stopped.current && state.values.isPlaying) {
+      if (stopped.current && state.isPlaying) {
         driver.start();
         stopped.current = false;
       }
@@ -123,12 +123,12 @@ export default function App() {
         delta = Math.max(delta - step, 0);
       }
 
-      if (!stopped.current && !state.values.isPlaying) {
+      if (!stopped.current && !state.isPlaying) {
         driver.stop();
         stopped.current = true;
       }
 
-      state.set(driver.state.values, "tick");
+      setState(driver.state);
       lastTick.current = now;
 
       // console.timeEnd("tick");
@@ -138,39 +138,27 @@ export default function App() {
   function updateInspectorWidth() {
     document.documentElement.style.setProperty(
       "--inspectorWidth",
-      `${state.values.inspectorWidth}px`
+      `${state.inspectorWidth}px`,
     );
   }
 
   function updateLeftColumnWidth() {
     document.documentElement.style.setProperty(
       "--leftColumnWidth",
-      `${state.values.leftColumnWidth}px`
+      `${state.leftColumnWidth}px`,
     );
   }
 
   function updateModChainWorkspaceHeight() {
     document.documentElement.style.setProperty(
       "--modChainWorkspaceHeight",
-      `${state.values.modChainWorkspaceHeight}px`
+      `${state.modChainWorkspaceHeight}px`,
     );
   }
 
-  state.useSubscription(
-    updateInspectorWidth,
-    [],
-    state.filters.deepEqual((s) => s.inspectorWidth)
-  );
-  state.useSubscription(
-    updateLeftColumnWidth,
-    [],
-    state.filters.deepEqual((s) => s.leftColumnWidth)
-  );
-  state.useSubscription(
-    updateModChainWorkspaceHeight,
-    [],
-    state.filters.deepEqual((s) => s.modChainWorkspaceHeight)
-  );
+  useEffect(updateInspectorWidth, [state.inspectorWidth]);
+  useEffect(updateLeftColumnWidth, [state.leftColumnWidth]);
+  useEffect(updateModChainWorkspaceHeight, [state.modChainWorkspaceHeight]);
 
   useLayoutEffect(() => {
     updateInspectorWidth();
@@ -178,29 +166,23 @@ export default function App() {
 
     function move(e: PointerEvent) {
       if (resizing.current === "leftColumn") {
-        state.set(
-          (s) => ({
-            leftColumnWidth: Math.max(s.leftColumnWidth + e.movementX, 100),
-          }),
-          "resize left col"
-        );
+        setState((s) => ({
+          ...s,
+          leftColumnWidth: Math.max(s.leftColumnWidth + e.movementX, 100),
+        }));
       } else if (resizing.current === "inspector") {
-        state.set(
-          (s) => ({
-            inspectorWidth: Math.max(s.inspectorWidth - e.movementX, 100),
-          }),
-          "resize inspector"
-        );
+        setState((s) => ({
+          ...s,
+          inspectorWidth: Math.max(s.inspectorWidth - e.movementX, 100),
+        }));
       } else if (resizing.current === "modChainWorkspace") {
-        state.set(
-          (s) => ({
-            modChainWorkspaceHeight: Math.max(
-              s.modChainWorkspaceHeight - e.movementY,
-              100
-            ),
-          }),
-          "resize modChainWorkspaceHeight"
-        );
+        setState((s) => ({
+          ...s,
+          modChainWorkspaceHeight: Math.max(
+            s.modChainWorkspaceHeight - e.movementY,
+            100,
+          ),
+        }));
       }
     }
 
@@ -226,10 +208,7 @@ export default function App() {
   }, []);
 
   function toggleLeftColumn() {
-    state.set(
-      (s) => ({ isShowingLeftColumn: !s.isShowingLeftColumn }),
-      "toggle showing left col"
-    );
+    setState((s) => ({ ...s, isShowingLeftColumn: !s.isShowingLeftColumn }));
   }
 
   useEffect(() => {
@@ -238,29 +217,22 @@ export default function App() {
         const serialized = await openComposition();
         if (!serialized) return;
 
-        state.set((state) => {
-          return deserializeComposition(state, serialized);
-        }, "open composition from menu");
+        const deserialized = await deserializeComposition(state, serialized);
+        setState(deserialized);
       },
       saveAs() {},
       addLayer() {
-        state.addLayer(true, "add layer from menu");
+        addLayer(setState, true, "add layer from menu");
       },
       async devtools() {
         await toggleDevtools();
       },
       toggleInspector() {
-        state.set(
-          (s) => ({ isShowingInspector: !s.isShowingInspector }),
-          "toggle showing inspector"
-        );
+        setState((s) => ({ ...s, isShowingInspector: !s.isShowingInspector }));
       },
       toggleLeftColumn,
       toggleMultilayer() {
-        state.set(
-          (s) => ({ isMultiLayerMode: !s.isMultiLayerMode }),
-          "toggle multilayer"
-        );
+        setState((s) => ({ ...s, isMultiLayerMode: !s.isMultiLayerMode }));
       },
     });
   }, []);
@@ -277,10 +249,10 @@ export default function App() {
 
   useEffect(() => {
     Midi.onOutputsChanged = (outputs) => {
-      state.set({ allowedOutputs: outputs }, "allowed midi outputs changed");
+      setState((s) => ({ ...s, allowedOutputs: outputs }));
     };
     Midi.onInputsChanged = (inputs) => {
-      state.set({ allowedInputs: inputs }, "allowed midi inputs changed");
+      setState((s) => ({ ...s, allowedInputs: inputs }));
     };
 
     function keyDown(e: KeyboardEvent) {
@@ -298,12 +270,12 @@ export default function App() {
           layerIndex = 9;
         }
 
-        if (layerIndex < state.values.layers.length) {
+        if (layerIndex < state.layers.length) {
           e.preventDefault();
-          state.set(
-            (state) => ({ selectedHex: { ...state.selectedHex, layerIndex } }),
-            "changing layer from keyboard shortcut"
-          );
+          setState((state) => ({
+            ...state,
+            selectedHex: { ...state.selectedHex, layerIndex },
+          }));
         }
       }
     }
@@ -323,7 +295,7 @@ export default function App() {
       Midi.setEnabledInputs(settings.midiInputs);
     },
     [],
-    settings.filters.deepEqual((s) => s.midiInputs)
+    settings.filters.deepEqual((s) => s.midiInputs),
   );
 
   settings.useSubscription(
@@ -331,15 +303,15 @@ export default function App() {
       Midi.setEnabledOutputs(settings.midiOutputs);
     },
     [],
-    settings.filters.deepEqual((s) => s.midiOutputs)
+    settings.filters.deepEqual((s) => s.midiOutputs),
   );
 
   async function confirmRemoveLayer(layerIndex?: number) {
     if (layerIndex === undefined) {
-      layerIndex = state.values.selectedHex.layerIndex;
+      layerIndex = state.selectedHex.layerIndex;
     }
 
-    if (state.values.layers.length === 1) {
+    if (state.layers.length === 1) {
       // TODO
       // remote.dialog.showMessageBox(remote.getCurrentWindow(), {
       //   message: "You must have at least one layer.",
@@ -351,11 +323,11 @@ export default function App() {
     } else if (
       !settings.values.confirmDelete ||
       (await confirmPrompt(
-        `Are you sure you want to delete the layer '${state.values.layers[layerIndex].name}'?`,
-        "Confirm delete"
+        `Are you sure you want to delete the layer '${state.layers[layerIndex].name}'?`,
+        "Confirm delete",
       ))
     ) {
-      state.removeLayer(layerIndex, "removing layer");
+      removeLayer(setState, layerIndex, "removing layer");
     }
   }
 
@@ -364,7 +336,7 @@ export default function App() {
   }
 
   function showSettings() {
-    state.set({ isShowingSettings: true }, "show settings");
+    setState((s) => ({ ...s, isShowingSettings: true }));
   }
 
   async function saveComposition() {
@@ -386,7 +358,7 @@ export default function App() {
     //     return;
     //   }
     //   dispatch({
-    //     type: "setAppState",
+    //     type: "setState",
     //     payload: deserializeComposition(state, JSON.parse(data)),
     //   });
     // });
@@ -397,17 +369,15 @@ export default function App() {
     const size = parseInt(n);
     if (isNaN(size)) return;
 
-    state.set(
-      {
-        multiLayerSize: size,
-      },
-      "set multilayer size"
-    );
+    setState((s) => ({
+      ...s,
+      multiLayerSize: size,
+    }));
   }
 
   function reportABug() {
     open(
-      "https://github.com/whisperdoll/acheron/issues/new?assignees=&labels=bug&template=1-Bug_report.md"
+      "https://github.com/whisperdoll/acheron/issues/new?assignees=&labels=bug&template=1-Bug_report.md",
     );
   }
 
@@ -415,18 +385,14 @@ export default function App() {
     open("https://www.patreon.com/whisperdoll");
   }
 
-  state.useSubscription(
-    () => {
-      document.documentElement.style.setProperty(
-        "--multilayer-cols",
-        state.values.multiLayerSize.toString()
-      );
-    },
-    [],
-    state.filters.deepEqual((s) => s.multiLayerSize)
-  );
+  useEffect(() => {
+    document.documentElement.style.setProperty(
+      "--multilayer-cols",
+      state.multiLayerSize.toString(),
+    );
+  }, [state.multiLayerSize]);
 
-  const inspector = reactiveState.isShowingInspector ? (
+  const inspector = state.isShowingInspector ? (
     <>
       <div
         className="resizeHandle"
@@ -436,7 +402,7 @@ export default function App() {
           resizing.current = "inspector";
         }}
       ></div>
-      <Inspector layerIndex={reactiveState.selectedHex.layerIndex} />
+      <Inspector layerIndex={state.selectedHex.layerIndex} />
     </>
   ) : (
     <>
@@ -446,17 +412,14 @@ export default function App() {
         buttonStyle="rounded"
         fill
         onClick={() =>
-          state.set(
-            (s) => ({ isShowingInspector: !s.isShowingInspector }),
-            "toggle showing inspector"
-          )
+          setState((s) => ({ ...s, isShowingInspector: !s.isShowingInspector }))
         }
         opticalSize={20}
         title={`Show Inspector (${keyboardShortcutStrings.toggleShowInspector})`}
       />
     </>
   );
-  const leftColumn = reactiveState.isShowingLeftColumn ? (
+  const leftColumn = state.isShowingLeftColumn ? (
     <>
       <div className="leftColumn">
         <div className="mainHeader">
@@ -479,33 +442,23 @@ export default function App() {
         </div>
         <div className="tabs">
           <button
-            onClick={() =>
-              state.set(
-                { leftColumnTab: "player" },
-                "show player tab on left col"
-              )
-            }
-            className={reactiveState.leftColumnTab === "player" ? "active" : ""}
+            onClick={() => setState((s) => ({ ...s, leftColumnTab: "player" }))}
+            className={state.leftColumnTab === "player" ? "active" : ""}
           >
             Global
           </button>
           <button
-            onClick={() =>
-              state.set(
-                { leftColumnTab: "layer" },
-                "show layer tab on left col"
-              )
-            }
-            className={reactiveState.leftColumnTab === "layer" ? "active" : ""}
+            onClick={() => setState((s) => ({ ...s, leftColumnTab: "layer" }))}
+            className={state.leftColumnTab === "layer" ? "active" : ""}
           >
             Layer
           </button>
         </div>
-        {reactiveState.leftColumnTab === "player" ? (
+        {state.leftColumnTab === "player" ? (
           <PlayerSettings />
         ) : (
           <LayerSettings
-            layerIndex={reactiveState.selectedHex.layerIndex}
+            layerIndex={state.selectedHex.layerIndex}
           ></LayerSettings>
         )}
       </div>
@@ -534,48 +487,46 @@ export default function App() {
 
   return (
     <div className="app">
-      {reactiveState.isShowingSettings && (
+      {state.isShowingSettings && (
         <Settings
-          onHide={() =>
-            state.set({ isShowingSettings: false }, "hide settings")
-          }
+          onHide={() => setState((s) => ({ ...s, isShowingSettings: false }))}
         />
       )}
-      {reactiveState.editingLfo && <LfoEditor />}
+      {state.editingLfo && <LfoEditor />}
       <div className="columns">
         {leftColumn}
 
         <div
           className={`middleColumn ${
-            reactiveState.isMultiLayerMode ? "multilayer" : "single-layer"
+            state.isMultiLayerMode ? "multilayer" : "single-layer"
           }`}
         >
-          {reactiveState.isMultiLayerMode ? (
+          {state.isMultiLayerMode ? (
             <>
               <div className="multilayerSizeContainer">
                 <span className="columnsLabel">
-                  Columns: {reactiveState.multiLayerSize}
+                  Columns: {state.multiLayerSize}
                 </span>
                 <input
                   type="range"
                   min={1}
                   max={10}
                   step={1}
-                  value={reactiveState.multiLayerSize}
+                  value={state.multiLayerSize}
                   onChange={(e) => setMultiLayerSize(e.currentTarget.value)}
                 />
                 <GoogleIconButton
                   icon="add"
                   buttonStyle="rounded"
                   fill
-                  onClick={(e) => state.addLayer(true, "add layer button")}
+                  onClick={(e) => addLayer(setState, true, "add layer button")}
                 >
                   Add Layer (
                   {keyboardShortcutString(keyboardShortcuts.addNewLayer)})
                 </GoogleIconButton>
               </div>
               <div className="multilayer">
-                {reactiveState.layers.map((layer, layerIndex) => (
+                {state.layers.map((layer, layerIndex) => (
                   <div className="layerContainer" key={layerIndex}>
                     <div className="layerName">
                       <span>{layer.name}</span>
@@ -597,14 +548,14 @@ export default function App() {
           ) : (
             <>
               <LayerSelect />
-              <HexGrid layerIndex={reactiveState.selectedHex.layerIndex} />
+              <HexGrid layerIndex={state.selectedHex.layerIndex} />
             </>
           )}
         </div>
 
         {inspector}
       </div>
-      {reactiveState.modChainControl && (
+      {state.modChainControl && (
         <>
           <div
             className="resizeHandle-alt"

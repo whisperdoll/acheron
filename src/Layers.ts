@@ -1,5 +1,5 @@
 import Dict from "./lib/dict";
-import { AppState, AppStateStore, LayerState } from "./state/AppState";
+import { AppState, LayerState } from "./state/AppState";
 import { ControlState } from "./Types";
 import {
   DefaultLayerControls,
@@ -20,7 +20,7 @@ export function buildLayer(appState: AppState): {
         Object.entries(controls).map(([id, value]) => [
           value.key as LayerControlKey,
           id,
-        ])
+        ]),
       ),
       tokenIds: createEmpty2dArray(appState.gridCols * appState.gridRows),
       playheads: createEmpty2dArray(appState.gridCols * appState.gridRows),

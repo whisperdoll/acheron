@@ -6,12 +6,12 @@ import {
   LfoType,
   LfoTypes,
 } from "../Types";
-import state from "../state/AppState";
 import { capitalize } from "../utils/utils";
 import NumberInput from "./NumberInput";
 import ModChainInputNode from "./ModChainInputNode";
 import { ModChainWorkspaceContext } from "../state/ModChainWorkspaceContext";
 import { isNil } from "../lib/utils";
+import { AppContext, resolveModItem } from "../state/AppState";
 
 interface Props {
   control?: ControlState;
@@ -32,11 +32,13 @@ export default React.memo(function LfoControls({
   onUpdate,
   modItemId,
 }: Props) {
+  const { state, setState } = useContext(AppContext)!;
+
   const modChainWorkspaceContext = useContext(ModChainWorkspaceContext);
-  const modChain = state.useState((s) =>
-    s.modChainControl ? s.modChains[s.modChainControl] : null
-  );
-  const now = state.useState((s) => Math.round(s.layers[0].currentTimeMs / 60));
+  const modChain = state.modChainControl
+    ? state.modChains[state.modChainControl]
+    : null;
+  const now = Math.round(state.layers[0].currentTimeMs / 60);
 
   const inputValues = useMemo(() => {
     const ret: Partial<Record<LfoConnectableProperty, number>> = {};
@@ -45,8 +47,11 @@ export default React.memo(function LfoControls({
 
     modChain.connections.forEach((connection) => {
       if (connection.to === modItemId) {
-        ret[connection.property as LfoConnectableProperty] =
-          state.resolveModItem(modChain, connection.from);
+        ret[connection.property as LfoConnectableProperty] = resolveModItem(
+          state,
+          modChain,
+          connection.from,
+        );
       }
     });
 
@@ -194,7 +199,7 @@ export default React.memo(function LfoControls({
                   onChange={(newValue) =>
                     modifyLfo({
                       sequence: lfo.sequence.map((v, vi) =>
-                        vi === i ? coerce(newValue) : v
+                        vi === i ? coerce(newValue) : v,
                       ),
                     })
                   }

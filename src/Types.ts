@@ -4,11 +4,7 @@ import {
   getInheritParts,
   noteArray,
 } from "./utils/elysiumutils";
-import appStateStore, {
-  AppState,
-  AppStateStore,
-  LayerState,
-} from "./state/AppState";
+import { AppState, LayerState } from "./state/AppState";
 import { sliceObject } from "./utils/utils";
 import { PlayerControlKey } from "./utils/DefaultDefinitions";
 import { randomFloat } from "./lib/utils";
@@ -116,16 +112,16 @@ export type Direction = 0 | 1 | 2 | 3 | 4 | 5;
 
 export type StartCallback<StoreType extends TokenStore = TokenStore> = (
   store: StoreType,
-  helpers: Record<string, Function>
+  helpers: Record<string, Function>,
 ) => any;
 export type StopCallback<StoreType extends TokenStore = TokenStore> = (
   store: StoreType,
-  helpers: Record<string, Function>
+  helpers: Record<string, Function>,
 ) => any;
 export type TickCallback<StoreType extends TokenStore = TokenStore> = (
   store: StoreType,
   helpers: Record<string, Function>,
-  playheads: Omit<Playhead, "store">[]
+  playheads: Omit<Playhead, "store">[],
 ) => any;
 export const ControlDataTypes = [
   "int",
@@ -143,10 +139,10 @@ export type TypeForControlDataType<T extends ControlDataType> = T extends
   | "triad"
   ? number
   : T extends "select"
-  ? string
-  : T extends "bool"
-  ? boolean
-  : never;
+    ? string
+    : T extends "bool"
+      ? boolean
+      : never;
 
 export interface SelectOption {
   label: string;
@@ -212,7 +208,7 @@ export function copyControl(control: ControlState): ControlState {
 }
 
 export function coerceControlValueFromNumber<
-  T extends ControlDataType = ControlDataType
+  T extends ControlDataType = ControlDataType,
 >(value: number, control: ControlState<T>): TypeForControlDataType<T> {
   return (() => {
     switch (control.type) {
@@ -236,10 +232,10 @@ export function coerceControlValueFromNumber<
 }
 
 export function coerceControlValueToNumber<
-  T extends ControlDataType = ControlDataType
+  T extends ControlDataType = ControlDataType,
 >(
   value: TypeForControlDataType<ControlDataType>,
-  control: ShallowControlState<T>
+  control: ShallowControlState<T>,
 ): number {
   if (control.type === "select") {
     return control.options!.findIndex((o) => o.value === value);
@@ -256,8 +252,9 @@ export interface TokenCallbacks<StoreType extends TokenStore = TokenStore> {
   onTick?: TickCallback<StoreType>;
 }
 
-export interface Token<StoreType extends TokenStore = TokenStore>
-  extends TokenDefinition {
+export interface Token<
+  StoreType extends TokenStore = TokenStore,
+> extends TokenDefinition {
   controlIds: string[];
   callbacks: TokenCallbacks;
   store: StoreType;
@@ -305,28 +302,28 @@ export type LfoConnectableProperty =
   | "hiPeriod"
   | "period";
 
-export function findPropertyConnection(
-  modChainItemId: ModChainItemID,
-  property: LfoConnectableProperty
-) {
-  Object.values(appStateStore.values.modChains).forEach((modChain) => {
-    modChain.connections.forEach((connection) => {
-      if (
-        connection.to === modChainItemId &&
-        connection.property === property
-      ) {
-        return connection;
-      }
-    });
-  });
+// export function findPropertyConnection(
+//   modChainItemId: ModChainItemID,
+//   property: LfoConnectableProperty
+// ) {
+//   Object.values(appStateStore.values.modChains).forEach((modChain) => {
+//     modChain.connections.forEach((connection) => {
+//       if (
+//         connection.to === modChainItemId &&
+//         connection.property === property
+//       ) {
+//         return connection;
+//       }
+//     });
+//   });
 
-  return null;
-}
+//   return null;
+// }
 
 export function getLfoValue(
   lfo: Lfo,
   currentTime: { beat: number; ms: number },
-  align: "beat" | "ms"
+  align: "beat" | "ms",
 ): number {
   const now =
     align === "ms"

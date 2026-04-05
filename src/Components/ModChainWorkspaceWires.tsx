@@ -1,19 +1,19 @@
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { ModChainWorkspaceContext } from "../state/ModChainWorkspaceContext";
 import ModChainWorkspaceWire from "./ModChainWorkspaceWire";
-import state from "../state/AppState";
 import { sliceObject } from "../utils/utils";
+import { AppContext } from "../state/AppState";
 
 interface Props {}
 
 export default function ModChainWorkspaceWires(props: Props) {
+  const { state, setState } = useContext(AppContext)!;
+
   const parentElement = useMemo(() => {
     return document.querySelector(".modChainWorkspace");
   }, []);
   const modChainWorkspaceContext = useContext(ModChainWorkspaceContext);
-  const modChain = state.useState(
-    (s) => s.modChains[modChainWorkspaceContext.modChainId]
-  );
+  const modChain = state.modChains[modChainWorkspaceContext.modChainId];
   const [mousePosition, setMousePosition] = useState<{
     x: number;
     y: number;

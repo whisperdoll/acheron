@@ -1,5 +1,5 @@
 import React, { useCallback, useContext, useMemo } from "react";
-import state from "../state/AppState";
+import { AppContext } from "../state/AppState";
 import LfoVisualizer from "./LfoVisualizer";
 import LfoControls from "./LfoControls";
 import * as Control from "./Control";
@@ -13,11 +13,11 @@ interface Props {
 }
 
 export default React.memo(function ModChainItemComponent(props: Props) {
-  const modChainItem = state.useState(
-    (s) => s.modChains[props.controlId].mods[props.id]
-  );
-  const sourceControl = state.useState((s) => s.controls[props.controlId]);
-  const currentTimeMs = state.useState((s) => s.layers[0].currentTimeMs);
+  const { state, setState } = useContext(AppContext)!;
+
+  const modChainItem = state.modChains[props.controlId].mods[props.id];
+  const sourceControl = state.controls[props.controlId];
+  const currentTimeMs = state.layers[0].currentTimeMs;
   const shallowControl: ShallowControlState | null = useMemo(
     () =>
       modChainItem.__type === "fixedControlValue"
@@ -26,35 +26,33 @@ export default React.memo(function ModChainItemComponent(props: Props) {
             fixedValue: modChainItem.value,
           }
         : null,
-    [modChainItem, sourceControl]
+    [modChainItem, sourceControl],
   );
 
   const updateFixedControlValue = useCallback(
     (newShallowControl: ShallowControlState) => {
       const value = coerceControlValueToNumber(
         newShallowControl.fixedValue,
-        newShallowControl
+        newShallowControl,
       );
-      state.set(
-        (s) => ({
-          modChains: {
-            ...s.modChains,
-            [props.controlId]: {
-              ...s.modChains[props.controlId],
-              mods: {
-                ...s.modChains[props.controlId].mods,
-                [props.id]: {
-                  ...s.modChains[props.controlId].mods[props.id],
-                  value,
-                },
+      setState((s) => ({
+        ...s,
+        modChains: {
+          ...s.modChains,
+          [props.controlId]: {
+            ...s.modChains[props.controlId],
+            mods: {
+              ...s.modChains[props.controlId].mods,
+              [props.id]: {
+                ...s.modChains[props.controlId].mods[props.id],
+                value,
               },
             },
           },
-        }),
-        "update fixed control mod value"
-      );
+        },
+      }));
     },
-    []
+    [],
   );
 
   return (
@@ -63,10 +61,10 @@ export default React.memo(function ModChainItemComponent(props: Props) {
         {modChainItem.__type === "lfo"
           ? "LFO"
           : modChainItem.__type === "fixedControlValue"
-          ? `Fixed ${state.values.controls[modChainItem.controlId].type} value`
-          : modChainItem.__type === "fixedValue"
-          ? "Fixed value"
-          : state.values.controls[modChainItem.controlId].label}
+            ? `Fixed ${state.controls[modChainItem.controlId].type} value`
+            : modChainItem.__type === "fixedValue"
+              ? "Fixed value"
+              : state.controls[modChainItem.controlId].label}
       </div>
       <div className="contents">
         {(() => {
@@ -89,26 +87,22 @@ export default React.memo(function ModChainItemComponent(props: Props) {
                     lfo={modChainItem}
                     modItemId={props.id}
                     onUpdate={(newLfo) => {
-                      state.set(
-                        (s) => ({
-                          modChains: {
-                            ...s.modChains,
-                            [props.controlId]: {
-                              ...s.modChains[props.controlId],
-                              mods: {
-                                ...s.modChains[props.controlId].mods,
-                                [props.id]: {
-                                  ...s.modChains[props.controlId].mods[
-                                    props.id
-                                  ],
-                                  ...newLfo,
-                                },
+                      setState((s) => ({
+                        ...s,
+                        modChains: {
+                          ...s.modChains,
+                          [props.controlId]: {
+                            ...s.modChains[props.controlId],
+                            mods: {
+                              ...s.modChains[props.controlId].mods,
+                              [props.id]: {
+                                ...s.modChains[props.controlId].mods[props.id],
+                                ...newLfo,
                               },
                             },
                           },
-                        }),
-                        "update lfo"
-                      );
+                        },
+                      }));
                     }}
                   />
                 </>

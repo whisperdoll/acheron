@@ -2,7 +2,7 @@ import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import TokenAdder from "../Components/TokenAdder";
 import TokenControl from "./TokenControl";
 
-import state from "../state/AppState";
+import { AppContext, removeToken } from "../state/AppState";
 import settings from "../state/AppSettings";
 import GoogleIconButton from "./GoogleIconButton";
 import GoogleIcon from "./GoogleIcon";
@@ -16,43 +16,41 @@ interface Props {
 }
 
 export default function (props: Props) {
-  const reactiveState = state.useState();
+  const { state, setState } = useContext(AppContext)!;
   const reactiveSettings = settings.useState();
   const [collapsedTokens, setCollapsedTokens] = useState<string[]>([]);
   const keyboardShortcutStrings = useKeyboardShortcutStrings();
   const layerIndex =
-    reactiveState.selectedHex.layerIndex !== -1
-      ? reactiveState.selectedHex.layerIndex
+    state.selectedHex.layerIndex !== -1
+      ? state.selectedHex.layerIndex
       : props.layerIndex;
 
   const tokenIds =
-    reactiveState.layers[layerIndex].tokenIds[
-      reactiveState.selectedHex.hexIndex
-    ];
+    state.layers[layerIndex].tokenIds[state.selectedHex.hexIndex];
 
   const hexNotes = useMemo(() => {
     return generateGridNotes(
-      reactiveState.gridStartingNote,
-      reactiveState.gridRows,
-      reactiveState.gridCols
+      state.gridStartingNote,
+      state.gridRows,
+      state.gridCols,
     );
-  }, [
-    reactiveState.gridStartingNote,
-    reactiveState.gridRows,
-    reactiveState.gridCols,
-  ]);
+  }, [state.gridStartingNote, state.gridRows, state.gridCols]);
 
   async function handleRemove(tokenIndex: number) {
     if (
       !reactiveSettings.confirmDelete ||
       (await confirmPrompt(
         `Are you sure you want to delete the ${
-          reactiveState.tokens[tokenIds[tokenIndex]].label
+          state.tokens[tokenIds[tokenIndex]].label
         } token?`,
-        "Confirm remove token"
+        "Confirm remove token",
       ))
     ) {
-      state.removeToken(tokenIds[tokenIndex], "remove token from inspector");
+      removeToken(
+        setState,
+        tokenIds[tokenIndex],
+        "remove token from inspector",
+      );
     }
   }
 
@@ -72,24 +70,23 @@ export default function (props: Props) {
           buttonStyle="rounded"
           fill
           onClick={() =>
-            state.set(
-              (s) => ({ isShowingInspector: !s.isShowingInspector }),
-              "toggle showing inspector"
-            )
+            setState((s) => ({
+              ...s,
+              isShowingInspector: !s.isShowingInspector,
+            }))
           }
           opticalSize={20}
           title={`Unpin Inspector (${keyboardShortcutStrings.toggleShowInspector})`}
         />
       </div>
-      {reactiveState.selectedHex.hexIndex === -1 ? (
+      {state.selectedHex.hexIndex === -1 ? (
         <div className="selectedHexLabel">No hex selected.</div>
       ) : (
         <>
           <div className="headerSection">
             <div className="selectedHexLabel">
-              Selected: L{layerIndex + 1}H
-              {reactiveState.selectedHex.hexIndex + 1} (
-              {hexNotes[reactiveState.selectedHex.hexIndex]})
+              Selected: L{layerIndex + 1}H{state.selectedHex.hexIndex + 1} (
+              {hexNotes[state.selectedHex.hexIndex]})
             </div>
             <TokenAdder />
           </div>

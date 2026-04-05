@@ -4,13 +4,15 @@ import {
   PlayerControlKeys,
 } from "../utils/DefaultDefinitions";
 import Control from "./Control";
-import state from "../state/AppState";
 import settings from "../state/AppSettings";
 import Dict from "../lib/dict";
+import { AppContext } from "../state/AppState";
 
 export default function PlayerSettings() {
+  const { state, setState } = useContext(AppContext)!;
+
   const controlStates = Dict.fromArray(
-    PlayerControlKeys.map((key) => [key, state.useState((s) => s[key])])
+    PlayerControlKeys.map((key) => [key, state[key]]),
   );
   const reactiveSettings = settings.useState();
   const layerControls: PlayerControlKey[] = ["key"];
@@ -28,13 +30,7 @@ export default function PlayerSettings() {
   const generatorControls: PlayerControlKey[] = ["timeToLive", "pulseEvery"];
 
   function buildControl(controlKey: PlayerControlKey) {
-    return (
-      <Control
-        controlId={controlStates[controlKey]}
-        key={controlKey}
-        layerIndex={-1}
-      />
-    );
+    return <Control controlId={controlStates[controlKey]} key={controlKey} />;
   }
 
   return (

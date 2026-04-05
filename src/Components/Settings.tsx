@@ -1,63 +1,64 @@
 import React, { useContext, useEffect } from "react";
-import state from "../state/AppState";
 import settings, { AppSettings } from "../state/AppSettings";
 import List from "../lib/list";
 import TokenManager from "./TokenManager";
 import { keyboardShortcutString } from "../lib/keyboard";
 import { camelCaseToSentence } from "../lib/utils";
 import KeyboardShortcutInput from "./KeyboardShortcutInput";
+import { AppContext } from "../state/AppState";
 
 interface Props {
   onHide: () => any;
 }
 
 export default function Settings(props: Props) {
-  const reactiveState = state.useState();
+  const { state, setState } = useContext(AppContext)!;
+
   const reactiveSettings = settings.useState();
 
   function handleCheckChanged(
     e: React.ChangeEvent<HTMLInputElement>,
-    property: keyof AppSettings
+    property: keyof AppSettings,
   ) {
     settings.set(
       (settings) => ({
         ...settings,
         [property]: e.currentTarget.checked,
       }),
-      `setting ${property} setting`
+      `setting ${property} setting`,
     );
   }
 
   function handleOutputToggled(
     e: React.ChangeEvent<HTMLInputElement>,
-    outputName: string
+    outputName: string,
   ) {
     if (reactiveSettings.midiOutputs.includes(outputName)) {
       settings.set(
         { midiOutputs: List.without(reactiveSettings.midiOutputs, outputName) },
-        "toggling midi output off"
+        "toggling midi output off",
       );
     } else if (!reactiveSettings.midiOutputs.includes(outputName)) {
       settings.set(
         { midiOutputs: reactiveSettings.midiOutputs.concat([outputName]) },
-        "toggling midi output on"
+        "toggling midi output on",
       );
     }
   }
 
   function handleInputToggled(
     e: React.ChangeEvent<HTMLInputElement>,
-    inputName: string
+    inputName: string,
   ) {
     if (reactiveSettings.midiInputs.includes(inputName)) {
       settings.set(
         { midiInputs: List.without(reactiveSettings.midiInputs, inputName) },
-        "toggling midi input off"
+        "toggling midi input off",
       );
     } else if (!reactiveSettings.midiInputs.includes(inputName)) {
       settings.set(
         { midiInputs: reactiveSettings.midiInputs.concat([inputName]) },
-        "toggling midi input on"
+        "toggling midi input on",
       );
     }
   }
@@ -98,7 +99,7 @@ export default function Settings(props: Props) {
         <div className="midiSelects">
           <div className="midiSelect">
             <div>MIDI Inputs:</div>
-            {reactiveState.allowedInputs.map((input) => (
+            {state.allowedInputs.map((input) => (
               <label className="clicky" key={input.name}>
                 <input
                   type="checkbox"
@@ -111,7 +112,7 @@ export default function Settings(props: Props) {
           </div>
           <div className="midiSelect">
             <div>MIDI Outputs:</div>
-            {reactiveState.allowedOutputs.map((output) => (
+            {state.allowedOutputs.map((output) => (
               <label className="clicky" key={output.name}>
                 <input
                   type="checkbox"
@@ -142,13 +143,13 @@ export default function Settings(props: Props) {
                             [key]: (newShortcut && newShortcut) || { key: "" },
                           },
                         }),
-                        `set keyboard shortcut for ${key}`
+                        `set keyboard shortcut for ${key}`,
                       )
                     }
                   />
                 </div>
               );
-            }
+            },
           )}
         </div>
         <div className="bottomButtons">

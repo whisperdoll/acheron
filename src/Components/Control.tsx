@@ -26,7 +26,6 @@ import direction3 from "../../assets/directions/3.png";
 import direction4 from "../../assets/directions/4.png";
 import direction5 from "../../assets/directions/5.png";
 import NumberInput from "./NumberInput";
-import state from "../state/AppState";
 import settings from "../state/AppSettings";
 import { pluck, sliceObject } from "../utils/utils";
 import { PlayerControlKeys } from "../utils/DefaultDefinitions";
@@ -37,6 +36,11 @@ import Midi from "../utils/midi";
 import List from "../lib/list";
 import GoogleIconButton from "./GoogleIconButton";
 import { ControlContext, IControlContext } from "../state/ControlContext";
+import {
+  AppContext,
+  getControlValue,
+  resolveModChain,
+} from "../state/AppState";
 
 const directionIcons = [
   direction0,
@@ -60,15 +64,10 @@ export const Container = React.memo(
       props: React.PropsWithChildren<
         Props & React.JSX.IntrinsicElements["div"]
       >,
-      ref
+      ref,
     ) {
-      const reactiveState = state.useState((s) => ({
-        controls: s.controls,
-        layers: s.layers,
-        tokens: s.tokens,
-        selectedLayer: s.selectedHex.layerIndex,
-      }));
-      const controlState = reactiveState.controls[props.controlId];
+      const { state, setState } = useContext(AppContext)!;
+      const controlState = state.controls[props.controlId];
 
       if (!controlState) {
         throw "bad control id";
@@ -77,17 +76,17 @@ export const Container = React.memo(
       const value = useMemo<IControlContext>(() => {
         return {
           controlId: props.controlId,
-          controls: reactiveState.controls,
-          layers: reactiveState.layers,
-          tokens: reactiveState.tokens,
-          selectedLayer: reactiveState.selectedLayer,
+          controls: state.controls,
+          layers: state.layers,
+          tokens: state.tokens,
+          selectedLayer: state.selectedHex.layerIndex,
         };
       }, [
         props.controlId,
-        reactiveState.controls,
-        reactiveState.layers,
-        reactiveState.tokens,
-        reactiveState.selectedLayer,
+        state.controls,
+        state.layers,
+        state.tokens,
+        state.selectedHex.layerIndex,
       ]);
 
       const children = useMemo(() => {
@@ -112,20 +111,20 @@ export const Container = React.memo(
           </div>
         </ControlContext.Provider>
       );
-    }
-  )
+    },
+  ),
 );
 
 export default Container;
 
 export const Row = React.memo(function ControlRow(
-  props: React.PropsWithChildren
+  props: React.PropsWithChildren,
 ) {
   return <div className="row">{props.children}</div>;
 });
 
 export const Label = React.memo(function ControlLabel(
-  props: { trailingColon?: boolean } = { trailingColon: true }
+  props: { trailingColon?: boolean } = { trailingColon: true },
 ) {
   const context = useContext(ControlContext);
   const controlState = context.controls[context.controlId];
@@ -251,7 +250,7 @@ export const ManualValue = React.memo(function ManualControlValue({
                       }}
                       onClick={() => handleTriadChanged(i)}
                     ></button>
-                  )
+                  ),
                 )}
               </div>
             );
@@ -302,7 +301,7 @@ export const ReadOnlyValue = React.memo(function ReadOnlyControlValue({
                   backgroundImage: `url(${triad})`,
                 }}
               ></button>
-            )
+            ),
           )}
         </div>
       );
@@ -310,19 +309,15 @@ export const ReadOnlyValue = React.memo(function ReadOnlyControlValue({
 });
 
 export const Value = React.memo(function ControlValue() {
+  const { state, setState } = useContext(AppContext)!;
   const context = useContext(ControlContext);
   const [_, forceUpdate] = useReducer((x) => x + 1, 0);
-  const modChain = state.useState(
-    (s) => {
-      return s.modChains[context.controlId];
-    },
-    [context.controlId]
-  );
-  const now = state.useState((s) => Math.round(s.layers[0].currentTimeMs / 60));
+  const modChain = state.modChains[context.controlId];
+  const now = Math.round(state.layers[0].currentTimeMs / 60);
   const controlState = useMemo(() => {
     const controlState = { ...context.controls[context.controlId] };
     if (modChain) {
-      controlState.fixedValue = state.resolveModChain(context.controlId);
+      controlState.fixedValue = resolveModChain(state, context.controlId);
       if (controlState.type !== "decimal") {
         controlState.fixedValue = Math.round(controlState.fixedValue);
       }
@@ -347,18 +342,16 @@ export const Value = React.memo(function ControlValue() {
   // const now = Math.floor(Date.now() / bpms) * bpms;
 
   function handleChange(partial: Partial<ControlState>) {
-    state.set(
-      (state) => ({
-        controls: {
-          ...state.controls,
-          [context.controlId]: {
-            ...state.controls[context.controlId],
-            ...partial,
-          },
+    setState((state) => ({
+      ...state,
+      controls: {
+        ...state.controls,
+        [context.controlId]: {
+          ...state.controls[context.controlId],
+          ...partial,
         },
-      }),
-      "update control"
-    );
+      },
+    }));
   }
 
   return (
@@ -376,6 +369,7 @@ export const Value = React.memo(function ControlValue() {
 });
 
 export const EditIcon = React.memo(function ControlEditIcon() {
+  const { state, setState } = useContext(AppContext)!;
   const context = useContext(ControlContext);
   const controlState = context.controls[context.controlId];
 
@@ -385,9 +379,9 @@ export const EditIcon = React.memo(function ControlEditIcon() {
         pluck(l, PlayerControlKeys).includes(context.controlId) ||
         l.tokenIds.some((tidArray) =>
           tidArray.some((tid) =>
-            context.tokens[tid].controlIds.includes(context.controlId)
-          )
-        )
+            context.tokens[tid].controlIds.includes(context.controlId),
+          ),
+        ),
     );
 
     if (index === -1) {
@@ -405,8 +399,8 @@ export const EditIcon = React.memo(function ControlEditIcon() {
   ];
   const controlValue = useMemo(() => {
     return coerceControlValueToNumber(
-      state.getControlValue(controlState),
-      controlState
+      getControlValue(state, controlState),
+      controlState,
     );
   }, controlValueDeps);
 
@@ -415,40 +409,37 @@ export const EditIcon = React.memo(function ControlEditIcon() {
       icon="adjust"
       buttonStyle="rounded"
       onClick={() => {
-        state.set(
-          (s) => ({
-            modChainControl: context.controlId,
-            modChains: {
-              ...s.modChains,
-              [context.controlId]:
-                s.modChains[context.controlId] ||
-                defaultModChain({ controlId: context.controlId, controlValue }),
-            },
-          }),
-          "set mod chain control"
-        );
+        setState((s) => ({
+          ...s,
+          modChainControl: context.controlId,
+          modChains: {
+            ...s.modChains,
+            [context.controlId]:
+              s.modChains[context.controlId] ||
+              defaultModChain({ controlId: context.controlId, controlValue }),
+          },
+        }));
       }}
     />
   );
 });
 
 export const MidiCC = React.memo(function ControlMIDICC() {
+  const { state, setState } = useContext(AppContext)!;
   const context = useContext(ControlContext);
   const controlState = context.controls[context.controlId];
 
   function handleChange(partial: Partial<ControlState>) {
-    state.set(
-      (state) => ({
-        controls: {
-          ...state.controls,
-          [context.controlId]: {
-            ...state.controls[context.controlId],
-            ...partial,
-          },
+    setState((state) => ({
+      ...state,
+      controls: {
+        ...state.controls,
+        [context.controlId]: {
+          ...state.controls[context.controlId],
+          ...partial,
         },
-      }),
-      "update control"
-    );
+      },
+    }));
   }
 
   return (

@@ -1,27 +1,28 @@
-import React from "react";
-import state from "../state/AppState";
+import React, { useContext } from "react";
 import settings from "../state/AppSettings";
 import GoogleIconButton from "./GoogleIconButton";
 import { confirmPrompt } from "../utils/desktop";
 import useKeyboardShortcutStrings from "../Hooks/useKeyboardShortcutStrings";
+import { addLayer, AppContext, removeLayer, setLayer } from "../state/AppState";
 
 interface Props {}
 
 const LayerSelect: React.FC<Props> = React.memo(() => {
-  const reactiveState = state.useState((s) => ({
-    isEditingLayerName: s.isEditingLayerName,
-    currentLayerName: s.layers[s.selectedHex.layerIndex].name,
-    currentLayerIndex: s.selectedHex.layerIndex,
-    layerNames: s.layers.map((l) => l.name),
-  }));
+  const { state, setState } = useContext(AppContext)!;
+  const reactiveState = {
+    isEditingLayerName: state.isEditingLayerName,
+    currentLayerName: state.layers[state.selectedHex.layerIndex].name,
+    currentLayerIndex: state.selectedHex.layerIndex,
+    layerNames: state.layers.map((l) => l.name),
+  };
   const keyboardShortcutStrings = useKeyboardShortcutStrings();
 
   async function confirmRemoveLayer(layerIndex?: number) {
     if (layerIndex === undefined) {
-      layerIndex = state.values.selectedHex.layerIndex;
+      layerIndex = state.selectedHex.layerIndex;
     }
 
-    if (state.values.layers.length === 1) {
+    if (state.layers.length === 1) {
       // TODO
       // remote.dialog.showMessageBox(remote.getCurrentWindow(), {
       //   message: "You must have at least one layer.",
@@ -33,11 +34,11 @@ const LayerSelect: React.FC<Props> = React.memo(() => {
     } else if (
       !settings.values.confirmDelete ||
       (await confirmPrompt(
-        `Are you sure you want to delete the layer '${state.values.layers[layerIndex].name}'?`,
-        "Confirm delete"
+        `Are you sure you want to delete the layer '${state.layers[layerIndex].name}'?`,
+        "Confirm delete",
       ))
     ) {
-      state.removeLayer(layerIndex, "removing layer");
+      removeLayer(setState, layerIndex, "removing layer");
     }
   }
 
@@ -49,29 +50,23 @@ const LayerSelect: React.FC<Props> = React.memo(() => {
           <input
             value={reactiveState.currentLayerName}
             onChange={(e) =>
-              state.setLayer(
-                "current",
-                (layer) => ({
-                  ...layer,
-                  name: e.currentTarget.value,
-                }),
-                "change layer name"
-              )
+              setLayer(setState, "current", (layer) => ({
+                ...layer,
+                name: e.currentTarget.value,
+              }))
             }
           />
         ) : (
           <select
             className="layerSelect"
             onChange={(e) =>
-              state.set(
-                (state) => ({
-                  selectedHex: {
-                    ...state.selectedHex,
-                    layerIndex: parseInt(e.currentTarget.value),
-                  },
-                }),
-                "change layer from select"
-              )
+              setState((state) => ({
+                ...state,
+                selectedHex: {
+                  ...state.selectedHex,
+                  layerIndex: parseInt(e.currentTarget.value),
+                },
+              }))
             }
             value={reactiveState.currentLayerIndex}
           >
@@ -89,7 +84,7 @@ const LayerSelect: React.FC<Props> = React.memo(() => {
       {reactiveState.isEditingLayerName ? (
         <GoogleIconButton
           onClick={(e) =>
-            state.set({ isEditingLayerName: false }, "stop edit layer name")
+            setState((s) => ({ ...s, isEditingLayerName: false }))
           }
           icon="check"
           buttonStyle="rounded"
@@ -99,9 +94,7 @@ const LayerSelect: React.FC<Props> = React.memo(() => {
         </GoogleIconButton>
       ) : (
         <GoogleIconButton
-          onClick={(e) =>
-            state.set({ isEditingLayerName: true }, "edit layer name")
-          }
+          onClick={(e) => setState((s) => ({ ...s, isEditingLayerName: true }))}
           icon="edit"
           buttonStyle="rounded"
           fill
@@ -119,7 +112,7 @@ const LayerSelect: React.FC<Props> = React.memo(() => {
         Delete Layer
       </GoogleIconButton>
       <GoogleIconButton
-        onClick={(e) => state.addLayer(true, "add layer button")}
+        onClick={(e) => addLayer(setState, true, "add layer button")}
         icon="add"
         buttonStyle="rounded"
         fill

@@ -1,7 +1,7 @@
 import { useCallback, useContext, useMemo } from "react";
 import { ModChainWorkspaceContext } from "../state/ModChainWorkspaceContext";
 import { cx } from "../lib/utils";
-import state from "../state/AppState";
+import { AppContext } from "../state/AppState";
 
 type Props =
   | {
@@ -19,6 +19,7 @@ type Props =
     };
 
 export default function ModChainWorkspaceWire(props: Props) {
+  const { state, setState } = useContext(AppContext)!;
   const modChainWorkspaceContext = useContext(ModChainWorkspaceContext);
   const offset = useMemo(() => {
     const bounds = modChainWorkspaceContext.containerBounds;
@@ -28,14 +29,12 @@ export default function ModChainWorkspaceWire(props: Props) {
       y: bounds.top,
     };
   }, [modChainWorkspaceContext.containerBounds]);
-  const currentModChain = state.useState(
-    (s) => s.modChains[modChainWorkspaceContext.modChainId]
-  );
+  const currentModChain = state.modChains[modChainWorkspaceContext.modChainId];
 
   const sourcePosition = useMemo(() => {
     const node = currentModChain.mods[props.from];
     const el = document.querySelector(
-      `[data-mod-chain-output-node="${props.from}"]`
+      `[data-mod-chain-output-node="${props.from}"]`,
     );
 
     if (!el) return;
@@ -60,7 +59,7 @@ export default function ModChainWorkspaceWire(props: Props) {
       return props.to;
     } else if ("toId" in props) {
       const el = document.querySelector(
-        `[data-mod-chain-input-node-id="${props.toId}"][data-mod-chain-input-node-property="${props.toProperty}"]`
+        `[data-mod-chain-input-node-id="${props.toId}"][data-mod-chain-input-node-property="${props.toProperty}"]`,
       );
 
       if (!el) return;

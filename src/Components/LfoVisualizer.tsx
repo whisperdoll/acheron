@@ -1,8 +1,8 @@
-import React, { useEffect, useMemo, useRef } from "react";
+import React, { useContext, useEffect, useMemo, useRef } from "react";
 import { getLfoValue, Lfo, LfoConnectableProperty } from "../Types";
 import Point from "../utils/point";
 import { clamp, minAndMax } from "../lib/utils";
-import state from "../state/AppState";
+import { AppContext, resolveModItem } from "../state/AppState";
 
 interface Props {
   lfo: Lfo;
@@ -19,9 +19,11 @@ export default React.memo(function LfoVisualizer({
   resolutionY,
   modItemId,
 }: Props) {
-  const modChain = state.useState((s) =>
-    s.modChainControl ? s.modChains[s.modChainControl] : null
-  );
+  const { state, setState } = useContext(AppContext)!;
+
+  const modChain = state.modChainControl
+    ? state.modChains[state.modChainControl]
+    : null;
   const now = Math.round(currentTimeMs / 60);
 
   const inputValues = useMemo(() => {
@@ -31,8 +33,11 @@ export default React.memo(function LfoVisualizer({
 
     modChain.connections.forEach((connection) => {
       if (connection.to === modItemId) {
-        ret[connection.property as LfoConnectableProperty] =
-          state.resolveModItem(modChain, connection.from);
+        ret[connection.property as LfoConnectableProperty] = resolveModItem(
+          state,
+          modChain,
+          connection.from,
+        );
       }
     });
 
@@ -41,7 +46,7 @@ export default React.memo(function LfoVisualizer({
 
   const lfo: Lfo = useMemo(
     () => ({ ...baseLfo, ...inputValues }),
-    [baseLfo, inputValues]
+    [baseLfo, inputValues],
   );
 
   const waveCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -85,8 +90,8 @@ export default React.memo(function LfoVisualizer({
         clamp(
           resolutionY - ((value - min) / amp) * resolutionY,
           ctx.lineWidth,
-          resolutionY - ctx.lineWidth
-        )
+          resolutionY - ctx.lineWidth,
+        ),
       );
     }
 

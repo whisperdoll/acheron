@@ -1,8 +1,8 @@
-import React, { useEffect, useRef } from "react";
+import React, { useContext, useEffect, useRef } from "react";
 import { cx } from "../lib/utils";
 import settings, { TouchMode } from "../state/AppSettings";
 import GoogleIcon, { CodePoint } from "./GoogleIcon";
-import state from "../state/AppState";
+import { AppContext } from "../state/AppState";
 
 /*
   - performance
@@ -49,9 +49,10 @@ const touchModeDescriptions: Record<
 };
 
 export default function TouchModeMenu() {
+  const { state, setState } = useContext(AppContext)!;
+
   const currentMode = settings.useState((s) => s.touchMode);
   const ref = useRef<HTMLDivElement>(null);
-  const reactiveState = state.useState();
 
   useEffect(() => {
     function pointerDown(e: PointerEvent) {
@@ -73,13 +74,10 @@ export default function TouchModeMenu() {
         return;
       }
 
-      state.set(
-        (s) => ({
-          ...s,
-          isShowingTouchModeMenu: false,
-        }),
-        "toggle showing touch mode menu"
-      );
+      setState((s) => ({
+        ...s,
+        isShowingTouchModeMenu: false,
+      }));
     }
 
     document.addEventListener("pointerdown", pointerDown);
@@ -99,17 +97,14 @@ export default function TouchModeMenu() {
               })}
               onClick={(e) => {
                 settings.set({ touchMode: mode }, "change touch mode");
-                state.set(
-                  (s) => ({
-                    ...s,
-                    isShowingTouchModeMenu: false,
-                    selectedHex: {
-                      hexIndex: -1,
-                      layerIndex: s.selectedHex.layerIndex,
-                    },
-                  }),
-                  "hide touch mode menu"
-                );
+                setState((s) => ({
+                  ...s,
+                  isShowingTouchModeMenu: false,
+                  selectedHex: {
+                    hexIndex: -1,
+                    layerIndex: s.selectedHex.layerIndex,
+                  },
+                }));
               }}
             >
               <GoogleIcon
@@ -132,7 +127,7 @@ export default function TouchModeMenu() {
               )}
             </div>
           );
-        }
+        },
       )}
     </div>
   );

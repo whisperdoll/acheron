@@ -1,19 +1,20 @@
-import { useState } from "react";
-import state from "../state/AppState";
+import { useContext, useState } from "react";
 import GoogleIconButton from "./GoogleIconButton";
+import { addTokenToSelected, AppContext } from "../state/AppState";
 
 export default function TokenAdder() {
-  const reactiveState = state.useState();
+  const { state, setState } = useContext(AppContext)!;
+
   const [isShowingTokens, setIsShowingTokens] = useState(false);
 
-  if (reactiveState.selectedHex.hexIndex === -1) return <></>;
+  if (state.selectedHex.hexIndex === -1) return <></>;
 
   function toggleTokens() {
     setIsShowingTokens(!isShowingTokens);
   }
 
   function addToken(tokenKey: string) {
-    state.addTokenToSelected(tokenKey, "add token from inspector");
+    addTokenToSelected(setState, tokenKey, "add token from inspector");
   }
 
   return (
@@ -29,20 +30,18 @@ export default function TokenAdder() {
       </GoogleIconButton>
       {isShowingTokens && (
         <div className="tokenAdderList">
-          {Object.entries(reactiveState.tokenDefinitions).map(
-            ([key, definition]) => (
-              <button
-                className="tokenAdderButton"
-                onClick={() => {
-                  addToken(key);
-                  setIsShowingTokens(false);
-                }}
-                key={key}
-              >
-                {"Add " + definition.label}
-              </button>
-            )
-          )}
+          {Object.entries(state.tokenDefinitions).map(([key, definition]) => (
+            <button
+              className="tokenAdderButton"
+              onClick={() => {
+                addToken(key);
+                setIsShowingTokens(false);
+              }}
+              key={key}
+            >
+              {"Add " + definition.label}
+            </button>
+          ))}
         </div>
       )}
     </div>

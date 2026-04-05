@@ -1,20 +1,19 @@
 import { useCallback, useContext } from "react";
 import { ModChainWorkspaceContext } from "../state/ModChainWorkspaceContext";
-import state from "../state/AppState";
 import { ModOutput } from "../Types";
 import { cx } from "../lib/utils";
+import { AppContext, connectModItems } from "../state/AppState";
 
 interface Props {
   modItemId: string;
 }
 
 export default function ModChainOutputNode(props: Props) {
+  const { state, setState } = useContext(AppContext)!;
   const modChainWorkspaceContext = useContext(ModChainWorkspaceContext);
-  const connected = state.useState((s) =>
-    s.modChains[modChainWorkspaceContext.modChainId].connections.some(
-      (c) => c.from === props.modItemId
-    )
-  );
+  const connected = state.modChains[
+    modChainWorkspaceContext.modChainId
+  ].connections.some((c) => c.from === props.modItemId);
 
   const handleMouseDown: React.PointerEventHandler<HTMLDivElement> =
     useCallback(
@@ -32,10 +31,11 @@ export default function ModChainOutputNode(props: Props) {
 
           // if direct to output
           if (target.parentElement?.dataset.modChainOutput) {
-            state.connectModItems(
+            connectModItems(
+              setState,
               modChainWorkspaceContext.modChainId,
               props.modItemId,
-              ModOutput
+              ModOutput,
             );
 
             return;
@@ -48,17 +48,18 @@ export default function ModChainOutputNode(props: Props) {
 
           if (!modChainInputNodeId || !modChainInputNodeProperty) return;
 
-          state.connectModItems(
+          connectModItems(
+            setState,
             modChainWorkspaceContext.modChainId,
             props.modItemId,
             modChainInputNodeId,
-            modChainInputNodeProperty
+            modChainInputNodeProperty,
           );
         };
 
         document.addEventListener("pointerup", onMouseUp);
       },
-      [modChainWorkspaceContext.set]
+      [modChainWorkspaceContext.set],
     );
 
   return (
