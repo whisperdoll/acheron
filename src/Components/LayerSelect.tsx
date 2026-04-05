@@ -59,15 +59,16 @@ const LayerSelect: React.FC<Props> = React.memo(() => {
         ) : (
           <select
             className="layerSelect"
-            onChange={(e) =>
+            onChange={(e) => {
+              const layerIndex = parseInt(e.currentTarget.value);
               setState((state) => ({
                 ...state,
                 selectedHex: {
                   ...state.selectedHex,
-                  layerIndex: parseInt(e.currentTarget.value),
+                  layerIndex,
                 },
-              }))
-            }
+              }));
+            }}
             value={reactiveState.currentLayerIndex}
           >
             {reactiveState.layerNames.map((name, i) => (
