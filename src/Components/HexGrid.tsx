@@ -224,7 +224,7 @@ export default function HexGrid(props: Props) {
     return () => {
       document.removeEventListener("keydown", keyDown);
     };
-  }, [props.layerIndex]);
+  }, [props.layerIndex, state]);
 
   /*
     (hexRadius * 2 * cols)) / 1.3076923076923077 + lineWidth * 2 + 1
@@ -682,7 +682,7 @@ export default function HexGrid(props: Props) {
       document.body.removeEventListener("mouseup", documentMouseUp);
       canvas.current?.canvas.removeEventListener("contextmenu", contextMenu);
     };
-  }, [props.layerIndex]);
+  }, [props.layerIndex, state]);
 
   /////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////// BACK CANVAS //////////////////////////////////

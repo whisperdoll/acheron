@@ -30,7 +30,7 @@ export default class Timer {
           tick: this.onTick,
         } as Record<typeof event, (() => any)[]>
       )[event],
-      fn
+      fn,
     );
   }
 
@@ -46,9 +46,12 @@ export default class Timer {
     this.startingTime = performance.now();
 
     if (this.intervalMs > 25) {
-      setTimeout(() => {
-        this.startImmediateTick();
-      }, Number(this.intervalMs - 25));
+      setTimeout(
+        () => {
+          this.startImmediateTick();
+        },
+        Number(this.intervalMs - 25),
+      );
     } else {
       this.startImmediateTick();
     }

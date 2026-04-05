@@ -14,8 +14,8 @@ export default function NumberInput(props: Props) {
   const [savedValue, setSavedValue] = useState<string | number>(props.value);
   const mouseIsDown = useRef<boolean>(false);
   const mouseDownTime = useRef<number>(0);
-  const initialHoldTimeout = useRef<NodeJS.Timeout | null>(null);
-  const holdInterval = useRef<NodeJS.Timeout | null>(null);
+  const initialHoldTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const holdInterval = useRef<ReturnType<typeof setInterval> | null>(null);
   const savedIncrement = useRef<Function>(() => 0);
   const savedDecrement = useRef<Function>(() => 0);
 

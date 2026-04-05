@@ -2,10 +2,10 @@ import { useEffect, useRef } from "react";
 
 export default function useImmediate(
   callback: (delta: number) => any,
-  isOn: boolean
+  isOn: boolean,
 ) {
   const savedCallback = useRef<(delta: number) => any>(() => 0);
-  const savedId = useRef<NodeJS.Immediate | null>(null);
+  const savedId = useRef<ReturnType<typeof setImmediate> | null>(null);
   const lastTime = useRef<number>(performance.now());
   const savedIsOn = useRef<boolean>(false);
 
@@ -23,7 +23,7 @@ export default function useImmediate(
       const now = performance.now();
       savedCallback.current(now - lastTime.current);
       lastTime.current = now;
-      setImmediate(tick);
+      window.setImmediate(tick);
     }
 
     if (isOn) {

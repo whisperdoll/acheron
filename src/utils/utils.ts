@@ -4,7 +4,7 @@ export function msToS(ms: number): number {
 
 export type SortFunction<T> = (a: T, b: T) => boolean;
 
-export function isFileNotFoundError(err: NodeJS.ErrnoException): boolean {
+export function isFileNotFoundError(err: { code: string }): boolean {
   return err.code === "ENOENT";
 }
 
@@ -18,7 +18,7 @@ export function mod(x: number, m: number): number {
 
 export function objectWithoutKeys<
   K extends string | number | symbol,
-  T extends Record<K, any>
+  T extends Record<K, any>,
 >(o: T, keys: K[]): Omit<typeof o, (typeof keys)[number]> {
   const ret = { ...o };
   keys.forEach((key) => delete ret[key]);
@@ -27,7 +27,7 @@ export function objectWithoutKeys<
 
 export function sliceObject<
   T extends Record<string | number | symbol, any>,
-  K extends keyof T
+  K extends keyof T,
 >(o: T, keys: K[]): Pick<typeof o, (typeof keys)[number]> {
   const ret = {} as Record<K, any>;
   keys.forEach((key) => (ret[key] = o[key]));
@@ -36,7 +36,7 @@ export function sliceObject<
 
 export function pluck<T, K extends (keyof T)[]>(
   obj: T,
-  keys: [...K]
+  keys: [...K],
 ): { [I in keyof K]: T[K[I]] } {
   return keys.map((key) => obj[key]) as { [I in keyof K]: T[K[I]] };
 }
@@ -45,7 +45,7 @@ export function emptyFn() {}
 
 export function array_remove<T>(
   array: T[],
-  item: T
+  item: T,
 ): { item: T; index: number; existed: boolean } {
   let index = array.indexOf(item);
   if (index !== -1) {

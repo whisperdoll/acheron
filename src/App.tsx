@@ -38,6 +38,7 @@ import useLazyRef from "./useLazyRef";
 import ModChainWorkspace from "./Components/ModChainWorkspace";
 import {
   addLayer,
+  AppContext,
   initialState,
   removeLayer,
   togglePlaying,
@@ -486,90 +487,94 @@ export default function App() {
   );
 
   return (
-    <div className="app">
-      {state.isShowingSettings && (
-        <Settings
-          onHide={() => setState((s) => ({ ...s, isShowingSettings: false }))}
-        />
-      )}
-      {state.editingLfo && <LfoEditor />}
-      <div className="columns">
-        {leftColumn}
+    <AppContext.Provider value={{ state, setState }}>
+      <div className="app">
+        {state.isShowingSettings && (
+          <Settings
+            onHide={() => setState((s) => ({ ...s, isShowingSettings: false }))}
+          />
+        )}
+        {state.editingLfo && <LfoEditor />}
+        <div className="columns">
+          {leftColumn}
 
-        <div
-          className={`middleColumn ${
-            state.isMultiLayerMode ? "multilayer" : "single-layer"
-          }`}
-        >
-          {state.isMultiLayerMode ? (
-            <>
-              <div className="multilayerSizeContainer">
-                <span className="columnsLabel">
-                  Columns: {state.multiLayerSize}
-                </span>
-                <input
-                  type="range"
-                  min={1}
-                  max={10}
-                  step={1}
-                  value={state.multiLayerSize}
-                  onChange={(e) => setMultiLayerSize(e.currentTarget.value)}
-                />
-                <GoogleIconButton
-                  icon="add"
-                  buttonStyle="rounded"
-                  fill
-                  onClick={(e) => addLayer(setState, true, "add layer button")}
-                >
-                  Add Layer (
-                  {keyboardShortcutString(keyboardShortcuts.addNewLayer)})
-                </GoogleIconButton>
-              </div>
-              <div className="multilayer">
-                {state.layers.map((layer, layerIndex) => (
-                  <div className="layerContainer" key={layerIndex}>
-                    <div className="layerName">
-                      <span>{layer.name}</span>
-                      <GoogleIconButton
-                        buttonStyle="rounded"
-                        icon="close"
-                        fill
-                        opticalSize={20}
-                        title="Remove Layer"
-                        onClick={() => confirmRemoveLayer(layerIndex)}
-                        className="nostyle remove"
-                      />
-                    </div>
-                    <HexGrid layerIndex={layerIndex} key={layerIndex} />
-                  </div>
-                ))}
-              </div>
-            </>
-          ) : (
-            <>
-              <LayerSelect />
-              <HexGrid layerIndex={state.selectedHex.layerIndex} />
-            </>
-          )}
-        </div>
-
-        {inspector}
-      </div>
-      {state.modChainControl && (
-        <>
           <div
-            className="resizeHandle-alt"
-            onPointerDown={(e) => {
-              e.preventDefault();
-              document.documentElement.style.cursor = "ns-resize";
-              resizing.current = "modChainWorkspace";
-            }}
-          ></div>
-          <ModChainWorkspace />
-        </>
-      )}
-      <StatusBar />
-      <ModalController />
-    </div>
+            className={`middleColumn ${
+              state.isMultiLayerMode ? "multilayer" : "single-layer"
+            }`}
+          >
+            {state.isMultiLayerMode ? (
+              <>
+                <div className="multilayerSizeContainer">
+                  <span className="columnsLabel">
+                    Columns: {state.multiLayerSize}
+                  </span>
+                  <input
+                    type="range"
+                    min={1}
+                    max={10}
+                    step={1}
+                    value={state.multiLayerSize}
+                    onChange={(e) => setMultiLayerSize(e.currentTarget.value)}
+                  />
+                  <GoogleIconButton
+                    icon="add"
+                    buttonStyle="rounded"
+                    fill
+                    onClick={(e) =>
+                      addLayer(setState, true, "add layer button")
+                    }
+                  >
+                    Add Layer (
+                    {keyboardShortcutString(keyboardShortcuts.addNewLayer)})
+                  </GoogleIconButton>
+                </div>
+                <div className="multilayer">
+                  {state.layers.map((layer, layerIndex) => (
+                    <div className="layerContainer" key={layerIndex}>
+                      <div className="layerName">
+                        <span>{layer.name}</span>
+                        <GoogleIconButton
+                          buttonStyle="rounded"
+                          icon="close"
+                          fill
+                          opticalSize={20}
+                          title="Remove Layer"
+                          onClick={() => confirmRemoveLayer(layerIndex)}
+                          className="nostyle remove"
+                        />
+                      </div>
+                      <HexGrid layerIndex={layerIndex} key={layerIndex} />
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <>
+                <LayerSelect />
+                <HexGrid layerIndex={state.selectedHex.layerIndex} />
+              </>
+            )}
+          </div>
+
+          {inspector}
+        </div>
+        {state.modChainControl && (
+          <>
+            <div
+              className="resizeHandle-alt"
+              onPointerDown={(e) => {
+                e.preventDefault();
+                document.documentElement.style.cursor = "ns-resize";
+                resizing.current = "modChainWorkspace";
+              }}
+            ></div>
+            <ModChainWorkspace />
+          </>
+        )}
+        <StatusBar />
+        <ModalController />
+      </div>
+    </AppContext.Provider>
   );
 }
