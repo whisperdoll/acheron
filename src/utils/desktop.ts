@@ -1,5 +1,4 @@
 import { SerializedComposition } from "../Serialization";
-import { AppState, AppStateStore } from "../state/AppState";
 import { modalStateStore } from "../state/ModalState";
 
 export function isOnDesktop() {
@@ -115,7 +114,7 @@ export async function openUrl(url: string) {
 
 export async function confirmPrompt(
   prompt: string,
-  title: string
+  title: string,
 ): Promise<boolean> {
   if (false) {
     const { ask } = await import("@tauri-apps/plugin-dialog");

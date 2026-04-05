@@ -1,6 +1,5 @@
 import React from "react";
 import { ControlChangeMessageEvent } from "webmidi";
-import appStateStore from "./AppState";
 import { ControlInstanceId } from "../Types";
 import { MaybeGenerated } from "../lib/utils";
 
@@ -20,13 +19,12 @@ export interface IModChainWorkspaceContextProps {
   };
 }
 
-export interface IModChainWorkspaceContext
-  extends IModChainWorkspaceContextProps {
+export interface IModChainWorkspaceContext extends IModChainWorkspaceContextProps {
   set: (
     props: MaybeGenerated<
       Partial<IModChainWorkspaceContextProps>,
       [IModChainWorkspaceContextProps]
-    >
+    >,
   ) => unknown;
 }
 
