@@ -721,6 +721,7 @@ export function resolveModItem(
 
   switch (modItem.__type) {
     case "controlValue":
+    case "inheritedControlValue":
       return coerceControlValueToNumber(
         getControlValue(state, state.controls[modItem.controlId]),
         state.controls[modItem.controlId],

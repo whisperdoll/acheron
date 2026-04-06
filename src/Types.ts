@@ -346,6 +346,11 @@ export type ControlValueMod = {
   controlId: string;
 };
 
+export type InheritedControlValueMod = {
+  __type: "inheritedControlValue";
+  controlId: string; // the inherited control
+};
+
 export type FixedValueMod = {
   __type: "fixedValue";
   value: number;
@@ -361,6 +366,7 @@ type ModChainItemID = string;
 export type ModChainItem =
   | LFOMod
   | ControlValueMod
+  | InheritedControlValueMod
   | FixedValueMod
   | FixedControlValueMod;
 export type ModChain = {
@@ -379,22 +385,14 @@ export function defaultModChain({
   controlValue: number;
   state: AppState;
 }): ModChain {
-  const id = uuidv4();
   const modChain = {
-    mods: {
-      [id]: {
-        __type: "fixedControlValue",
-        controlId,
-        value: controlValue,
-      },
-    },
+    mods: {},
     input: controlId,
     output: null,
     connections: [],
   } as ModChain;
 
-  const control = state.controls[controlId];
-  const inherit = control.inherit;
+  const inherit = state.controls[controlId].inherit;
   if (inherit) {
     const layer = state.layers.find((l) =>
       l.tokenIds.some((tokenIds) =>
@@ -412,11 +410,17 @@ export function defaultModChain({
         inheritParts,
       );
       modChain.mods[uuidv4()] = {
-        __type: "controlValue",
+        __type: "inheritedControlValue",
         controlId: inheritedControl.id,
       };
     }
   }
+
+  modChain.mods[uuidv4()] = {
+    __type: "fixedControlValue",
+    controlId,
+    value: controlValue,
+  };
 
   return modChain;
 }

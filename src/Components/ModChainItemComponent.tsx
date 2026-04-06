@@ -64,7 +64,9 @@ export default React.memo(function ModChainItemComponent(props: Props) {
             ? `Fixed ${state.controls[modChainItem.controlId].type} value`
             : modChainItem.__type === "fixedValue"
               ? "Fixed value"
-              : state.controls[modChainItem.controlId].label}
+              : modChainItem.__type === "controlValue"
+                ? state.controls[modChainItem.controlId].label
+                : `Inherited value`}
       </div>
       <div className="contents">
         {(() => {
@@ -108,6 +110,7 @@ export default React.memo(function ModChainItemComponent(props: Props) {
                 </>
               );
             case "controlValue":
+            case "inheritedControlValue":
               return (
                 <div className="row">
                   <Control.Container controlId={modChainItem.controlId} bald>
