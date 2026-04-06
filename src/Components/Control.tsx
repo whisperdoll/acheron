@@ -316,7 +316,9 @@ export const Value = React.memo(function ControlValue() {
   const now = Math.round(state.layers[0].currentTimeMs / 60);
   const controlState = useMemo(() => {
     const controlState = { ...context.controls[context.controlId] };
-    if (modChain) {
+    if (controlState.inherit) {
+      controlState.fixedValue = getControlValue(state, controlState);
+    } else if (modChain) {
       controlState.fixedValue = resolveModChain(state, context.controlId);
       if (controlState.type !== "decimal") {
         controlState.fixedValue = Math.round(controlState.fixedValue);
@@ -363,7 +365,7 @@ export const Value = React.memo(function ControlValue() {
   return (
     <div className="controlRow">
       {(() => {
-        if (!modChain?.output) {
+        if (!modChain?.output && !controlState.inherit) {
           return <ManualValue control={controlState} onChange={handleChange} />;
         } else {
           // LFO
@@ -422,7 +424,11 @@ export const EditIcon = React.memo(function ControlEditIcon() {
             ...s.modChains,
             [context.controlId]:
               s.modChains[context.controlId] ||
-              defaultModChain({ controlId: context.controlId, controlValue }),
+              defaultModChain({
+                controlId: context.controlId,
+                controlValue,
+                state: s,
+              }),
           },
         }));
       }}

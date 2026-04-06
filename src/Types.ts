@@ -373,12 +373,14 @@ export type ModChain = {
 export function defaultModChain({
   controlId,
   controlValue,
+  state,
 }: {
   controlId: string;
   controlValue: number;
+  state: AppState;
 }): ModChain {
   const id = uuidv4();
-  return {
+  const modChain = {
     mods: {
       [id]: {
         __type: "fixedControlValue",
@@ -389,5 +391,32 @@ export function defaultModChain({
     input: controlId,
     output: null,
     connections: [],
-  };
+  } as ModChain;
+
+  const control = state.controls[controlId];
+  const inherit = control.inherit;
+  if (inherit) {
+    const layer = state.layers.find((l) =>
+      l.tokenIds.some((tokenIds) =>
+        tokenIds.some((tokenId) =>
+          state.tokens[tokenId].controlIds.includes(controlId),
+        ),
+      ),
+    )!;
+    const inheritParts = getInheritParts(inherit);
+    if (inheritParts) {
+      const inheritedControl = getControlFromInheritParts(
+        state.controls,
+        state,
+        layer,
+        inheritParts,
+      );
+      modChain.mods[uuidv4()] = {
+        __type: "controlValue",
+        controlId: inheritedControl.id,
+      };
+    }
+  }
+
+  return modChain;
 }
