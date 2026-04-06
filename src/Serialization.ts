@@ -32,11 +32,12 @@ export interface SerializedCompositionToken {
 }
 
 export interface SerializedCompositionLayer {
-  version: 2;
+  version: 3;
   name: string;
   enabled: SerializedCompositionControl;
   midiChannel: SerializedCompositionControl;
-  key: SerializedCompositionControl;
+  keyTonic: SerializedCompositionControl;
+  keyMode: SerializedCompositionControl;
   transpose: SerializedCompositionControl;
   tempo: SerializedCompositionControl;
   barLength: SerializedCompositionControl;
@@ -49,8 +50,8 @@ export interface SerializedCompositionLayer {
   tokenIds: string[][];
 }
 
-export interface SerializedComposition {
-  version: number;
+export interface SerializedCompositionV2 {
+  version: 2;
   tokens: SerializedCompositionToken[];
   global: {
     key: SerializedCompositionControl;
@@ -67,9 +68,28 @@ export interface SerializedComposition {
   layers: SerializedCompositionLayer[];
 }
 
+export interface SerializedComposition {
+  version: 3;
+  tokens: SerializedCompositionToken[];
+  global: {
+    keyTonic: SerializedCompositionControl;
+    keyMode: SerializedCompositionControl;
+    transpose: SerializedCompositionControl;
+    tempo: SerializedCompositionControl;
+    tempoSync: SerializedCompositionControl;
+    barLength: SerializedCompositionControl;
+    velocity: SerializedCompositionControl;
+    emphasis: SerializedCompositionControl;
+    noteLength: SerializedCompositionControl;
+    timeToLive: SerializedCompositionControl;
+    pulseEvery: SerializedCompositionControl;
+  };
+  layers: SerializedCompositionLayer[];
+}
+
 function buildTokenFromSerialized(
   appState: AppState,
-  serialized: SerializedCompositionToken
+  serialized: SerializedCompositionToken,
 ): { tokenState: Token; controls: Record<string, ControlState> } | null {
   const def = appState.tokenDefinitions[serialized.uid];
 
@@ -79,7 +99,7 @@ function buildTokenFromSerialized(
 
   for (const id in controls) {
     const serializedControl = serialized.controls.find(
-      (c) => c.key === controls[id].key
+      (c) => c.key === controls[id].key,
     );
     if (serializedControl) {
       controls[id] = {
@@ -123,27 +143,28 @@ function serializeControl(control: ControlState): SerializedCompositionControl {
 }
 
 export function serializeComposition(
-  appState: AppState
+  appState: AppState,
 ): SerializedComposition {
   const tokenMap: SerializedCompositionToken[] = Object.entries(
-    appState.tokens
+    appState.tokens,
   ).map((e) => {
     const [tokenId, token] = e;
 
     return {
       id: tokenId,
       controls: token.controlIds.map((cid) =>
-        serializeControl(appState.controls[cid])
+        serializeControl(appState.controls[cid]),
       ),
       uid: token.uid,
     };
   });
 
   return {
-    version: 2,
+    version: 3,
     tokens: tokenMap,
     global: {
-      key: serializeControl(appState.controls[appState.key]),
+      keyTonic: serializeControl(appState.controls[appState.keyTonic]),
+      keyMode: serializeControl(appState.controls[appState.keyMode]),
       transpose: serializeControl(appState.controls[appState.transpose]),
       tempo: serializeControl(appState.controls[appState.tempo]),
       tempoSync: serializeControl(appState.controls[appState.tempoSync]),
@@ -156,11 +177,12 @@ export function serializeComposition(
     },
     layers: appState.layers.map((layer) => {
       return {
-        version: 2,
+        version: 3,
         name: layer.name,
         enabled: serializeControl(appState.controls[layer.enabled]),
         midiChannel: serializeControl(appState.controls[layer.midiChannel]),
-        key: serializeControl(appState.controls[layer.key]),
+        keyTonic: serializeControl(appState.controls[layer.keyTonic]),
+        keyMode: serializeControl(appState.controls[layer.keyMode]),
         transpose: serializeControl(appState.controls[layer.transpose]),
         tempo: serializeControl(appState.controls[layer.tempo]),
         barLength: serializeControl(appState.controls[layer.barLength]),
@@ -178,7 +200,7 @@ export function serializeComposition(
 
 export async function deserializeComposition(
   appState: AppState,
-  c: SerializedComposition
+  c: SerializedComposition,
 ): Promise<AppState> {
   const migrated = await migrateSerializedComposition(c);
   if (!migrated) {
@@ -254,7 +276,8 @@ export async function deserializeComposition(
       name: layer.name,
       enabled: layer.enabled.id,
       midiChannel: layer.midiChannel.id,
-      key: layer.key.id,
+      keyTonic: layer.keyTonic.id,
+      keyMode: layer.keyMode.id,
       transpose: layer.transpose.id,
       tempo: layer.tempo.id,
       barLength: layer.barLength.id,
@@ -283,7 +306,8 @@ export async function deserializeComposition(
 
   return {
     ...appState,
-    key: c.global.key.id,
+    keyTonic: c.global.keyTonic.id,
+    keyMode: c.global.keyMode.id,
     transpose: c.global.transpose.id,
     tempo: c.global.tempo.id,
     barLength: c.global.barLength.id,

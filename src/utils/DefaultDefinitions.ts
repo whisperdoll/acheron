@@ -10,13 +10,15 @@ import {
 import { v4 as uuidv4 } from "uuid";
 import { getInheritParts } from "./elysiumutils";
 import { NumMIDIChannels } from "../constants";
+import { modes } from "./scales";
 
 // ----------------------------------------------------------------
 // PLAYER
 // ----------------------------------------------------------------
 
 export const PlayerControlKeys = [
-  "key",
+  "keyTonic",
+  "keyMode",
   "transpose",
   "barLength",
   "tempo",
@@ -44,57 +46,44 @@ export const noteArray: string[] = [
 ];
 
 function major(root: number) {
-  return [root, root + 2, root + 4, root + 5, root + 7, root + 9, root + 11].map((n) => n % 12);
+  return [
+    root,
+    root + 2,
+    root + 4,
+    root + 5,
+    root + 7,
+    root + 9,
+    root + 11,
+  ].map((n) => n % 12);
 }
 
 function minor(root: number) {
-  return [root, root + 2, root + 3, root + 5, root + 7, root + 8, root + 10].map((n) => n % 12);
+  return [
+    root,
+    root + 2,
+    root + 3,
+    root + 5,
+    root + 7,
+    root + 8,
+    root + 10,
+  ].map((n) => n % 12);
 }
 
 export type PlayerControlKey = (typeof PlayerControlKeys)[number];
 
 export const playerControlDefs: Record<PlayerControlKey, ControlDefinition> = {
-  key: {
+  keyTonic: {
     label: "Key",
     type: "select",
-    options: Object.keys({
-      None: noteArray.map((n, i) => i),
-      "A major": major(noteArray.indexOf("A")),
-      "A minor": minor(noteArray.indexOf("A")),
-      "A flat major": major(noteArray.indexOf("G#")),
-      "A flat minor": minor(noteArray.indexOf("G#")),
-      "A sharp minor": minor(noteArray.indexOf("A#")),
-      "B major": major(noteArray.indexOf("B")),
-      "B minor": minor(noteArray.indexOf("B")),
-      "B flat major": major(noteArray.indexOf("A#")),
-      "B flat minor": minor(noteArray.indexOf("A#")),
-      "C major": major(noteArray.indexOf("C")),
-      "C minor": minor(noteArray.indexOf("C")),
-      "C flat major": major(noteArray.indexOf("B")),
-      "C sharp major": major(noteArray.indexOf("C#")),
-      "C sharp minor": minor(noteArray.indexOf("C#")),
-      "D major": major(noteArray.indexOf("D")),
-      "D minor": minor(noteArray.indexOf("D")),
-      "D flat major": major(noteArray.indexOf("C#")),
-      "D flat minor": minor(noteArray.indexOf("C#")),
-      "D sharp minor": minor(noteArray.indexOf("D#")),
-      "E major": major(noteArray.indexOf("E")),
-      "E minor": minor(noteArray.indexOf("E")),
-      "E flat major": major(noteArray.indexOf("D#")),
-      "E flat minor": minor(noteArray.indexOf("D#")),
-      "F major": major(noteArray.indexOf("F")),
-      "F minor": minor(noteArray.indexOf("F")),
-      "F flat major": major(noteArray.indexOf("E")),
-      "F sharp major": major(noteArray.indexOf("F#")),
-      "F sharp minor": minor(noteArray.indexOf("F#")),
-      "G major": major(noteArray.indexOf("G")),
-      "G minor": minor(noteArray.indexOf("G")),
-      "G flat minor": minor(noteArray.indexOf("F#")),
-      "G sharp minor": minor(noteArray.indexOf("G#")),
-    }).map((key) => ({
-      label: key,
-      value: key,
+    options: ["None", ...noteArray].map((note) => ({
+      label: note,
+      value: note,
     })),
+  },
+  keyMode: {
+    label: "Mode",
+    type: "select",
+    options: Object.keys(modes).map((mode) => ({ label: mode, value: mode })),
   },
   transpose: {
     label: "Transpose",
@@ -169,7 +158,8 @@ export const DefaultPlayerControls = buildFromDefs(playerControlDefs);
 export const LayerControlTypes = [
   "enabled",
   "midiChannel",
-  "key",
+  "keyTonic",
+  "keyMode",
   "barLength",
   "emphasis",
   "tempo",
@@ -198,8 +188,11 @@ function layerControlDefs(): Record<LayerControlKey, ControlDefinition> {
       step: 1,
       defaultValue: 1,
     },
-    key: {
-      inherit: "global.key",
+    keyTonic: {
+      inherit: "global.keyTonic",
+    },
+    keyMode: {
+      inherit: "global.keyMode",
     },
     barLength: {
       inherit: "global.barLength",
@@ -239,7 +232,9 @@ export function DefaultLayerControls(): Record<TokenInstanceId, ControlState> {
 
 // ----------------------------------------------------------------
 
-export function buildFromDefs<K extends string>(defs: Record<K, ControlDefinition>): Record<K, ControlState> {
+export function buildFromDefs<K extends string>(
+  defs: Record<K, ControlDefinition>,
+): Record<K, ControlState> {
   const parts: Record<string, ControlState> = {};
 
   function getDefaultValue(definition: ControlDefinition) {
@@ -256,7 +251,9 @@ export function buildFromDefs<K extends string>(defs: Record<K, ControlDefinitio
           throw "select control without options :(";
         }
 
-        const defaultOption = definition.options.find((o) => o.value === definition.defaultValue);
+        const defaultOption = definition.options.find(
+          (o) => o.value === definition.defaultValue,
+        );
         if (defaultOption) {
           return defaultOption.value;
         } else {
@@ -273,7 +270,8 @@ export function buildFromDefs<K extends string>(defs: Record<K, ControlDefinitio
 
   const defaultControls = {
     global: () => DefaultPlayerControls,
-    layer: () => _defaultLayerControls || (_defaultLayerControls = DefaultLayerControls()),
+    layer: () =>
+      _defaultLayerControls || (_defaultLayerControls = DefaultLayerControls()),
   };
 
   for (const key in defs) {
@@ -283,9 +281,9 @@ export function buildFromDefs<K extends string>(defs: Record<K, ControlDefinitio
         reportError("bad inherit key");
       } else {
         let inheritKey = inheritParts[1];
-        let defaultControl = Object.entries(defaultControls[inheritParts[0]]()).find(
-          (e) => e[1].key === inheritKey
-        )![1];
+        let defaultControl = Object.entries(
+          defaultControls[inheritParts[0]](),
+        ).find((e) => e[1].key === inheritKey)![1];
         if (defaultControl === null) {
           reportError("bad");
         } else {
@@ -300,7 +298,12 @@ export function buildFromDefs<K extends string>(defs: Record<K, ControlDefinitio
             inherit: defs[key].inherit,
             fixedValue: defaultControl.fixedValue,
             currentValueType: "inherit",
-            lfo: buildLfo(defaultControl.type, defaultControl.min, defaultControl.max, defaultControl.options),
+            lfo: buildLfo(
+              defaultControl.type,
+              defaultControl.min,
+              defaultControl.max,
+              defaultControl.options,
+            ),
             id,
             key,
           };
@@ -334,7 +337,12 @@ export function buildFromDefs<K extends string>(defs: Record<K, ControlDefinitio
   return Object.freeze(parts) as Record<K, ControlState>;
 }
 
-function getMinMaxForType(type: ControlDataType, n_min?: number, n_max?: number, options?: SelectOption[]) {
+function getMinMaxForType(
+  type: ControlDataType,
+  n_min?: number,
+  n_max?: number,
+  options?: SelectOption[],
+) {
   let max: number, min: number;
 
   switch (type) {
@@ -364,7 +372,12 @@ function getMinMaxForType(type: ControlDataType, n_min?: number, n_max?: number,
   return { min, max };
 }
 
-export function buildLfo(type: ControlDataType, n_min?: number, n_max?: number, options?: SelectOption[]) {
+export function buildLfo(
+  type: ControlDataType,
+  n_min?: number,
+  n_max?: number,
+  options?: SelectOption[],
+) {
   const { min, max } = getMinMaxForType(type, n_min, n_max, options);
 
   // add an extra 1 for ints cuz 0-5 is actually 6 items

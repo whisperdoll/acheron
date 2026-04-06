@@ -17,7 +17,8 @@ export default function (props: Props) {
   const layerControls: LayerControlKey[] = [
     //        "enabled",
     "midiChannel",
-    "key",
+    "keyTonic",
+    "keyMode",
   ];
 
   const noteControls: LayerControlKey[] = [

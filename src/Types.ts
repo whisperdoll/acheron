@@ -48,66 +48,6 @@ export type TokenUID = string;
 export type TokenInstanceId = string;
 export type ControlInstanceId = string;
 
-function major(root: number) {
-  return [
-    root,
-    root + 2,
-    root + 4,
-    root + 5,
-    root + 7,
-    root + 9,
-    root + 11,
-  ].map((n) => n % 12);
-}
-
-function minor(root: number) {
-  return [
-    root,
-    root + 2,
-    root + 3,
-    root + 5,
-    root + 7,
-    root + 8,
-    root + 10,
-  ].map((n) => n % 12);
-}
-
-export const KeyMap = {
-  None: noteArray.map((n, i) => i),
-  "A major": major(noteArray.indexOf("A")),
-  "A minor": minor(noteArray.indexOf("A")),
-  "A flat major": major(noteArray.indexOf("G#")),
-  "A flat minor": minor(noteArray.indexOf("G#")),
-  "A sharp minor": minor(noteArray.indexOf("A#")),
-  "B major": major(noteArray.indexOf("B")),
-  "B minor": minor(noteArray.indexOf("B")),
-  "B flat major": major(noteArray.indexOf("A#")),
-  "B flat minor": minor(noteArray.indexOf("A#")),
-  "C major": major(noteArray.indexOf("C")),
-  "C minor": minor(noteArray.indexOf("C")),
-  "C flat major": major(noteArray.indexOf("B")),
-  "C sharp major": major(noteArray.indexOf("C#")),
-  "C sharp minor": minor(noteArray.indexOf("C#")),
-  "D major": major(noteArray.indexOf("D")),
-  "D minor": minor(noteArray.indexOf("D")),
-  "D flat major": major(noteArray.indexOf("C#")),
-  "D flat minor": minor(noteArray.indexOf("C#")),
-  "D sharp minor": minor(noteArray.indexOf("D#")),
-  "E major": major(noteArray.indexOf("E")),
-  "E minor": minor(noteArray.indexOf("E")),
-  "E flat major": major(noteArray.indexOf("D#")),
-  "E flat minor": minor(noteArray.indexOf("D#")),
-  "F major": major(noteArray.indexOf("F")),
-  "F minor": minor(noteArray.indexOf("F")),
-  "F flat major": major(noteArray.indexOf("E")),
-  "F sharp major": major(noteArray.indexOf("F#")),
-  "F sharp minor": minor(noteArray.indexOf("F#")),
-  "G major": major(noteArray.indexOf("G")),
-  "G minor": minor(noteArray.indexOf("G")),
-  "G flat minor": minor(noteArray.indexOf("F#")),
-  "G sharp minor": minor(noteArray.indexOf("G#")),
-};
-
 export type Direction = 0 | 1 | 2 | 3 | 4 | 5;
 
 export type StartCallback<StoreType extends TokenStore = TokenStore> = (

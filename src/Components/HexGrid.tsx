@@ -1,5 +1,5 @@
 import { useContext, useEffect, useRef } from "react";
-import { ControlState, KeyMap, PerformanceNote } from "../Types";
+import { ControlState, PerformanceNote } from "../Types";
 import { Canvas } from "../utils/canvas";
 import {
   generateGridNotes,
@@ -29,6 +29,7 @@ import { mapTouches } from "../lib/utils";
 import Midi from "../utils/midi";
 import HexGridContextMenu from "./HexGridContextMenu";
 import Color from "colorjs.io";
+import { modes, notesForKey } from "../utils/scales";
 
 interface Props {
   layerIndex: number;
@@ -705,12 +706,18 @@ export default function HexGrid(props: Props) {
 
     // draw key //
     // console.log(state);
-    const key: keyof typeof KeyMap = getControlValue(state, {
-      layerControl: "key",
+    const key = getControlValue<"select">(state, {
+      layerControl: "keyTonic",
       layer: props.layerIndex,
-    }) as keyof typeof KeyMap;
+    });
     if (key !== "None") {
-      const notes = KeyMap[key].map((ni) => noteArray[ni]);
+      const mode = getControlValue<"select">(state, {
+        layerControl: "keyMode",
+        layer: props.layerIndex,
+      }) as keyof typeof modes;
+      const notes = notesForKey(noteArray.indexOf(key), mode).map(
+        (noteIndex) => noteArray[noteIndex],
+      );
       for (let i = 0; i < state.gridRows * state.gridCols; i++) {
         const hexNote = getNoteParts(hexNotes[i]).name;
         if (notes.includes(hexNote)) {
@@ -855,6 +862,8 @@ export default function HexGrid(props: Props) {
     state.gridCols,
     state.gridRows,
     state.gridStartingNote,
+    state.keyMode,
+    state.keyTonic,
   ]);
 
   const style = props.size

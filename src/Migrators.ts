@@ -6,13 +6,51 @@ import {
 } from "./Serialization";
 import { AppSettings, TokenSettings } from "./state/AppSettings";
 import { tokenDefinitions } from "./Tokens";
-import { KeyMap, TokenUID } from "./Types";
+import { TokenUID } from "./Types";
 import {
   buildLfo,
   DefaultPlayerControls,
   LayerControlTypes,
+  noteArray,
   PlayerControlKeys,
 } from "./utils/DefaultDefinitions";
+import { modes } from "./utils/scales";
+
+const legacyKeys = [
+  "None",
+  "A major",
+  "A minor",
+  "A flat major",
+  "A flat minor",
+  "A sharp minor",
+  "B major",
+  "B minor",
+  "B flat major",
+  "B flat minor",
+  "C major",
+  "C minor",
+  "C flat major",
+  "C sharp major",
+  "C sharp minor",
+  "D major",
+  "D minor",
+  "D flat major",
+  "D flat minor",
+  "D sharp minor",
+  "E major",
+  "E minor",
+  "E flat major",
+  "E flat minor",
+  "F major",
+  "F minor",
+  "F flat major",
+  "F sharp major",
+  "F sharp minor",
+  "G major",
+  "G minor",
+  "G flat minor",
+  "G sharp minor",
+];
 
 interface LfoV1 {
   type:
@@ -36,6 +74,22 @@ interface SerializedCompositionControlV1 {
   id: string;
   currentValueType: "fixed" | "modulate" | "inherit" | "multiply" | "add";
   inherit?: string;
+  fixedValue: any;
+  lfo: LfoV1;
+}
+
+export interface SerializedCompositionControlV2 {
+  key: string;
+  id: string;
+  currentValueType:
+    | "fixed"
+    | "modulate"
+    | "inherit"
+    | "multiply"
+    | "add"
+    | "midi_cc";
+  inherit?: string;
+  showIf?: string;
   fixedValue: any;
   lfo: LfoV1;
 }
@@ -69,9 +123,27 @@ interface SerializedCompositionLayerV1 {
   tokenIds: string[][];
 }
 const isSerializedCompositionLayerV1 = (
-  value: SerializedCompositionLayerV1 | SerializedCompositionLayer
+  value: SerializedCompositionLayerV1 | SerializedCompositionLayer,
 ): value is SerializedCompositionLayerV1 =>
-  (value as SerializedCompositionLayer).version !== 2;
+  ((value as SerializedCompositionLayer).version || 0) < 2;
+
+interface SerializedCompositionLayerV2 {
+  version: 2;
+  name: string;
+  enabled: SerializedCompositionControlV2;
+  midiChannel: SerializedCompositionControlV2;
+  key: SerializedCompositionControlV2;
+  transpose: SerializedCompositionControlV2;
+  tempo: SerializedCompositionControlV2;
+  barLength: SerializedCompositionControlV2;
+  velocity: SerializedCompositionControlV2;
+  emphasis: SerializedCompositionControlV2;
+  tempoSync: SerializedCompositionControlV2;
+  noteLength: SerializedCompositionControlV2;
+  timeToLive: SerializedCompositionControlV2;
+  pulseEvery: SerializedCompositionControlV2;
+  tokenIds: string[][];
+}
 
 interface SerializedCompositionV1 {
   version: number;
@@ -92,7 +164,7 @@ interface SerializedCompositionV1 {
 }
 
 export async function migrateSettings(
-  settings: Record<string, any>
+  settings: Record<string, any>,
 ): Promise<Partial<AppSettings>> {
   if (settings.version === 1) return settings as AppSettings;
 
@@ -135,7 +207,7 @@ export async function migrateSettings(
 }
 
 async function migrateSerializedToken(
-  serialized: SerializedCompositionTokenV1 | SerializedCompositionToken
+  serialized: SerializedCompositionTokenV1 | SerializedCompositionToken,
 ): Promise<SerializedCompositionToken | null> {
   if (Object.prototype.hasOwnProperty.call(serialized, "path")) {
     throw "this save format is not supported";
@@ -146,13 +218,13 @@ async function migrateSerializedToken(
 
 function migrateSerializedLayer(
   global: SerializedComposition["global"] | SerializedCompositionV1["global"],
-  serialized: SerializedCompositionLayerV1 | SerializedCompositionLayer
+  serialized: SerializedCompositionLayerV1 | SerializedCompositionLayer,
 ): SerializedCompositionLayer {
   if (isSerializedCompositionLayerV1(serialized)) {
     // v1 //
     let ret: SerializedCompositionLayer = {
       ...serialized,
-      version: 2,
+      version: 3,
       enabled: {
         id: "",
         currentValueType: "fixed",
@@ -167,7 +239,7 @@ function migrateSerializedLayer(
         lfo: buildLfo("int", 1, NumMIDIChannels),
         fixedValue: serialized.midiChannel,
       },
-      key: {
+      keyTonic: {
         id: "",
         currentValueType: "fixed",
         key: "key",
@@ -175,9 +247,21 @@ function migrateSerializedLayer(
           "select",
           undefined,
           undefined,
-          Object.keys(KeyMap).map((key) => ({ label: key, value: key }))
+          ["None", ...noteArray].map((key) => ({ label: key, value: key })),
         ),
-        fixedValue: Object.keys(KeyMap)[serialized.key],
+        fixedValue: serialized.key,
+      },
+      keyMode: {
+        id: "",
+        currentValueType: "fixed",
+        key: "key",
+        lfo: buildLfo(
+          "select",
+          undefined,
+          undefined,
+          Object.keys(modes).map((key) => ({ label: key, value: key })),
+        ),
+        fixedValue: serialized.key,
       },
       tempoSync: {
         id: "",
@@ -215,12 +299,12 @@ function migrateSerializedLayer(
 }
 
 export async function migrateSerializedComposition(
-  serialized: SerializedCompositionV1 | SerializedComposition
+  serialized: SerializedCompositionV1 | SerializedComposition,
 ): Promise<SerializedComposition | null> {
   function inheritFor(ret: SerializedComposition, id: string): string {
     // check global //
     let candidate = PlayerControlKeys.findIndex(
-      (key) => ret.global[key].id === id
+      (key) => ret.global[key].id === id,
     );
     if (candidate !== -1) {
       return "global." + ret.global[PlayerControlKeys[candidate]].key;
@@ -229,7 +313,7 @@ export async function migrateSerializedComposition(
     // check layers //
     for (let i = 0; i < ret.layers.length; i++) {
       candidate = LayerControlTypes.findIndex(
-        (key) => ret.layers[i][key].id === id
+        (key) => ret.layers[i][key].id === id,
       );
       if (candidate !== -1) {
         return "layer." + ret.layers[i][LayerControlTypes[candidate]].key;
@@ -241,21 +325,49 @@ export async function migrateSerializedComposition(
 
   const migratedGlobal: SerializedComposition["global"] = {
     ...serialized.global,
-    key:
-      typeof serialized.global.key === "number"
-        ? {
+    keyTonic:
+      "keyTonic" in serialized.global
+        ? serialized.global.keyTonic
+        : typeof serialized.global.key === "number"
+          ? {
+              id: "",
+              currentValueType: "fixed",
+              key: "keyTonic",
+              lfo: buildLfo(
+                "select",
+                undefined,
+                undefined,
+                DefaultPlayerControls.keyTonic.options,
+              ),
+              fixedValue: 0, // todo lol
+            }
+          : {
+              id: "",
+              currentValueType: "fixed",
+              key: "keyTonic",
+              lfo: buildLfo(
+                "select",
+                undefined,
+                undefined,
+                DefaultPlayerControls.keyTonic.options,
+              ),
+              fixedValue: 0, // todo lol
+            },
+    keyMode:
+      "keyMode" in serialized.global
+        ? serialized.global.keyMode
+        : {
             id: "",
             currentValueType: "fixed",
-            key: "tempoSync",
+            key: "keyMode",
             lfo: buildLfo(
               "select",
               undefined,
               undefined,
-              DefaultPlayerControls.key.options
+              DefaultPlayerControls.keyMode.options,
             ),
             fixedValue: serialized.global.key,
-          }
-        : serialized.global.key,
+          },
     tempoSync:
       typeof serialized.global.tempoSync !== "object"
         ? {
@@ -278,10 +390,10 @@ export async function migrateSerializedComposition(
   }
 
   let ret = {
-    version: 2,
+    version: 3 as const,
     global: migratedGlobal,
     layers: serialized.layers.map((l) =>
-      migrateSerializedLayer(migratedGlobal, l)
+      migrateSerializedLayer(migratedGlobal, l),
     ),
     tokens,
   };

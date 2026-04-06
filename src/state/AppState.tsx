@@ -54,7 +54,8 @@ export interface AppState {
   controls: Record<ControlInstanceId, ControlState>;
   tokens: Record<TokenInstanceId, Token>;
   tokenDefinitions: Record<TokenUID, TokenDefinition>;
-  key: ControlInstanceId;
+  keyTonic: ControlInstanceId;
+  keyMode: ControlInstanceId;
   transpose: ControlInstanceId;
   tempo: ControlInstanceId;
   barLength: ControlInstanceId;
@@ -104,7 +105,8 @@ export interface LayerState {
   currentTimeMs: number;
   enabled: ControlInstanceId;
   midiChannel: ControlInstanceId;
-  key: ControlInstanceId;
+  keyTonic: ControlInstanceId;
+  keyMode: ControlInstanceId;
   transpose: ControlInstanceId;
   tempo: ControlInstanceId;
   barLength: ControlInstanceId;
@@ -146,8 +148,11 @@ export const initialState: AppState = {
   timeToLive: Object.entries(DefaultPlayerControls).find(
     (e) => e[1].key === "timeToLive",
   )![0],
-  key: Object.entries(DefaultPlayerControls).find(
-    (e) => e[1].key === "key",
+  keyTonic: Object.entries(DefaultPlayerControls).find(
+    (e) => e[1].key === "keyTonic",
+  )![0],
+  keyMode: Object.entries(DefaultPlayerControls).find(
+    (e) => e[1].key === "keyMode",
   )![0],
   transpose: Object.entries(DefaultPlayerControls).find(
     (e) => e[1].key === "transpose",

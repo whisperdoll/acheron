@@ -15,7 +15,7 @@ export default function PlayerSettings() {
     PlayerControlKeys.map((key) => [key, state[key]]),
   );
   const reactiveSettings = settings.useState();
-  const layerControls: PlayerControlKey[] = ["key"];
+  const layerControls: PlayerControlKey[] = ["keyTonic", "keyMode"];
 
   const noteControls: PlayerControlKey[] = [
     "transpose",

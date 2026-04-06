@@ -321,6 +321,12 @@ export const Value = React.memo(function ControlValue() {
       if (controlState.type !== "decimal") {
         controlState.fixedValue = Math.round(controlState.fixedValue);
       }
+      if (controlState.type === "select" && controlState.options) {
+        controlState.fixedValue =
+          controlState.options[
+            controlState.fixedValue % controlState.options.length
+          ].value;
+      }
     }
     return controlState;
   }, [context.controls, context.controlId, modChain, now]);

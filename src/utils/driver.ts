@@ -1,4 +1,4 @@
-import { KeyMap, LayerNote, PerformanceNote, Playhead, Token } from "../Types";
+import { LayerNote, PerformanceNote, Playhead, Token } from "../Types";
 import {
   generateGridNotes,
   getAdjacentHex,
@@ -19,6 +19,7 @@ import { AppState, getControlValue, LayerState } from "../state/AppState";
 import settings from "../state/AppSettings";
 import Dict from "../lib/dict";
 import List from "../lib/list";
+import { modes, notesForKey } from "./scales";
 
 export class Driver {
   private scheduledForMove: {
@@ -125,11 +126,20 @@ export class Driver {
       );
     }
 
-    const key = getControlValue(state, {
-      layerControl: "key",
+    const key = getControlValue<"select">(state, {
+      layerControl: "keyTonic",
       layer: layerIndex || "current",
-    }) as keyof typeof KeyMap;
-    const permittedNotes = KeyMap[key].map((ni) => noteArray[ni]);
+    });
+    const mode = getControlValue<"select">(state, {
+      layerControl: "keyMode",
+      layer: layerIndex || "current",
+    }) as keyof typeof modes;
+    const permittedNotes =
+      key === "None"
+        ? noteArray
+        : notesForKey(noteArray.indexOf(key), mode).map(
+            (noteIndex) => noteArray[noteIndex],
+          );
 
     let unpermitted: string[];
     // eslint-disable-next-line prefer-const
@@ -408,11 +418,20 @@ export class Driver {
           );
         }
 
-        const key = getControlValue(state, {
-          layerControl: "key",
-          layer: layerIndex,
-        }) as keyof typeof KeyMap;
-        const permittedNotes = KeyMap[key].map((ni) => noteArray[ni]);
+        const key = getControlValue<"select">(state, {
+          layerControl: "keyTonic",
+          layer: layerIndex || "current",
+        });
+        const mode = getControlValue<"select">(state, {
+          layerControl: "keyMode",
+          layer: layerIndex || "current",
+        }) as keyof typeof modes;
+        const permittedNotes =
+          key === "None"
+            ? noteArray
+            : notesForKey(noteArray.indexOf(key), mode).map(
+                (noteIndex) => noteArray[noteIndex],
+              );
 
         notes = notes.filter((note) => {
           return permittedNotes.includes(getNoteParts(note).name);
@@ -478,6 +497,12 @@ export class Driver {
       },
       getNumHexes(): number {
         return state.gridCols * state.gridRows;
+      },
+      getCols(): number {
+        return state.gridCols;
+      },
+      getRows(): number {
+        return state.gridRows;
       },
     };
 
