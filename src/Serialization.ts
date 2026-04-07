@@ -1,5 +1,4 @@
 import { buildLayer } from "./Layers";
-import { migrateSerializedComposition } from "./Migrators";
 import { AppState, LayerState } from "./state/AppState";
 import { tokenDefinitionsMap } from "./Tokens";
 import { ControlState, Lfo, Token } from "./Types";
@@ -202,13 +201,6 @@ export async function deserializeComposition(
   appState: AppState,
   c: SerializedComposition,
 ): Promise<AppState> {
-  const migrated = await migrateSerializedComposition(c);
-  if (!migrated) {
-    alert("Error migrating old composition version");
-    return appState;
-  }
-  c = migrated;
-
   const appTokens: Record<string, Token> = {};
   let appControls: Record<string, ControlState> = {};
 

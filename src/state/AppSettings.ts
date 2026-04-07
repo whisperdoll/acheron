@@ -5,7 +5,6 @@ import Dict from "../lib/dict";
 import { tokenDefinitions } from "../Tokens";
 import { isOnDesktop } from "../utils/desktop";
 import { KeyboardShortcut } from "../lib/keyboard";
-import { migrateSettings } from "../Migrators";
 
 const localStorageKey = "acheronSettings";
 
@@ -59,7 +58,7 @@ export const defaultSettings: AppSettings = {
     tokenDefinitions.map<[TokenUID, TokenSettings]>((t) => [
       t.uid,
       { enabled: true, shortcut: "" },
-    ])
+    ]),
   ),
   confirmDelete: true,
   midiInputs: [],
@@ -124,9 +123,7 @@ class SettingsStore extends StateStore<AppSettings> {
 
         try {
           const fileContents = await fs.readTextFile(filepath);
-          const newSettings: Partial<AppSettings> = await migrateSettings(
-            JSON.parse(fileContents)
-          );
+          const newSettings: Partial<AppSettings> = JSON.parse(fileContents);
           return {
             ...defaultSettings,
             ...newSettings,
@@ -143,9 +140,7 @@ class SettingsStore extends StateStore<AppSettings> {
       } else {
         const fileContents = localStorage.getItem(localStorageKey);
         if (fileContents) {
-          const newSettings: Partial<AppSettings> = await migrateSettings(
-            JSON.parse(fileContents)
-          );
+          const newSettings: Partial<AppSettings> = JSON.parse(fileContents);
           return {
             ...defaultSettings,
             ...newSettings,
@@ -158,7 +153,7 @@ class SettingsStore extends StateStore<AppSettings> {
         } else {
           localStorage.setItem(
             localStorageKey,
-            JSON.stringify(defaultSettings)
+            JSON.stringify(defaultSettings),
           );
           return defaultSettings;
         }
@@ -168,7 +163,7 @@ class SettingsStore extends StateStore<AppSettings> {
 
   async set(
     newState: MaybeGeneratedPromise<Partial<AppSettings>, [AppSettings]>,
-    why: string
+    why: string,
   ) {
     await super.set(newState, why);
     await this.saveSettingsThrottled(1000, why);
@@ -209,11 +204,14 @@ class SettingsStore extends StateStore<AppSettings> {
 
     if (this.throttleTimer) return;
 
-    this.throttleTimer = window.setTimeout(() => {
-      this.throttleTimer = 0;
-      this.throttleLastTime = Date.now();
-      this.save(`(throttled) ${why}`);
-    }, ms - (Date.now() - this.throttleLastTime));
+    this.throttleTimer = window.setTimeout(
+      () => {
+        this.throttleTimer = 0;
+        this.throttleLastTime = Date.now();
+        this.save(`(throttled) ${why}`);
+      },
+      ms - (Date.now() - this.throttleLastTime),
+    );
   }
 }
 
