@@ -20,6 +20,7 @@ import TwistToken from "./tokens/twist.ts";
 import WormholeToken from "./tokens/wormhole.ts";
 import { AppState } from "./state/AppState.ts";
 import List from "./lib/list.ts";
+import ShiftToken from "./tokens/shift.ts";
 
 export const tokenDefinitions: TokenDefinition[] = [
   GenerateToken,
@@ -32,6 +33,7 @@ export const tokenDefinitions: TokenDefinition[] = [
   WormholeToken,
   AbsorbToken,
   LifespanToken,
+  ShiftToken,
 ] as TokenDefinition[];
 
 export const tokenDefinitionsMap = List.indexBy(tokenDefinitions, (d) => d.uid);
@@ -81,7 +83,7 @@ export function buildToken(appState: AppState, uid: string) {
 
 export function copyToken(
   appState: AppState,
-  token: Token
+  token: Token,
 ): { tokenState: Token; controls: Record<string, ControlState> } {
   const controls: Record<string, ControlState> = {};
 

@@ -1,3 +1,4 @@
+import { mod } from "../lib/utils";
 import { TokenDefinition } from "../Types";
 
 interface Store {
@@ -57,12 +58,9 @@ const ShiftToken: TokenDefinition<Store> = {
 
       function tryPerformShift(playheadIndex: number) {
         if (probability / 100 > Math.random()) {
-          const newLocation = Math.max(
-            Math.min(
-              helpers.getHexIndex() + shift * 2 * helpers.getRows(),
-              helpers.getNumHexes() - 1,
-            ),
-            0,
+          const newLocation = mod(
+            helpers.getHexIndex() + shift * 2 * helpers.getRows(),
+            helpers.getNumHexes(),
           );
           helpers.warpPlayhead(playheadIndex, newLocation, helpers.getLayer());
         }

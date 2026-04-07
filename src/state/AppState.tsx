@@ -357,6 +357,7 @@ export function togglePlaying(setState: SetState, why: string) {
       ...layer,
       currentBeat: 0,
       currentTimeMs: 0,
+      playheads: [],
     })),
     startTime: performance.now(),
   }));

@@ -97,6 +97,12 @@ export class Driver {
     const { state, hexIndex, durationMs, additionalTranspose, layerIndex } =
       opts;
 
+    if (hexIndex === -1)
+      return [[], []] as [
+        Omit<PerformanceNote, "identifier">[],
+        Omit<PerformanceNote, "identifier">[],
+      ];
+
     const hexNotes = generateGridNotes(
       state.gridStartingNote,
       state.gridRows,
