@@ -317,7 +317,7 @@ export default function HexGrid(props: Props) {
         tokens.forEach((token) => {
           const controls = token.controlIds.map((cid) => state.controls[cid]);
           controls
-            .filter((c) => c.type === "direction")
+            .filter((c) => c.definition.type === "direction")
             .forEach((c) =>
               ret.push(getControlValue(state, c as ControlState<"direction">)),
             );

@@ -6,11 +6,15 @@ import {
   ControlDataType,
   TokenUID,
   TokenInstanceId,
+  ModChain,
+  FixedControlValueMod,
+  coerceControlValueToNumber,
 } from "../Types";
 import { v4 as uuidv4 } from "uuid";
 import { getInheritParts } from "./elysiumutils";
 import { NumMIDIChannels } from "../constants";
 import { modes } from "./scales";
+import { AppState } from "../state/AppState";
 
 // ----------------------------------------------------------------
 // PLAYER
@@ -45,32 +49,12 @@ export const noteArray: string[] = [
   "B", // 11
 ];
 
-function major(root: number) {
-  return [
-    root,
-    root + 2,
-    root + 4,
-    root + 5,
-    root + 7,
-    root + 9,
-    root + 11,
-  ].map((n) => n % 12);
-}
-
-function minor(root: number) {
-  return [
-    root,
-    root + 2,
-    root + 3,
-    root + 5,
-    root + 7,
-    root + 8,
-    root + 10,
-  ].map((n) => n % 12);
-}
-
 export type PlayerControlKey = (typeof PlayerControlKeys)[number];
 
+const keyModeOptions = Object.keys(modes).map((mode) => ({
+  label: mode,
+  value: mode,
+}));
 export const playerControlDefs: Record<PlayerControlKey, ControlDefinition> = {
   keyTonic: {
     label: "Key",
@@ -79,11 +63,13 @@ export const playerControlDefs: Record<PlayerControlKey, ControlDefinition> = {
       label: note,
       value: note,
     })),
+    defaultValue: "None",
   },
   keyMode: {
     label: "Mode",
     type: "select",
-    options: Object.keys(modes).map((mode) => ({ label: mode, value: mode })),
+    options: keyModeOptions,
+    defaultValue: keyModeOptions[0].value,
   },
   transpose: {
     label: "Transpose",
@@ -149,8 +135,6 @@ export const playerControlDefs: Record<PlayerControlKey, ControlDefinition> = {
   },
 };
 
-export const DefaultPlayerControls = buildFromDefs(playerControlDefs);
-
 // ----------------------------------------------------------------
 // LAYER
 // ----------------------------------------------------------------
@@ -169,64 +153,58 @@ export const LayerControlTypes = [
   "pulseEvery",
   "timeToLive",
   "tempoSync",
-] as const;
+] as const satisfies string[];
 
 export type LayerControlKey = (typeof LayerControlTypes)[number];
 
-function layerControlDefs(): Record<LayerControlKey, ControlDefinition> {
-  return {
-    enabled: {
-      label: "Enabled",
-      type: "bool",
-      defaultValue: true,
-    },
-    midiChannel: {
-      label: "MIDI Channel",
-      type: "int",
-      min: 1,
-      max: NumMIDIChannels,
-      step: 1,
-      defaultValue: 1,
-    },
-    keyTonic: {
-      inherit: "global.keyTonic",
-    },
-    keyMode: {
-      inherit: "global.keyMode",
-    },
-    barLength: {
-      inherit: "global.barLength",
-    },
-    emphasis: {
-      inherit: "global.emphasis",
-    },
-    tempo: {
-      inherit: "global.tempo",
-    },
-    transpose: {
-      inherit: "global.transpose",
-    },
-    velocity: {
-      inherit: "global.velocity",
-    },
-    tempoSync: {
-      inherit: "global.tempoSync",
-    },
-    noteLength: {
-      inherit: "global.noteLength",
-    },
-    pulseEvery: {
-      inherit: "global.pulseEvery",
-    },
-    timeToLive: {
-      inherit: "global.timeToLive",
-    },
-  };
-}
-
-export function DefaultLayerControls(): Record<TokenInstanceId, ControlState> {
-  return buildFromDefs(layerControlDefs());
-}
+export const layerControlDefs: Record<LayerControlKey, ControlDefinition> = {
+  enabled: {
+    label: "Enabled",
+    type: "bool",
+    defaultValue: true,
+  },
+  midiChannel: {
+    label: "MIDI Channel",
+    type: "int",
+    min: 1,
+    max: NumMIDIChannels,
+    step: 1,
+    defaultValue: 1,
+  },
+  keyTonic: {
+    inherit: "global.keyTonic",
+  },
+  keyMode: {
+    inherit: "global.keyMode",
+  },
+  barLength: {
+    inherit: "global.barLength",
+  },
+  emphasis: {
+    inherit: "global.emphasis",
+  },
+  tempo: {
+    inherit: "global.tempo",
+  },
+  transpose: {
+    inherit: "global.transpose",
+  },
+  velocity: {
+    inherit: "global.velocity",
+  },
+  tempoSync: {
+    inherit: "global.tempoSync",
+  },
+  noteLength: {
+    inherit: "global.noteLength",
+  },
+  pulseEvery: {
+    inherit: "global.pulseEvery",
+  },
+  timeToLive: {
+    inherit: "global.timeToLive",
+  },
+};
 
 // ------------------------------
 
@@ -234,107 +212,73 @@ export function DefaultLayerControls(): Record<TokenInstanceId, ControlState> {
 
 export function buildFromDefs<K extends string>(
   defs: Record<K, ControlDefinition>,
-): Record<K, ControlState> {
+): [Record<K, ControlState>, Record<K, ModChain>] {
   const parts: Record<string, ControlState> = {};
-
-  function getDefaultValue(definition: ControlDefinition) {
-    switch (definition.type) {
-      case "bool":
-        return definition.defaultValue ?? false;
-      case "int":
-      case "decimal":
-      case "direction":
-      case "triad":
-        return definition.defaultValue ?? 0;
-      case "select":
-        if (!definition.options) {
-          throw "select control without options :(";
-        }
-
-        const defaultOption = definition.options.find(
-          (o) => o.value === definition.defaultValue,
-        );
-        if (defaultOption) {
-          return defaultOption.value;
-        } else {
-          return definition.options[0].value;
-        }
-    }
-  }
+  const modChains = {} as Record<string, ModChain>;
 
   function reportError(msg: string) {
     console.error("Error building token control:\n" + msg);
   }
 
-  let _defaultLayerControls: Record<string, ControlState> | null = null;
-
-  const defaultControls = {
-    global: () => DefaultPlayerControls,
-    layer: () =>
-      _defaultLayerControls || (_defaultLayerControls = DefaultLayerControls()),
-  };
-
   for (const key in defs) {
-    if (defs[key].inherit) {
-      const inheritParts = getInheritParts(defs[key].inherit!);
+    const controlDef = defs[key];
+    let parentDef = controlDef;
+
+    const id = uuidv4();
+    const modId = uuidv4();
+
+    modChains[id] = {
+      connections: [],
+      input: id,
+      mods: {
+        [modId]: {
+          __type: "fixedControlValue",
+          controlId: id,
+          value: 0,
+        },
+      },
+      output: modId,
+    };
+
+    if (controlDef.inherit) {
+      const inheritParts = getInheritParts(controlDef.inherit!);
       if (!inheritParts) {
         reportError("bad inherit key");
-      } else {
-        let inheritKey = inheritParts[1];
-        let defaultControl = Object.entries(
-          defaultControls[inheritParts[0]](),
-        ).find((e) => e[1].key === inheritKey)![1];
-        if (defaultControl === null) {
-          reportError("bad");
-        } else {
-          const id = uuidv4();
-          parts[id] = {
-            label: defaultControl.label,
-            type: defaultControl.type,
-            min: defaultControl.min,
-            max: defaultControl.max,
-            step: defaultControl.step,
-            options: defaultControl.options?.slice(0),
-            inherit: defs[key].inherit,
-            fixedValue: defaultControl.fixedValue,
-            currentValueType: "inherit",
-            lfo: buildLfo(
-              defaultControl.type,
-              defaultControl.min,
-              defaultControl.max,
-              defaultControl.options,
-            ),
-            id,
-            key,
-          };
-        }
+        continue;
       }
-    } else {
-      const def = defs[key];
 
-      if (def.label === undefined || def.type === undefined) {
-        reportError("bad");
-      } else {
-        const id = uuidv4();
-        parts[id] = {
-          label: def.label,
-          type: def.type,
-          step: def.step,
-          options: def.options?.slice(0),
-          inherit: undefined,
-          currentValueType: "fixed",
-          fixedValue: getDefaultValue(defs[key]),
-          lfo: buildLfo(def.type, def.min, def.max, def.options),
-          id,
-          key,
-          ...getMinMaxForType(def.type, def.min, def.max, def.options),
-          showIf: def.showIf,
-        };
-      }
+      const [inheritSourceKey, inheritKey] = inheritParts;
+      parentDef =
+        inheritKey in playerControlDefs
+          ? playerControlDefs[inheritKey as keyof typeof playerControlDefs]
+          : layerControlDefs[inheritKey];
+
+      const inheritModId = uuidv4();
+      modChains[id].mods[inheritModId] = {
+        __type: "inheritedControlValue",
+        inherit: controlDef.inherit!,
+      };
+      modChains[id].output = inheritModId;
     }
+
+    (modChains[id].mods[modId] as FixedControlValueMod).value =
+      coerceControlValueToNumber(parentDef.defaultValue, {
+        key,
+        definition: parentDef,
+      });
+
+    const control: ControlState = {
+      id,
+      key,
+      definition: { ...parentDef, ...controlDef },
+    };
+    parts[id] = control;
   }
 
-  return Object.freeze(parts) as Record<K, ControlState>;
+  return [
+    Object.freeze(parts) as Record<K, ControlState>,
+    Object.freeze(modChains) as Record<K, ModChain>,
+  ];
 }
 
 function getMinMaxForType(

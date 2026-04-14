@@ -25,8 +25,10 @@ import {
   coerceControlValueFromNumber,
 } from "../Types.ts";
 import {
-  DefaultPlayerControls,
+  buildFromDefs,
   LayerControlKey,
+  LayerControlTypes,
+  playerControlDefs,
   PlayerControlKey,
   PlayerControlKeys,
 } from "../utils/DefaultDefinitions.ts";
@@ -38,6 +40,7 @@ import {
   MaybeGenerated,
   arrayWithoutIndexes,
   MaybeGeneratedPromise,
+  mapObject,
 } from "../lib/utils.ts";
 import appSettingsStore from "./AppSettings.ts";
 import AbsorbToken from "../tokens/absorb.ts";
@@ -97,6 +100,7 @@ export interface AppState {
   gridStartingNote: string;
   modChainControl?: ControlInstanceId;
   modChains: Record<ControlInstanceId, ModChain>;
+  controlLayers: Record<ControlInstanceId, number>; // convenience map control->layer
 }
 
 export interface LayerState {
@@ -122,44 +126,43 @@ export interface LayerState {
   playingNotes: LayerNote[]; // from tokens
 }
 
+export function buildControlLayers(
+  appState: AppState,
+): AppState["controlLayers"] {
+  const controlLayers: Record<ControlInstanceId, number> = {};
+  appState.layers.forEach((layer, layerIndex) => {
+    layer.tokenIds.forEach((tokenIds) => {
+      tokenIds.forEach((tokenId) => {
+        const token = appState.tokens[tokenId];
+        token.controlIds.forEach((controlId) => {
+          controlLayers[controlId] = layerIndex;
+        });
+      });
+    });
+
+    Object.entries(sliceObject(layer, LayerControlTypes)).forEach(
+      ([key, controlId]) => {
+        controlLayers[controlId] = layerIndex;
+      },
+    );
+  });
+
+  return controlLayers;
+}
+
+const [initialPlayerControls, initialPlayerModChains] =
+  buildFromDefs(playerControlDefs);
+
 export const initialState: AppState = {
   selectedHex: { hexIndex: -1, layerIndex: 0 },
   hoveredHex: { hexIndex: -1, layerIndex: 0 },
-  controls: { ...DefaultPlayerControls }, // appended to after layer contruction
+  controls: { ...initialPlayerControls }, // appended to after layer contruction
   tokens: {},
-  barLength: Object.entries(DefaultPlayerControls).find(
-    (e) => e[1].key === "barLength",
-  )![0],
-  emphasis: Object.entries(DefaultPlayerControls).find(
-    (e) => e[1].key === "emphasis",
-  )![0],
-  tempoSync: Object.entries(DefaultPlayerControls).find(
-    (e) => e[1].key === "tempoSync",
-  )![0],
-  noteLength: Object.entries(DefaultPlayerControls).find(
-    (e) => e[1].key === "noteLength",
-  )![0],
-  pulseEvery: Object.entries(DefaultPlayerControls).find(
-    (e) => e[1].key === "pulseEvery",
-  )![0],
-  tempo: Object.entries(DefaultPlayerControls).find(
-    (e) => e[1].key === "tempo",
-  )![0],
-  timeToLive: Object.entries(DefaultPlayerControls).find(
-    (e) => e[1].key === "timeToLive",
-  )![0],
-  keyTonic: Object.entries(DefaultPlayerControls).find(
-    (e) => e[1].key === "keyTonic",
-  )![0],
-  keyMode: Object.entries(DefaultPlayerControls).find(
-    (e) => e[1].key === "keyMode",
-  )![0],
-  transpose: Object.entries(DefaultPlayerControls).find(
-    (e) => e[1].key === "transpose",
-  )![0],
-  velocity: Object.entries(DefaultPlayerControls).find(
-    (e) => e[1].key === "velocity",
-  )![0],
+  ...mapObject(initialPlayerControls, (k, v) => [
+    v.key as PlayerControlKey,
+    v.id,
+  ]),
+  controlLayers: {},
   layers: [], // appended to after layer contruction
   isPlaying: false,
   startTime: 0,
@@ -191,7 +194,9 @@ export const initialState: AppState = {
   gridRows: 7,
   gridCols: 12,
   gridStartingNote: "D#7",
-  modChains: {},
+  modChains: {
+    ...initialPlayerModChains,
+  },
   modChainControl: undefined,
 };
 
@@ -199,6 +204,14 @@ const initialLayer = buildLayer(initialState);
 
 initialState.controls = { ...initialState.controls, ...initialLayer.controls };
 initialState.layers = [initialLayer.layerState];
+initialState.modChains = {
+  ...initialState.modChains,
+  ...initialLayer.modChains,
+};
+initialState.controlLayers = {
+  ...initialState.controlLayers,
+  ...mapObject(initialLayer.controls, (k, v) => [v.id, 0]),
+};
 
 type SetState = React.Dispatch<React.SetStateAction<AppState>>;
 export const AppContext = React.createContext<{
@@ -240,7 +253,8 @@ export function addTokenToHex(
   why: string,
 ) {
   setState((state) => {
-    const { tokenState, controls } = buildToken(state, tokenKey);
+    const { tokenState, controls, modChains } = buildToken(state, tokenKey);
+    const resolvedOpts = resolveMaybeGenerated(opts, state);
 
     return {
       ...state,
@@ -252,14 +266,25 @@ export function addTokenToHex(
         ...state.controls,
         ...controls,
       },
+      modChains: {
+        ...state.modChains,
+        ...modChains,
+      },
+      controlLayers: {
+        ...state.controlLayers,
+        ...mapObject(controls, (key, value) => [
+          value.id,
+          resolvedOpts.layerIndex,
+        ]),
+      },
       layers: List.withIndexReplaced(
         state.layers,
-        resolveMaybeGenerated(opts, state).layerIndex,
+        resolvedOpts.layerIndex,
         (layer) => ({
           ...layer,
           tokenIds: List.withIndexReplaced(
             layer.tokenIds,
-            resolveMaybeGenerated(opts, state).hexIndex,
+            resolvedOpts.hexIndex,
             (old) => old.concat([tokenState.id]),
           ),
         }),
@@ -290,7 +315,6 @@ export function removeTokenFromHexStatic(
   opts: MaybeGenerated<{ hexIndex: number; layerIndex: number }, [AppState]>,
 ): AppState {
   const resolvedOpts = resolveMaybeGenerated(opts, state);
-  console.log({ state, tokenId, opts });
 
   return {
     ...state,
@@ -640,6 +664,36 @@ export function playerControl<T extends ControlDataType = ControlDataType>(
   return state.controls[state[control]] as ControlState<T>;
 }
 
+export function getControlLayer(
+  state: AppState,
+  controlId: ControlInstanceId,
+): LayerState | null {
+  const layerIndex = state.controlLayers[controlId];
+  if (layerIndex === undefined) {
+    return null;
+  }
+
+  return state.layers[layerIndex];
+}
+
+export function getControlType(state: AppState, controlId: ControlInstanceId) {
+  const control = state.controls[controlId];
+  if (control.definition.type) {
+    return control.definition.type;
+  }
+
+  const inheritParts = getInheritParts(control.definition.inherit);
+  if (!inheritParts) throw "something bad happened lol";
+
+  // otherwise, it's inherited
+  return getControlFromInheritParts(
+    state.controls,
+    playerControls(state),
+    getControlLayer(state, controlId)!,
+    inheritParts,
+  ).definition.type!;
+}
+
 export function getControlValue<T extends ControlDataType = ControlDataType>(
   state: AppState,
   control:
@@ -677,40 +731,10 @@ export function getControlValue<T extends ControlDataType = ControlDataType>(
             ] as ControlState<T>)
           : control;
 
-  if (resolvedControl.currentValueType === "fixed") {
-    if (state.modChains[resolvedControl.id]) {
-      return coerceControlValueFromNumber<T>(
-        resolveModChain(state, resolvedControl.id),
-        resolvedControl,
-      );
-    } else {
-      return resolvedControl.fixedValue;
-    }
-  } else {
-    const inheritParts = getInheritParts(resolvedControl.inherit);
-    if (!inheritParts) {
-      console.error("inherit failed", { control });
-      throw "inherit fail";
-    }
-
-    const inheritedControl = getControlFromInheritParts(
-      state.controls,
-      playerControls(state),
-      resolvedLayer,
-      inheritParts,
-    );
-    let inheritedValue = coerceControlValueToNumber(
-      getControlValue(state, inheritedControl),
-      inheritedControl,
-    );
-    return coerceControlValueFromNumber<T>(
-      Math.max(
-        Math.min(+inheritedValue, resolvedControl.max),
-        resolvedControl.min,
-      ),
-      resolvedControl,
-    );
-  }
+  return coerceControlValueFromNumber<T>(
+    resolveModChain(state, resolvedControl.id),
+    resolvedControl,
+  );
 }
 
 export function resolveModItem(
@@ -722,10 +746,29 @@ export function resolveModItem(
 
   switch (modItem.__type) {
     case "controlValue":
-    case "inheritedControlValue":
       return coerceControlValueToNumber(
         getControlValue(state, state.controls[modItem.controlId]),
         state.controls[modItem.controlId],
+      );
+    case "inheritedControlValue":
+      const inherit = modItem.inherit;
+      const inheritParts = getInheritParts(inherit);
+      if (!inheritParts) {
+        throw "bad inherit parts";
+      }
+      const controlLayer = getControlLayer(state, modChain.input);
+      if (!controlLayer) {
+        throw "bad inherit situation";
+      }
+      const control = getControlFromInheritParts(
+        state.controls,
+        playerControls(state),
+        controlLayer,
+        inheritParts,
+      );
+      return coerceControlValueToNumber(
+        getControlValue(state, control),
+        control,
       );
     case "fixedControlValue":
       return modItem.value;
@@ -755,16 +798,7 @@ export function resolveModItem(
 
 export function resolveModChain(state: AppState, modChainId: string): number {
   const modChain = state.modChains[modChainId];
-  const inputValue = state.controls[modChain.input].fixedValue;
-
-  if (modChain.output) {
-    return resolveModItem(state, modChain, modChain.output);
-  } else {
-    return coerceControlValueToNumber(
-      inputValue,
-      state.controls[modChain.input],
-    );
-  }
+  return resolveModItem(state, modChain, modChain.output);
 }
 
 export function connectModItems(

@@ -50,7 +50,7 @@ export function transposeNote(note: string, semitones: number) {
 }
 
 export function getInheritParts(
-  str: string | undefined
+  str: string | undefined,
 ):
   | [p1: "global", p2: PlayerControlKey]
   | [p1: "layer", p2: LayerControlKey]
@@ -61,13 +61,13 @@ export function getInheritParts(
     if (parts[0] === "global") {
       return (
         PlayerControlKeys.includes(
-          parts[1] as (typeof PlayerControlKeys)[number]
+          parts[1] as (typeof PlayerControlKeys)[number],
         ) && (parts as [p1: "global", p2: PlayerControlKey])
       );
     } else if (parts[0] === "layer") {
       return (
         LayerControlTypes.includes(
-          parts[1] as (typeof PlayerControlKeys)[number]
+          parts[1] as (typeof PlayerControlKeys)[number],
         ) && (parts as [p1: "layer", p2: LayerControlKey])
       );
     }
@@ -82,7 +82,7 @@ export function getControlFromInheritParts(
   layer: LayerState,
   inheritParts:
     | [p1: "global", p2: PlayerControlKey]
-    | [p1: "layer", p2: LayerControlKey]
+    | [p1: "layer", p2: LayerControlKey],
 ): ControlState {
   if (inheritParts[0] === "global") {
     return controls[playerControls[inheritParts[1]]];
@@ -96,7 +96,7 @@ export function getAdjacentHex(
   direction: number,
   gridRows: number,
   gridColumns: number,
-  offset: number = 1
+  offset: number = 1,
 ): number {
   let val = hexIndex;
   direction = mod(direction, 6);
@@ -113,7 +113,7 @@ export function getAdjacentHex(
       case 0: // up
         val = mod(
           isTop ? val + (gridRows - 1) : val - 1,
-          gridRows * gridColumns
+          gridRows * gridColumns,
         );
         break;
       case 1: // up-right
@@ -121,9 +121,9 @@ export function getAdjacentHex(
           isTop && !isLow
             ? val + (gridRows * 2 - 1)
             : isLow
-            ? val + gridRows
-            : val + (gridRows - 1),
-          gridRows * gridColumns
+              ? val + gridRows
+              : val + (gridRows - 1),
+          gridRows * gridColumns,
         );
         break;
       case 2: // down-right
@@ -131,15 +131,15 @@ export function getAdjacentHex(
           isBottom && isLow
             ? val + 1
             : isLow
-            ? val + (gridRows + 1)
-            : val + gridRows,
-          gridRows * gridColumns
+              ? val + (gridRows + 1)
+              : val + gridRows,
+          gridRows * gridColumns,
         );
         break;
       case 3: // down
         val = mod(
           isBottom ? val - (gridRows - 1) : val + 1,
-          gridRows * gridColumns
+          gridRows * gridColumns,
         );
         break;
       case 4: // down-left
@@ -147,9 +147,9 @@ export function getAdjacentHex(
           isBottom && isLow
             ? val - (gridRows * 2 - 1)
             : isLow
-            ? val - (gridRows - 1)
-            : val - gridRows,
-          gridRows * gridColumns
+              ? val - (gridRows - 1)
+              : val - gridRows,
+          gridRows * gridColumns,
         );
         break;
       case 5: // up-left
@@ -157,9 +157,9 @@ export function getAdjacentHex(
           isTop && !isLow
             ? val - 1
             : isLow
-            ? val - gridRows
-            : val - (gridRows + 1),
-          gridRows * gridColumns
+              ? val - gridRows
+              : val - (gridRows + 1),
+          gridRows * gridColumns,
         );
         break;
     }
@@ -202,7 +202,7 @@ export function hexIndexesFromNote(note: string, hexNotes: string[]): number[] {
 export function generateGridNotes(
   startingNote: string,
   rows: number,
-  cols: number
+  cols: number,
 ) {
   const ret = [];
   let cursor = startingNote;

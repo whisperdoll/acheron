@@ -1,4 +1,4 @@
-import { useCallback, useContext, useMemo } from "react";
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { ModChainWorkspaceContext } from "../state/ModChainWorkspaceContext";
 import { cx } from "../lib/utils";
 import { AppContext } from "../state/AppState";
@@ -29,15 +29,17 @@ export default function ModChainWorkspaceWire(props: Props) {
       y: bounds.top,
     };
   }, [modChainWorkspaceContext.containerBounds]);
-  const currentModChain = state.modChains[modChainWorkspaceContext.modChainId];
+  const currentModChain = state.modChains[state.modChainControl!];
 
-  const sourcePosition = useMemo(() => {
-    const node = currentModChain.mods[props.from];
+  function calcSourcePosition() {
     const el = document.querySelector(
       `[data-mod-chain-output-node="${props.from}"]`,
     );
 
-    if (!el) return;
+    if (!el) {
+      console.log("missed wire");
+      return;
+    }
 
     const bounds = el.getBoundingClientRect();
 
@@ -48,6 +50,12 @@ export default function ModChainWorkspaceWire(props: Props) {
         (modChainWorkspaceContext.containerBounds?.scrollLeft ?? 0),
       y: bounds.top + bounds.height / 2,
     };
+  }
+
+  const [sourcePosition, setSourcePosition] = useState(calcSourcePosition);
+
+  useEffect(() => {
+    setTimeout(() => setSourcePosition(calcSourcePosition), 0);
   }, [
     props.from,
     currentModChain.mods,

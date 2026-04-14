@@ -218,7 +218,7 @@ export default function App() {
         const serialized = await openComposition();
         if (!serialized) return;
 
-        const deserialized = await deserializeComposition(state, serialized);
+        const deserialized = deserializeComposition(state, serialized);
         setState(deserialized);
       },
       saveAs() {},

@@ -19,6 +19,7 @@ const NoteToken: TokenDefinition<Store> = {
     triad: {
       label: "Triad",
       type: "triad",
+      defaultValue: 0,
     },
     transpose: {
       label: "Transpose",
@@ -91,7 +92,7 @@ const NoteToken: TokenDefinition<Store> = {
             noteLength * (durationType === "ms" ? 1000 : 1),
             durationType,
             helpers.getCurrentBeat() === 0 ? emphasis : velocity,
-            transpose
+            transpose,
           );
           hasPerformed = true;
         }

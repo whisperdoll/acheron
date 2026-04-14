@@ -11,9 +11,9 @@ interface Props {
 export default function ModChainOutputNode(props: Props) {
   const { state, setState } = useContext(AppContext)!;
   const modChainWorkspaceContext = useContext(ModChainWorkspaceContext);
-  const connected = state.modChains[
-    modChainWorkspaceContext.modChainId
-  ].connections.some((c) => c.from === props.modItemId);
+  const connected = state.modChains[state.modChainControl!].connections.some(
+    (c) => c.from === props.modItemId,
+  );
 
   const handleMouseDown: React.PointerEventHandler<HTMLDivElement> =
     useCallback(
@@ -33,7 +33,7 @@ export default function ModChainOutputNode(props: Props) {
           if (target.parentElement?.dataset.modChainOutput) {
             connectModItems(
               setState,
-              modChainWorkspaceContext.modChainId,
+              state.modChainControl!,
               props.modItemId,
               ModOutput,
             );
@@ -50,7 +50,7 @@ export default function ModChainOutputNode(props: Props) {
 
           connectModItems(
             setState,
-            modChainWorkspaceContext.modChainId,
+            state.modChainControl!,
             props.modItemId,
             modChainInputNodeId,
             modChainInputNodeProperty,
@@ -59,7 +59,7 @@ export default function ModChainOutputNode(props: Props) {
 
         document.addEventListener("pointerup", onMouseUp);
       },
-      [modChainWorkspaceContext.set],
+      [modChainWorkspaceContext.set, state.modChainControl],
     );
 
   return (

@@ -1,11 +1,21 @@
 import React, { useCallback, useContext, useMemo } from "react";
-import { AppContext } from "../state/AppState";
+import {
+  AppContext,
+  getControlLayer,
+  getControlValue,
+  playerControls,
+  resolveModItem,
+} from "../state/AppState";
 import LfoVisualizer from "./LfoVisualizer";
 import LfoControls from "./LfoControls";
 import * as Control from "./Control";
 import { coerceControlValueToNumber, ShallowControlState } from "../Types";
 import { ModChainWorkspaceContext } from "../state/ModChainWorkspaceContext";
 import ModChainOutputNode from "./ModChainOutputNode";
+import {
+  getControlFromInheritParts,
+  getInheritParts,
+} from "../utils/elysiumutils";
 
 interface Props {
   id: string;
@@ -18,42 +28,39 @@ export default React.memo(function ModChainItemComponent(props: Props) {
   const modChainItem = state.modChains[props.controlId].mods[props.id];
   const sourceControl = state.controls[props.controlId];
   const currentTimeMs = state.layers[0].currentTimeMs;
-  const shallowControl: ShallowControlState | null = useMemo(
-    () =>
-      modChainItem.__type === "fixedControlValue"
-        ? {
-            ...sourceControl,
-            fixedValue: modChainItem.value,
-          }
-        : null,
-    [modChainItem, sourceControl],
-  );
+  const inheritedControl = useMemo(() => {
+    if (!sourceControl.definition.inherit) return;
 
-  const updateFixedControlValue = useCallback(
-    (newShallowControl: ShallowControlState) => {
-      const value = coerceControlValueToNumber(
-        newShallowControl.fixedValue,
-        newShallowControl,
-      );
-      setState((s) => ({
-        ...s,
-        modChains: {
-          ...s.modChains,
-          [props.controlId]: {
-            ...s.modChains[props.controlId],
-            mods: {
-              ...s.modChains[props.controlId].mods,
-              [props.id]: {
-                ...s.modChains[props.controlId].mods[props.id],
-                value,
-              },
+    const inheritParts = getInheritParts(sourceControl.definition.inherit!);
+    if (!inheritParts) {
+      throw "bad inherit parts";
+    }
+    return getControlFromInheritParts(
+      state.controls,
+      playerControls(state),
+      getControlLayer(state, sourceControl.id)!,
+      inheritParts,
+    );
+  }, [modChainItem, sourceControl]);
+
+  const updateFixedControlValue = useCallback((value: number) => {
+    setState((s) => ({
+      ...s,
+      modChains: {
+        ...s.modChains,
+        [props.controlId]: {
+          ...s.modChains[props.controlId],
+          mods: {
+            ...s.modChains[props.controlId].mods,
+            [props.id]: {
+              ...s.modChains[props.controlId].mods[props.id],
+              value,
             },
           },
         },
-      }));
-    },
-    [],
-  );
+      },
+    }));
+  }, []);
 
   return (
     <div className={`modChainItem ${modChainItem.__type}`}>
@@ -61,11 +68,11 @@ export default React.memo(function ModChainItemComponent(props: Props) {
         {modChainItem.__type === "lfo"
           ? "LFO"
           : modChainItem.__type === "fixedControlValue"
-            ? `Fixed ${state.controls[modChainItem.controlId].type} value`
+            ? `Fixed ${state.controls[modChainItem.controlId].definition.type} value`
             : modChainItem.__type === "fixedValue"
               ? "Fixed value"
               : modChainItem.__type === "controlValue"
-                ? state.controls[modChainItem.controlId].label
+                ? state.controls[modChainItem.controlId].definition.label
                 : `Inherited value`}
       </div>
       <div className="contents">
@@ -110,7 +117,6 @@ export default React.memo(function ModChainItemComponent(props: Props) {
                 </>
               );
             case "controlValue":
-            case "inheritedControlValue":
               return (
                 <div className="row">
                   <Control.Container controlId={modChainItem.controlId} bald>
@@ -119,12 +125,29 @@ export default React.memo(function ModChainItemComponent(props: Props) {
                   <ModChainOutputNode modItemId={props.id} />
                 </div>
               );
+            case "inheritedControlValue":
+              return (
+                <div className="row">
+                  <Control.Container controlId={props.controlId} bald>
+                    <Control.ReadOnlyValue
+                      type={sourceControl.definition.type!}
+                      value={getControlValue(state, inheritedControl!)}
+                    />
+                  </Control.Container>
+                  <ModChainOutputNode modItemId={props.id} />
+                </div>
+              );
             case "fixedControlValue":
               return (
                 <div className="row">
                   <Control.ManualValue
-                    control={shallowControl!}
                     onChange={updateFixedControlValue}
+                    mod={modChainItem}
+                    type={sourceControl.definition.type!}
+                    max={sourceControl.definition.max}
+                    min={sourceControl.definition.min}
+                    selectOptions={sourceControl.definition.options}
+                    step={sourceControl.definition.step}
                   />
                   <ModChainOutputNode modItemId={props.id} />
                 </div>

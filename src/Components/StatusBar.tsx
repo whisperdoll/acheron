@@ -74,10 +74,7 @@ export default React.memo(function StatusBar(props: Props) {
             const composition = await openComposition();
             if (!composition) return;
 
-            const deserialized = await deserializeComposition(
-              state,
-              composition,
-            );
+            const deserialized = deserializeComposition(state, composition);
 
             setState(deserialized);
           }}

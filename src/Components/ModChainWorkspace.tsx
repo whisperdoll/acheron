@@ -145,7 +145,20 @@ export default function ModChainWorkspace(props: Props) {
         })}
         ref={containerRef}
       >
-        <div className="header">{<Control.Label trailingColon={false} />}</div>
+        <div className="header">
+          <Control.Label trailingColon={false} />
+          <GoogleIconButton
+            buttonStyle="rounded"
+            icon="close"
+            fill
+            opticalSize={20}
+            title="Remove Layer"
+            onClick={(e) => {
+              setState((s) => ({ ...s, modChainControl: undefined }));
+            }}
+            className="nostyle remove"
+          />
+        </div>
 
         <div className="mainRow">
           <div className="scrollPart" ref={scrollPartContainerRef}>

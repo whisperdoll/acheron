@@ -1,8 +1,9 @@
 import Dict from "./lib/dict";
 import { AppState, LayerState } from "./state/AppState";
-import { ControlState } from "./Types";
+import { ControlState, ModChain } from "./Types";
 import {
-  DefaultLayerControls,
+  buildFromDefs,
+  layerControlDefs,
   LayerControlKey,
 } from "./utils/DefaultDefinitions";
 import { createEmpty2dArray, msToS } from "./utils/utils";
@@ -11,8 +12,9 @@ import settings from "./state/AppSettings";
 export function buildLayer(appState: AppState): {
   layerState: LayerState;
   controls: Record<string, ControlState>;
+  modChains: Record<string, ModChain>;
 } {
-  const controls = DefaultLayerControls();
+  const [controls, modChains] = buildFromDefs(layerControlDefs);
 
   return {
     layerState: {
@@ -31,5 +33,6 @@ export function buildLayer(appState: AppState): {
       currentTimeMs: appState.layers[0]?.currentTimeMs || 0,
     },
     controls,
+    modChains,
   };
 }

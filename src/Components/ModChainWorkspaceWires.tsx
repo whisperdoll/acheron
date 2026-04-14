@@ -9,11 +9,8 @@ interface Props {}
 export default function ModChainWorkspaceWires(props: Props) {
   const { state, setState } = useContext(AppContext)!;
 
-  const parentElement = useMemo(() => {
-    return document.querySelector(".modChainWorkspace");
-  }, []);
   const modChainWorkspaceContext = useContext(ModChainWorkspaceContext);
-  const modChain = state.modChains[modChainWorkspaceContext.modChainId];
+  const modChain = state.modChains[state.modChainControl!];
   const [mousePosition, setMousePosition] = useState<{
     x: number;
     y: number;

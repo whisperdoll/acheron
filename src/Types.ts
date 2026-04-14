@@ -96,9 +96,11 @@ export interface Playhead {
   store: Record<TokenUID, Record<string, any>>;
 }
 
-export interface ControlDefinition {
+export interface ControlDefinition<
+  T extends ControlDataType = ControlDataType,
+> {
   label?: string;
-  type?: ControlDataType;
+  type?: T;
   min?: number;
   max?: number;
   step?: number;
@@ -110,39 +112,19 @@ export interface ControlDefinition {
 }
 
 export interface ControlState<T extends ControlDataType = ControlDataType> {
-  label: string;
-  type: T;
   id: string;
   key: string;
-  min: number;
-  max: number;
-  step?: number;
-  options?: SelectOption[];
-  inherit?: string;
-  showIf?: string;
-  fixedValue: TypeForControlDataType<T>;
-  currentValueType: ControlValueType;
-  lfo: Lfo; // for currentValueType === 'modulate'
-  // control?: number;
-  midiCCNumber?: number; // for currentValueType === 'midi_cc'
+  definition: ControlDefinition<T>; // convenience
 }
 
 export type ShallowControlState<T extends ControlDataType = ControlDataType> =
-  Pick<
-    ControlState<T>,
-    "fixedValue" | "inherit" | "max" | "min" | "step" | "type" | "options"
-  >;
+  Pick<ControlState<T>, "key" | "definition">;
 
 export function copyControl(control: ControlState): ControlState {
   const ret = {
     ...control,
     id: uuidv4(),
-    lfo: { ...control.lfo },
   };
-
-  if (control.options) {
-    ret.options = control.options.map((o) => ({ ...o }));
-  }
 
   return ret;
 }
@@ -151,7 +133,7 @@ export function coerceControlValueFromNumber<
   T extends ControlDataType = ControlDataType,
 >(value: number, control: ControlState<T>): TypeForControlDataType<T> {
   return (() => {
-    switch (control.type) {
+    switch (control.definition.type) {
       case "bool":
         return Boolean(value);
       case "decimal":
@@ -161,8 +143,9 @@ export function coerceControlValueFromNumber<
       case "int":
         return Math.floor(+value);
       case "select":
-        return control.options![Math.floor(+value) % control.options!.length]
-          .value;
+        return control.definition.options![
+          Math.floor(+value) % control.definition.options!.length
+        ].value;
       case "triad":
         return Math.floor(+value) % 7;
       default:
@@ -177,8 +160,8 @@ export function coerceControlValueToNumber<
   value: TypeForControlDataType<ControlDataType>,
   control: ShallowControlState<T>,
 ): number {
-  if (control.type === "select") {
-    return control.options!.findIndex((o) => o.value === value);
+  if (control.definition.type === "select") {
+    return control.definition.options!.findIndex((o) => o.value === value);
   } else {
     return +value;
   }
@@ -348,7 +331,7 @@ export type ControlValueMod = {
 
 export type InheritedControlValueMod = {
   __type: "inheritedControlValue";
-  controlId: string; // the inherited control
+  inherit: string;
 };
 
 export type FixedValueMod = {
@@ -372,55 +355,6 @@ export type ModChainItem =
 export type ModChain = {
   input: ControlInstanceId;
   mods: Record<ModChainItemID, ModChainItem>;
-  output: null | ModChainItemID; // null will just connect input -> output
+  output: ModChainItemID;
   connections: { from: ModChainItemID; to: ModChainItemID; property: string }[];
 };
-
-export function defaultModChain({
-  controlId,
-  controlValue,
-  state,
-}: {
-  controlId: string;
-  controlValue: number;
-  state: AppState;
-}): ModChain {
-  const modChain = {
-    mods: {},
-    input: controlId,
-    output: null,
-    connections: [],
-  } as ModChain;
-
-  const inherit = state.controls[controlId].inherit;
-  if (inherit) {
-    const layer = state.layers.find((l) =>
-      l.tokenIds.some((tokenIds) =>
-        tokenIds.some((tokenId) =>
-          state.tokens[tokenId].controlIds.includes(controlId),
-        ),
-      ),
-    )!;
-    const inheritParts = getInheritParts(inherit);
-    if (inheritParts) {
-      const inheritedControl = getControlFromInheritParts(
-        state.controls,
-        state,
-        layer,
-        inheritParts,
-      );
-      modChain.mods[uuidv4()] = {
-        __type: "inheritedControlValue",
-        controlId: inheritedControl.id,
-      };
-    }
-  }
-
-  modChain.mods[uuidv4()] = {
-    __type: "fixedControlValue",
-    controlId,
-    value: controlValue,
-  };
-
-  return modChain;
-}

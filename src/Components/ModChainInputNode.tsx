@@ -11,10 +11,7 @@ interface Props {
 export default function ModChainInputNode(props: Props) {
   const { state, setState } = useContext(AppContext)!;
 
-  const modChainWorkspaceContext = useContext(ModChainWorkspaceContext);
-  const connected = state.modChains[
-    modChainWorkspaceContext.modChainId
-  ].connections.some(
+  const connected = state.modChains[state.modChainControl!].connections.some(
     (c) => c.to === props.modItemId && c.property === props.property,
   );
 

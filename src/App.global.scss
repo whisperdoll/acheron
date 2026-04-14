@@ -1455,8 +1455,11 @@ button.showInspector {
     gap: 0.25rem;
     align-items: center;
     padding: 0.25rem 0.5rem;
-    padding-right: 0rem;
     background-color: var(--header-background-color);
+
+    .remove {
+      margin-left: auto;
+    }
   }
 
   .addButtons {

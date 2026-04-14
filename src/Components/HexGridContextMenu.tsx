@@ -104,9 +104,7 @@ export default function HexGridContextMenu({ onHide: hide }: Props) {
 
       return (
         <div key={control.key}>
-          {control.label}: {value}{" "}
-          {control.currentValueType !== "fixed" &&
-            `(${camelCaseToSentence(control.currentValueType)})`}
+          {control.definition.label}: {value}
         </div>
       );
     });

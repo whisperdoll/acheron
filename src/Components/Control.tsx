@@ -1,6 +1,7 @@
 import React, {
   forwardRef,
   JSX,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -8,9 +9,15 @@ import React, {
 } from "react";
 import {
   coerceControlValueToNumber,
+  ControlDataType,
   ControlState,
-  defaultModChain,
+  ControlValueMod,
+  FixedControlValueMod,
+  FixedValueMod,
+  InheritedControlValueMod,
+  ModChainItem,
   ShallowControlState,
+  TypeForControlDataType,
 } from "../Types";
 import triad0 from "../../assets/triads/0.png";
 import triad1 from "../../assets/triads/1.png";
@@ -38,6 +45,7 @@ import GoogleIconButton from "./GoogleIconButton";
 import { ControlContext, IControlContext } from "../state/ControlContext";
 import {
   AppContext,
+  getControlType,
   getControlValue,
   resolveModChain,
 } from "../state/AppState";
@@ -131,36 +139,46 @@ export const Label = React.memo(function ControlLabel(
 
   return (
     <div className="label">
-      {controlState.label}
+      {controlState.definition.label}
       {!!props.trailingColon && ":"}
     </div>
   );
 });
 
-interface ManualControlValueProps {
-  control: ShallowControlState;
-  onChange: (newValue: ShallowControlState) => unknown;
+interface ManualControlValueProps<
+  T extends FixedValueMod | FixedControlValueMod,
+> {
+  mod: T;
+  type: ControlDataType;
+  onChange: (newValue: number) => unknown;
+  max?: number;
+  min?: number;
+  step?: number;
+  selectOptions?: { value: string; label: string }[];
 }
-export const ManualValue = React.memo(function ManualControlValue({
-  control,
+export const ManualValue = React.memo(function ManualControlValue<
+  T extends FixedValueMod | FixedControlValueMod,
+>({
+  mod,
+  type,
   onChange,
-}: ManualControlValueProps) {
-  function handleChange(partial: Partial<ControlState>) {
-    onChange({ ...control, ...partial });
-  }
+  max,
+  min,
+  step,
+  selectOptions,
+}: ManualControlValueProps<T>) {
+  const handleValueChanged = (value: number) => {
+    let newValue: number;
 
-  const handleValueChanged = (value: any) => {
-    let newValue: any = null;
-
-    switch (control.type) {
+    switch (type) {
       case "bool":
+      case "decimal":
+      case "select":
+      case "triad":
         newValue = value;
         break;
       case "int":
         newValue = Math.floor(value);
-        break;
-      case "decimal":
-        newValue = value;
         break;
       case "direction":
         newValue = Math.min(Math.max(0, Math.floor(value)), 5);
@@ -169,32 +187,19 @@ export const ManualValue = React.memo(function ManualControlValue({
         throw "uh oh...";
     }
 
-    if (newValue === null) throw "uh oh...";
-    handleChange({ fixedValue: newValue });
+    onChange(newValue);
   };
-
-  function handleSelectValueChanged(e: React.ChangeEvent<HTMLSelectElement>) {
-    handleChange({ fixedValue: e.currentTarget.value });
-  }
-
-  function handleDirectionChanged(direction: number) {
-    handleChange({ fixedValue: direction });
-  }
-
-  function handleTriadChanged(triad: number) {
-    handleChange({ fixedValue: triad });
-  }
 
   return (
     <div className="controlRow">
       {(() => {
-        switch (control.type) {
+        switch (type) {
           case "bool":
             return (
               <input
                 type="checkbox"
-                onChange={(e) => handleValueChanged(e.currentTarget.checked)}
-                checked={(control.fixedValue as boolean) ?? false}
+                onChange={(e) => handleValueChanged(+e.currentTarget.checked)}
+                checked={!!mod.value}
               />
             );
           case "int":
@@ -202,11 +207,11 @@ export const ManualValue = React.memo(function ManualControlValue({
             return (
               <NumberInput
                 onChange={handleValueChanged}
-                value={(control.fixedValue as number) ?? 0}
-                max={control.max}
-                min={control.min}
-                step={control.step}
-                roundPlaces={control.type === "int" ? 0 : 9}
+                value={(mod.value as number) ?? 0}
+                max={max}
+                min={min}
+                step={step}
+                roundPlaces={type === "int" ? 0 : 9}
               />
             );
           case "direction":
@@ -215,11 +220,11 @@ export const ManualValue = React.memo(function ManualControlValue({
                 {directionOrder.map((i, di) => (
                   <button
                     key={i}
-                    className={control.fixedValue === i ? "selected" : ""}
+                    className={mod.value === i ? "selected" : ""}
                     style={{
                       backgroundImage: `url(${directionIcons[i]})`,
                     }}
-                    onClick={() => handleDirectionChanged(i)}
+                    onClick={() => handleValueChanged(i)}
                   ></button>
                 ))}
               </div>
@@ -227,10 +232,16 @@ export const ManualValue = React.memo(function ManualControlValue({
           case "select":
             return (
               <select
-                onChange={handleSelectValueChanged}
-                value={(control.fixedValue as string) ?? ""}
+                onChange={(e) =>
+                  handleValueChanged(
+                    selectOptions!.findIndex(
+                      (o) => o.value === e.currentTarget.value,
+                    ),
+                  )
+                }
+                value={selectOptions![mod.value].value}
               >
-                {control.options?.map((option) => (
+                {selectOptions!.map((option) => (
                   <option key={option.value} value={option.value}>
                     {option.label}
                   </option>
@@ -244,11 +255,11 @@ export const ManualValue = React.memo(function ManualControlValue({
                   (triad, i) => (
                     <button
                       key={i}
-                      className={control.fixedValue === i ? "selected" : ""}
+                      className={mod.value === i ? "selected" : ""}
                       style={{
                         backgroundImage: `url(${triad})`,
                       }}
-                      onClick={() => handleTriadChanged(i)}
+                      onClick={() => handleValueChanged(i)}
                     ></button>
                   ),
                 )}
@@ -261,25 +272,27 @@ export const ManualValue = React.memo(function ManualControlValue({
 });
 
 export const ReadOnlyValue = React.memo(function ReadOnlyControlValue({
-  control,
+  value,
+  type,
 }: {
-  control: ShallowControlState;
+  type: ControlDataType;
+  value: TypeForControlDataType<typeof type>;
 }) {
-  switch (control.type) {
+  switch (type) {
     case "bool":
     case "decimal":
     case "int":
     default:
-      return <div>{control.fixedValue}</div>;
+      return <div>{value}</div>;
     case "select":
-      return <div>{control.fixedValue}</div>;
+      return <div>{value}</div>;
     case "direction":
       return (
         <div className="directionRow disabled">
           {directionOrder.map((i, di) => (
             <button
               key={i}
-              className={control.fixedValue === i ? "selected" : ""}
+              className={value === i ? "selected" : ""}
               style={{
                 backgroundImage: `url(${directionIcons[i]})`,
               }}
@@ -294,9 +307,7 @@ export const ReadOnlyValue = React.memo(function ReadOnlyControlValue({
             (triad, i) => (
               <button
                 key={i}
-                className={
-                  control.fixedValue === i ? "selected noclicky" : "noclicky"
-                }
+                className={value === i ? "selected noclicky" : "noclicky"}
                 style={{
                   backgroundImage: `url(${triad})`,
                 }}
@@ -313,63 +324,57 @@ export const Value = React.memo(function ControlValue() {
   const context = useContext(ControlContext);
   const [_, forceUpdate] = useReducer((x) => x + 1, 0);
   const modChain = state.modChains[context.controlId];
+  const outputMod = modChain.mods[modChain.output];
   const now = Math.round(state.layers[0].currentTimeMs / 60);
-  const controlState = useMemo(() => {
-    const controlState = { ...context.controls[context.controlId] };
-    if (controlState.inherit) {
-      controlState.fixedValue = getControlValue(state, controlState);
-    } else if (modChain) {
-      controlState.fixedValue = resolveModChain(state, context.controlId);
-      if (controlState.type !== "decimal") {
-        controlState.fixedValue = Math.round(controlState.fixedValue);
-      }
-      if (controlState.type === "select" && controlState.options) {
-        controlState.fixedValue =
-          controlState.options[
-            controlState.fixedValue % controlState.options.length
-          ].value;
-      }
-    }
-    return controlState;
-  }, [context.controls, context.controlId, modChain, now]);
+  const control = state.controls[context.controlId];
+  const isFixed =
+    outputMod.__type === "fixedValue" ||
+    outputMod.__type === "fixedControlValue";
+  const value = useMemo(() => {
+    return resolveModChain(state, context.controlId);
+  }, [modChain, !isFixed && now]);
 
-  useEffect(() => {
-    const onCC: (typeof Midi.onCC)[number] = ({ number, value }) => {
-      forceUpdate();
-    };
-
-    Midi.onCC.push(onCC);
-
-    return () => {
-      Midi.onCC.splice(Midi.onCC.indexOf(onCC), 1);
-    };
-  }, []);
-
-  // const tempo = layerIndex === -1 ? getControlValue(context, context.controls[context.tempo]) : getControlValue(context, context.controls[context.layers[layerIndex].tempo]);
-  // const bpms = 60 / tempo * 1000;
-  // const now = Math.floor(Date.now() / bpms) * bpms;
-
-  function handleChange(partial: Partial<ControlState>) {
-    setState((state) => ({
-      ...state,
-      controls: {
-        ...state.controls,
+  const handleUpdate = useCallback((value: number) => {
+    setState((s) => ({
+      ...s,
+      modChains: {
+        ...s.modChains,
         [context.controlId]: {
-          ...state.controls[context.controlId],
-          ...partial,
+          ...s.modChains[context.controlId],
+          mods: {
+            ...s.modChains[context.controlId].mods,
+            [modChain.output]: {
+              ...s.modChains[context.controlId].mods[modChain.output],
+              value,
+            },
+          },
         },
       },
     }));
-  }
+  }, []);
 
   return (
     <div className="controlRow">
       {(() => {
-        if (!modChain?.output && !controlState.inherit) {
-          return <ManualValue control={controlState} onChange={handleChange} />;
+        if (isFixed) {
+          return (
+            <ManualValue
+              mod={outputMod}
+              onChange={handleUpdate}
+              type={getControlType(state, control.id)}
+              max={control.definition.max}
+              min={control.definition.min}
+              selectOptions={control.definition.options}
+              step={control.definition.step}
+            />
+          );
         } else {
-          // LFO
-          return <ReadOnlyValue control={controlState} />;
+          return (
+            <ReadOnlyValue
+              value={value}
+              type={getControlType(state, control.id)}
+            />
+          );
         }
       })()}
     </div>
@@ -399,18 +404,12 @@ export const EditIcon = React.memo(function ControlEditIcon() {
     return index;
   }, [context.controlId, context.selectedLayer]);
 
-  const controlValueDeps = [
-    controlState,
-    context.layers[layerIndex].currentBeat,
-    controlState.currentValueType === "midi_cc" &&
-      Midi.ccValue(controlState.midiCCNumber || 0),
-  ];
   const controlValue = useMemo(() => {
     return coerceControlValueToNumber(
       getControlValue(state, controlState),
       controlState,
     );
-  }, controlValueDeps);
+  }, [controlState, context.layers[layerIndex].currentBeat]);
 
   return (
     <GoogleIconButton
@@ -420,57 +419,8 @@ export const EditIcon = React.memo(function ControlEditIcon() {
         setState((s) => ({
           ...s,
           modChainControl: context.controlId,
-          modChains: {
-            ...s.modChains,
-            [context.controlId]:
-              s.modChains[context.controlId] ||
-              defaultModChain({
-                controlId: context.controlId,
-                controlValue,
-                state: s,
-              }),
-          },
         }));
       }}
     />
-  );
-});
-
-export const MidiCC = React.memo(function ControlMIDICC() {
-  const { state, setState } = useContext(AppContext)!;
-  const context = useContext(ControlContext);
-  const controlState = context.controls[context.controlId];
-
-  function handleChange(partial: Partial<ControlState>) {
-    setState((state) => ({
-      ...state,
-      controls: {
-        ...state.controls,
-        [context.controlId]: {
-          ...state.controls[context.controlId],
-          ...partial,
-        },
-      },
-    }));
-  }
-
-  return (
-    controlState.currentValueType === "midi_cc" && (
-      <>
-        <div className="labelRow">
-          <div>&nbsp;&nbsp;</div>
-          <div className="label">CC Number:</div>
-          <div className="controlRow">
-            <NumberInput
-              min={0}
-              max={127}
-              step={1}
-              value={controlState.midiCCNumber || 0}
-              onChange={(value) => handleChange({ midiCCNumber: value })}
-            />
-          </div>
-        </div>
-      </>
-    )
   );
 });

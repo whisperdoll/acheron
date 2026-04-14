@@ -83,12 +83,12 @@ export const normalizeIndex = (i: number, array: any[]) =>
 
 export type MaybeGenerated<
   ReturnType,
-  GeneratorArgsType extends Array<any> = []
+  GeneratorArgsType extends Array<any> = [],
 > = ReturnType | ((...prev: GeneratorArgsType) => ReturnType);
 
 export const resolveMaybeGenerated = <
   ReturnType,
-  GeneratorArgsType extends Array<any> = [ReturnType]
+  GeneratorArgsType extends Array<any> = [ReturnType],
 >(
   action: MaybeGenerated<ReturnType, GeneratorArgsType>,
   ...generatorArgs: GeneratorArgsType
@@ -97,25 +97,25 @@ export const resolveMaybeGenerated = <
 export type MaybePromise<T> = T | Promise<T>;
 
 export async function resolveMaybePromise<T>(
-  value: T | Promise<T>
+  value: T | Promise<T>,
 ): Promise<T> {
   return await Promise.resolve(value);
 }
 
 export type MaybeGeneratedPromise<
   ReturnType,
-  GeneratorArgsType extends Array<any> = [ReturnType]
+  GeneratorArgsType extends Array<any> = [ReturnType],
 > = MaybeGenerated<MaybePromise<ReturnType>, GeneratorArgsType>;
 
 export async function resolveMaybeGeneratedPromise<
   ReturnType,
-  GeneratorArgsType extends Array<any> = [ReturnType]
+  GeneratorArgsType extends Array<any> = [ReturnType],
 >(
   value: MaybeGeneratedPromise<ReturnType, GeneratorArgsType>,
   ...generatorArgs: GeneratorArgsType
 ): Promise<ReturnType> {
   return await resolveMaybePromise(
-    await resolveMaybeGenerated(value, ...generatorArgs)
+    await resolveMaybeGenerated(value, ...generatorArgs),
   );
 }
 
@@ -137,13 +137,13 @@ export function distance(
   x1: number,
   y1: number,
   x2: number,
-  y2: number
+  y2: number,
 ): number;
 export function distance(
   x1: number | Point,
   y1: number | Point,
   x2?: number,
-  y2?: number
+  y2?: number,
 ): number {
   if (typeof x1 === "object" && typeof y1 === "object") {
     // x1 and y1 are both Points
@@ -292,7 +292,7 @@ function isRect(r: any): r is Rect {
 export function viewportToDocument(
   point: Point | Rect,
   zoom: number,
-  offset: Point
+  offset: Point,
 ): Point | Rect {
   if (isRect(point)) {
     return {
@@ -309,7 +309,7 @@ export function viewportToDocument(
 export function documentToViewport<T extends Point | Rect>(
   point: T,
   zoom: number,
-  offset: Point
+  offset: Point,
 ): T {
   if (isRect(point)) {
     return {
@@ -335,7 +335,7 @@ export function pointFromEventClient(e: {
 }
 
 export function getContext<T extends HTMLCanvasElement | OffscreenCanvas>(
-  canvas: T
+  canvas: T,
 ): T extends HTMLCanvasElement
   ? CanvasRenderingContext2D
   : OffscreenCanvasRenderingContext2D {
@@ -347,7 +347,7 @@ export function getContext<T extends HTMLCanvasElement | OffscreenCanvas>(
 }
 
 export function rectFromClientBoundingRect(
-  rect: ReturnType<Element["getBoundingClientRect"]>
+  rect: ReturnType<Element["getBoundingClientRect"]>,
 ): Rect {
   return { x: rect.x, y: rect.y, w: rect.width, h: rect.height };
 }
@@ -390,11 +390,11 @@ export function arrayWithoutIndexes<T>(array: T[], ...indexes: number[]): T[] {
 export function arrayWithModifiedIndexes<T, E extends T = T>(
   array: T[],
   indexes: number | number[],
-  updateFn: (old: E) => T
+  updateFn: (old: E) => T,
 ): T[] {
   const copy = array.slice(0);
   const normalizedIndexex = wrapArray(indexes).map((i) =>
-    normalizeIndex(i, copy)
+    normalizeIndex(i, copy),
   );
   for (const i of normalizedIndexex) {
     copy[i] = updateFn(copy[i] as E);
@@ -419,7 +419,7 @@ export function camelCaseToSentence(s: string): string {
 
 export function mapTouches<T = void>(
   touches: TouchList,
-  fn: (touch: Touch, i: number) => T
+  fn: (touch: Touch, i: number) => T,
 ): T[] {
   const ret: T[] = [];
 
@@ -439,3 +439,56 @@ export type ExpandRecursively<T> = T extends object
     ? { [K in keyof O]: ExpandRecursively<O[K]> }
     : never
   : T;
+
+export function mapObject<
+  K extends string | number | symbol,
+  V,
+  K2 extends string | number | symbol,
+  V2,
+>(o: Record<K, V>, fn: (key: K, value: V) => [K2, V2]): Record<K2, V2> {
+  const newObject: Record<K2, V2> = {} as Record<K2, V2>;
+
+  Object.entries(o).forEach(([key, value]) => {
+    const [newKey, newValue] = fn(key, value);
+    newObject[newKey] = newValue;
+  });
+
+  return newObject;
+}
+
+export function filterMapObject<
+  K extends string | number | symbol,
+  V,
+  K2 extends string | number | symbol,
+  V2,
+>(
+  o: Record<K, V>,
+  fn: (key: K, value: V) => [K2, V2] | null | undefined | false,
+): Record<K2, V2> {
+  const newObject: Record<K2, V2> = {} as Record<K2, V2>;
+
+  Object.entries(o).forEach(([key, value]) => {
+    const fnResult = fn(key, value);
+    if (!fnResult) {
+      return;
+    }
+
+    const [newKey, newValue] = fnResult;
+    newObject[newKey] = newValue;
+  });
+
+  return newObject;
+}
+
+export function mapToObject<T, K extends string | number | symbol, V>(
+  array: T[],
+  fn: (value: T, index: number) => [K, V],
+): Record<K, V> {
+  const obj = {} as Record<K, V>;
+  array.forEach((item, i) => {
+    const [key, value] = fn(item, i);
+    obj[key] = value;
+  });
+
+  return obj;
+}
