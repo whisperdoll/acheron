@@ -118,11 +118,11 @@ export default function (props: Props) {
           const ret = <Control controlId={controlId} key={controlId} />;
 
           const control = controls[controlId];
-          if (control.showIf !== undefined) {
-            const key = control.showIf.startsWith("!")
-              ? control.showIf.substr(1)
-              : control.showIf;
-            const shouldNegate = control.showIf.startsWith("!");
+          if (control.definition.showIf !== undefined) {
+            const key = control.definition.showIf.startsWith("!")
+              ? control.definition.showIf.substr(1)
+              : control.definition.showIf;
+            const shouldNegate = control.definition.showIf.startsWith("!");
             const index = token.controlIds.findIndex(
               (cid) => controls[cid].key === key,
             );

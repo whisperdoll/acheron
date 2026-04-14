@@ -63,7 +63,9 @@ export default React.memo(function LfoControls({
   }
 
   const coerce =
-    !control || control.type === "decimal" ? (v: number) => v : Math.floor;
+    !control || control.definition.type === "decimal"
+      ? (v: number) => v
+      : Math.floor;
 
   return (
     <>
@@ -193,8 +195,8 @@ export default React.memo(function LfoControls({
             {lfo.sequence.map((value, i) => (
               <div className="row">
                 <NumberInput
-                  min={control?.min ?? -99999}
-                  max={control?.max ?? 99999}
+                  min={control?.definition.min ?? -99999}
+                  max={control?.definition.max ?? 99999}
                   value={value}
                   onChange={(newValue) =>
                     modifyLfo({

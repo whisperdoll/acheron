@@ -14,7 +14,6 @@ import LayerSettings from "./Components/LayerSettings";
 import { Driver } from "./utils/driver";
 import Midi from "./utils/midi";
 import Settings from "./Components/Settings";
-import LfoEditor from "./Components/LfoEditor";
 import { buildMenu } from "./Menu";
 import { deserializeComposition } from "./Serialization";
 import settings, { AppSettings } from "./state/AppSettings";
@@ -494,7 +493,7 @@ export default function App() {
             onHide={() => setState((s) => ({ ...s, isShowingSettings: false }))}
           />
         )}
-        {state.editingLfo && <LfoEditor />}
+        {/* {state.editingLfo && <LfoEditor />} */}
         <div className="columns">
           {leftColumn}
 
