@@ -389,7 +389,7 @@ export function togglePlaying(setState: SetState, why: string) {
 
 export function addLayer(setState: SetState, select: boolean, why: string) {
   setState((state) => {
-    const { layerState, controls } = buildLayer(state);
+    const { layerState, controls, modChains } = buildLayer(state);
 
     return {
       ...state,
@@ -400,6 +400,14 @@ export function addLayer(setState: SetState, select: boolean, why: string) {
       controls: {
         ...state.controls,
         ...controls,
+      },
+      modChains: {
+        ...state.modChains,
+        ...modChains,
+      },
+      controlLayers: {
+        ...state.controlLayers,
+        ...mapObject(controls, (key, value) => [key, state.layers.length]),
       },
     };
   });
