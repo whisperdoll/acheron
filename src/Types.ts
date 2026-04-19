@@ -193,8 +193,6 @@ export const LfoTypes = [
   "random",
   "sawtooth",
   "reverse Sawtooth",
-  "sequence",
-  "midi Control",
 ] as const;
 export type LfoType = (typeof LfoTypes)[number];
 
@@ -210,7 +208,6 @@ export interface Lfo {
   lowPeriod: number;
   hiPeriod: number;
   period: number;
-  sequence: number[];
 }
 export type LfoConnectableProperty = "min" | "max" | "lowPeriod" | "hiPeriod" | "period";
 
@@ -258,12 +255,9 @@ export function getLfoValue(
       return lfo.max - (t / period) * (lfo.max - lfo.min);
     }
     case "triangle": {
-      return (
-        2 *
-        (t / period <= 0.5
-          ? lfo.min + (t / period) * (lfo.max - lfo.min)
-          : lfo.max - (t / period) * (lfo.max - lfo.min))
-      );
+      return t / period <= 0.5
+        ? lfo.min + (t / period) * 2 * (lfo.max - lfo.min)
+        : lfo.max - (t / period - 0.5) * 2 * (lfo.max - lfo.min);
     }
     case "sine": {
       const amp = (lfo.max - lfo.min) / 2;
@@ -271,9 +265,6 @@ export function getLfoValue(
     }
     case "square": {
       return t < lowPeriod ? lfo.min : lfo.max;
-    }
-    case "sequence": {
-      return lfo.sequence[Math.floor((t / period) * lfo.sequence.length)] ?? 0;
     }
     default: {
       throw "lfo error";

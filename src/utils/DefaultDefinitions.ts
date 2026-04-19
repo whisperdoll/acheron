@@ -339,7 +339,6 @@ export function buildLfo(
     lowPeriod: 1,
     max: max + +(type !== "decimal"),
     min,
-    sequence: [],
     type: "sawtooth",
   };
 

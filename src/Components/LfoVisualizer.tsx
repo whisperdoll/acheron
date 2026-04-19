@@ -21,10 +21,8 @@ export default React.memo(function LfoVisualizer({
 }: Props) {
   const { state, setState } = useContext(AppContext)!;
 
-  const modChain = state.modChainControl
-    ? state.modChains[state.modChainControl]
-    : null;
-  const now = Math.round(currentTimeMs / 60);
+  const modChain = state.modChainControl ? state.modChains[state.modChainControl] : null;
+  const now = Math.round(currentTimeMs / 10);
 
   const inputValues = useMemo(() => {
     const ret: Partial<Record<LfoConnectableProperty, number>> = {};
@@ -44,25 +42,20 @@ export default React.memo(function LfoVisualizer({
     return ret;
   }, [baseLfo, modItemId, modChain, now]);
 
-  const lfo: Lfo = useMemo(
-    () => ({ ...baseLfo, ...inputValues }),
-    [baseLfo, inputValues],
-  );
+  const lfo: Lfo = useMemo(() => ({ ...baseLfo, ...inputValues }), [baseLfo, inputValues]);
 
   const waveCanvasRef = useRef<HTMLCanvasElement>(null);
   const progressCanvasRef = useRef<HTMLCanvasElement>(null);
-  const periodMs =
-    (lfo.type === "square" ? lfo.hiPeriod + lfo.lowPeriod : lfo.period) * 1000;
+  const periodMs = (lfo.type === "square" ? lfo.hiPeriod + lfo.lowPeriod : lfo.period) * 1000;
+  const animHandle = useRef<number>(0);
 
   useEffect(() => {
     const ctx = waveCanvasRef.current?.getContext("2d");
     if (!ctx) return;
 
-    if (lfo.type === "sequence" && !lfo.sequence.length) return;
-
     const resolution = periodMs / 10;
-    const [min, max] =
-      lfo.type === "sequence" ? minAndMax(lfo.sequence) : [lfo.min, lfo.max];
+    const min = Math.min(lfo.min, lfo.max);
+    const max = Math.max(lfo.min, lfo.max);
     const amp = max - min;
 
     ctx.lineWidth = 2;
@@ -99,36 +92,72 @@ export default React.memo(function LfoVisualizer({
   }, [lfo, resolutionX, resolutionY]);
 
   useEffect(() => {
-    const ctx = progressCanvasRef.current?.getContext("2d");
-    if (!ctx) return;
+    if (!state.isPlaying) {
+      if (animHandle.current) {
+        cancelAnimationFrame(animHandle.current);
+      }
 
-    ctx.clearRect(0, 0, resolutionX, resolutionY);
+      requestAnimationFrame(() => {
+        const ctx = progressCanvasRef.current?.getContext("2d");
+        if (!ctx) return;
 
-    if (!currentTimeMs) {
+        ctx.clearRect(0, 0, resolutionX, resolutionY);
+      });
+
       return;
     }
 
-    const pc = (currentTimeMs % periodMs) / periodMs;
-    ctx.lineWidth = 1;
-    ctx.strokeStyle = "#FF0000";
-    ctx.beginPath();
-    ctx.moveTo(pc * resolutionX, 0);
-    ctx.lineTo(pc * resolutionX, resolutionY);
-    ctx.stroke();
-  }, [currentTimeMs, resolutionX, resolutionY]);
+    const drawTime = () => {
+      const ctx = progressCanvasRef.current?.getContext("2d");
+      if (!ctx) return;
+
+      ctx.clearRect(0, 0, resolutionX, resolutionY);
+
+      const pNow = performance.now();
+      const delta = pNow - state.startTime;
+
+      const pc = (delta % periodMs) / periodMs;
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = "#FF0000";
+      ctx.beginPath();
+      ctx.moveTo(pc * resolutionX, 0);
+      ctx.lineTo(pc * resolutionX, resolutionY);
+      ctx.stroke();
+
+      const min = Math.min(lfo.min, lfo.max);
+      const max = Math.max(lfo.min, lfo.max);
+      const amp = max - min;
+
+      const value = getLfoValue(lfo, { beat: 0, ms: pc * periodMs }, "ms");
+
+      const y = resolutionY - ((value - min) / amp) * resolutionY;
+
+      ctx.stroke();
+
+      ctx.fillStyle = "#ffe96f";
+      ctx.beginPath();
+      ctx.arc(pc * resolutionX, y, 5, 0, 2 * Math.PI, false);
+      ctx.fill();
+
+      if (animHandle.current) {
+        animHandle.current = requestAnimationFrame(drawTime);
+      }
+    };
+
+    animHandle.current = requestAnimationFrame(drawTime);
+
+    return () => {
+      if (animHandle.current) {
+        animHandle.current = 0;
+        cancelAnimationFrame(animHandle.current);
+      }
+    };
+  }, [state.isPlaying, resolutionX, resolutionY, lfo]);
 
   return (
     <div className="lfoVisualizer">
-      <canvas
-        ref={waveCanvasRef}
-        width={resolutionX}
-        height={resolutionY}
-      ></canvas>
-      <canvas
-        ref={progressCanvasRef}
-        width={resolutionX}
-        height={resolutionY}
-      ></canvas>
+      <canvas ref={waveCanvasRef} width={resolutionX} height={resolutionY}></canvas>
+      <canvas ref={progressCanvasRef} width={resolutionX} height={resolutionY}></canvas>
     </div>
   );
 });
