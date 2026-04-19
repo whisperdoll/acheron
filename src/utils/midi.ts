@@ -2,8 +2,9 @@ import { ControlChangeMessageEvent, NoteMessageEvent, WebMidi } from "webmidi";
 import { transposeNote } from "./elysiumutils";
 import { WebMidiInput, WebMidiPortEvent } from "../Types";
 import List from "../lib/list";
-import { MaybeGenerated, resolveMaybeGenerated } from "../lib/utils";
+import { clamp, MaybeGenerated, resolveMaybeGenerated } from "../lib/utils";
 import * as wm from "webmidi";
+import { decodeMidiCc, detectRelativeMode, MidiCcMode } from "./ccClassifier";
 
 export interface MidiDevice {
   name: string;
@@ -49,20 +50,16 @@ export default class Midi {
   private static enabledOutputNames: string[] = [];
   private static enabledInputNames: string[] = [];
   private static notes: MidiNote[] = [];
-  public static onOutputsChanged: null | ((outputs: MidiDevice[]) => void) =
-    null;
-  public static onInputsChanged: null | ((outputs: MidiDevice[]) => void) =
-    null;
+  public static onOutputsChanged: null | ((outputs: MidiDevice[]) => void) = null;
+  public static onInputsChanged: null | ((outputs: MidiDevice[]) => void) = null;
   public static onNotesChanged: null | ((notes: MidiNote[]) => void) = null;
-  public static onCC: (({
-    number,
-    value,
-  }: {
-    number: number;
-    value: number;
-  }) => void)[] = [];
+  public static onCC: (({ number, value }: { number: number; value: number }) => void)[] = [];
   private static isEnabled = false;
   private static ccValues: number[] = Array(128).fill(0); // 0-127
+  private static ccModes: { values: number[]; mode: MidiCcMode }[] = List.fromGenerator(
+    () => ({ values: [], mode: "unknown" }),
+    128,
+  );
 
   private static _noteOnListener(e: NoteMessageEvent) {
     const index = this.notes.findIndex((n) => n.name === e.note.name);
@@ -101,9 +98,32 @@ export default class Midi {
   }
 
   private static _CCListener(e: ControlChangeMessageEvent) {
-    this.ccValues[e.controller.number] = e.rawValue || 0;
+    let value = e.rawValue || 0;
+    const existingValue = this.ccValues[e.controller.number];
+    const ccMode = this.ccModes[e.controller.number];
+
+    if (ccMode.mode === "unknown") {
+      ccMode.values.push(value);
+      ccMode.mode = detectRelativeMode(ccMode.values);
+    }
+
+    switch (ccMode.mode) {
+      case "unknown": // if it's still unknown
+        return;
+      case "absolute":
+        value = value; // nuf said
+        break;
+      case "binaryOffset":
+      case "signMagnitude":
+      case "twosComplement":
+        // TODO: settings on this behavior (clamp vs wrap)
+        value = clamp(existingValue + decodeMidiCc(value, ccMode.mode), 0, 127);
+        break;
+    }
+
+    this.ccValues[e.controller.number] = value;
     this.onCC.forEach((fn) => {
-      fn({ number: e.controller.number, value: e.rawValue || 0 });
+      fn({ number: e.controller.number, value });
     });
   }
 
@@ -157,7 +177,7 @@ export default class Midi {
             name: output.name,
             id: output.id,
           };
-        })
+        }),
       );
     }
     if (this.onInputsChanged) {
@@ -167,7 +187,7 @@ export default class Midi {
             name: input.name,
             id: input.id,
           };
-        })
+        }),
       );
     }
   }
@@ -205,33 +225,29 @@ export default class Midi {
 
   public static noteOn(notes: NoteOnOptions | NoteOnOptions[]) {
     List.wrap(notes).forEach((note) => {
-      List.wrap(resolveMaybeGenerated(note.deviceName)).forEach(
-        (deviceName) => {
-          const midiOutput = WebMidi.getOutputByName(deviceName);
-          if (!midiOutput) return;
+      List.wrap(resolveMaybeGenerated(note.deviceName)).forEach((deviceName) => {
+        const midiOutput = WebMidi.getOutputByName(deviceName);
+        if (!midiOutput) return;
 
-          midiOutput.channels[note.channel].sendNoteOn(note.note, {
-            rawAttack: note.velocity,
-            time: note.time,
-          });
-        }
-      );
+        midiOutput.channels[note.channel].sendNoteOn(note.note, {
+          rawAttack: note.velocity,
+          time: note.time,
+        });
+      });
     });
   }
 
   public static noteOff(notes: NoteOffOptions | NoteOffOptions[]) {
     List.wrap(notes).forEach((note) => {
-      List.wrap(resolveMaybeGenerated(note.deviceName)).forEach(
-        (deviceName) => {
-          const midiOutput = WebMidi.getOutputByName(deviceName);
-          if (!midiOutput) return;
+      List.wrap(resolveMaybeGenerated(note.deviceName)).forEach((deviceName) => {
+        const midiOutput = WebMidi.getOutputByName(deviceName);
+        if (!midiOutput) return;
 
-          midiOutput.channels[note.channel].sendNoteOff(note.note, {
-            rawRelease: note.release,
-            time: note.time,
-          });
-        }
-      );
+        midiOutput.channels[note.channel].sendNoteOff(note.note, {
+          rawRelease: note.release,
+          time: note.time,
+        });
+      });
     });
   }
 
@@ -289,12 +305,8 @@ export class MidiScheduler {
     return id;
   }
 
-  public static scheduleNoteOff(
-    note: NoteOffParams & { id: string; time: number }
-  ) {
-    const noteOn = this.queue.find(
-      (n) => n.id === note.id && n.type === "noteOn"
-    );
+  public static scheduleNoteOff(note: NoteOffParams & { id: string; time: number }) {
+    const noteOn = this.queue.find((n) => n.id === note.id && n.type === "noteOn");
     if (!noteOn) {
       throw new Error("scheduled noteOff for non-existing noteOn");
     }

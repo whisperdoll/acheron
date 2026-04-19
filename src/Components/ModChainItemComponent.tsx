@@ -6,6 +6,7 @@ import React, {
   useEffect,
   useMemo,
   useRef,
+  useState,
 } from "react";
 import {
   AppContext,
@@ -13,6 +14,7 @@ import {
   getControlValue,
   playerControls,
   removeModItem,
+  resolveInputtableValue,
   resolveModItem,
 } from "../state/AppState";
 import LfoVisualizer from "./LfoVisualizer";
@@ -23,6 +25,7 @@ import {
   LerpMod,
   MathMod,
   MathModOperation,
+  MidiCcMod,
   ModChainItem,
   ShallowControlState,
 } from "../Types";
@@ -30,10 +33,12 @@ import { ModChainWorkspaceContext } from "../state/ModChainWorkspaceContext";
 import ModChainOutputNode from "./ModChainOutputNode";
 import { getControlFromInheritParts, getInheritParts } from "../utils/elysiumutils";
 import NumberInput from "./NumberInput";
-import { isFunction } from "../lib/utils";
+import { isFunction, roundMod } from "../lib/utils";
 import ModChainInputNode from "./ModChainInputNode";
 import InputtableValue from "./InputtableValue";
 import GoogleIconButton from "./GoogleIconButton";
+import Midi from "../utils/midi";
+import useNow from "../Hooks/useNow";
 
 interface Props {
   id: string;
@@ -44,10 +49,11 @@ export default React.memo(function ModChainItemComponent(
   props: Props & React.JSX.IntrinsicElements["div"],
 ) {
   const { state, setState } = useContext(AppContext)!;
-
   const { id: modChainItemId, controlId: modChainId, ...rest } = props;
 
-  const modChainItem = state.modChains[modChainId].mods[modChainItemId];
+  const now = useNow();
+  const modChain = state.modChains[modChainId];
+  const modChainItem = modChain.mods[modChainItemId];
   const sourceControl = state.controls[modChainId];
   const currentTimeMs = state.layers[0].currentTimeMs;
   const inheritedControl = useMemo(() => {
@@ -64,6 +70,33 @@ export default React.memo(function ModChainItemComponent(
       inheritParts,
     );
   }, [modChainItem, sourceControl]);
+
+  const [midiCcTrigger, setMidiCcTrigger] = useState(0);
+
+  useEffect(() => {
+    if (modChainItem.__type !== "midiCc") return;
+
+    const controllerNumber = resolveInputtableValue<MidiCcMod>(
+      state,
+      modChain,
+      modChainItemId,
+      "controllerNumber",
+    );
+
+    setMidiCcTrigger(Midi.ccValue(roundMod(controllerNumber, 0, 128)));
+
+    const onChange: (typeof Midi.onCC)[number] = ({ number, value }) => {
+      if (number !== controllerNumber) return;
+
+      setMidiCcTrigger(value);
+    };
+
+    Midi.onCC.push(onChange);
+
+    return () => {
+      Midi.onCC.splice(Midi.onCC.indexOf(onChange), 1);
+    };
+  }, [modChainItem.__type === "midiCc" && now]);
 
   const updateMod = useCallback(<T extends ModChainItem>(fn: SetStateAction<T>) => {
     setState((s) => ({
@@ -102,7 +135,7 @@ export default React.memo(function ModChainItemComponent(
     }));
   }, []);
 
-  const label = useMemo(() => {
+  const label = useMemo<string>(() => {
     switch (modChainItem.__type) {
       case "lfo":
         return "LFO";
@@ -111,13 +144,15 @@ export default React.memo(function ModChainItemComponent(
       case "fixedValue":
         return "Fixed value";
       case "controlValue":
-        return state.controls[modChainItem.controlId].definition.label;
+        return state.controls[modChainItem.controlId].definition.label!;
       case "inheritedControlValue":
         return "Inherited value";
       case "math":
         return "Math";
       case "lerp":
         return "Lerp";
+      case "midiCc":
+        return "MIDI CC";
     }
   }, [modChainItem.__type]);
 
@@ -364,6 +399,27 @@ export default React.memo(function ModChainItemComponent(
                     modChainItemId={modChainItemId}
                     modChainItemProperty="value2"
                   />
+                </>
+              );
+            case "midiCc":
+              return (
+                <>
+                  <div className="row">
+                    <InputtableValue<MidiCcMod>
+                      modChainId={modChainId}
+                      modChainItemId={modChainItemId}
+                      modChainItemProperty="controllerNumber"
+                      numberInputProps={{
+                        max: 127,
+                        min: 0,
+                        roundPlaces: 0,
+                        coerce(value) {
+                          return roundMod(value, 0, 128);
+                        },
+                      }}
+                    />
+                    <ModChainOutputNode value={midiCcTrigger} modItemId={modChainItemId} />
+                  </div>
                 </>
               );
           }

@@ -78,13 +78,11 @@ export const tryParseFloat = (value: number | string, fallback: number) => {
   return isNaN(parsed) ? fallback : parsed;
 };
 
-export const normalizeIndex = (i: number, array: any[]) =>
-  i >= 0 ? i : array.length + i;
+export const normalizeIndex = (i: number, array: any[]) => (i >= 0 ? i : array.length + i);
 
-export type MaybeGenerated<
-  ReturnType,
-  GeneratorArgsType extends Array<any> = [],
-> = ReturnType | ((...prev: GeneratorArgsType) => ReturnType);
+export type MaybeGenerated<ReturnType, GeneratorArgsType extends Array<any> = []> =
+  | ReturnType
+  | ((...prev: GeneratorArgsType) => ReturnType);
 
 export const resolveMaybeGenerated = <
   ReturnType,
@@ -96,9 +94,7 @@ export const resolveMaybeGenerated = <
 
 export type MaybePromise<T> = T | Promise<T>;
 
-export async function resolveMaybePromise<T>(
-  value: T | Promise<T>,
-): Promise<T> {
+export async function resolveMaybePromise<T>(value: T | Promise<T>): Promise<T> {
   return await Promise.resolve(value);
 }
 
@@ -114,9 +110,7 @@ export async function resolveMaybeGeneratedPromise<
   value: MaybeGeneratedPromise<ReturnType, GeneratorArgsType>,
   ...generatorArgs: GeneratorArgsType
 ): Promise<ReturnType> {
-  return await resolveMaybePromise(
-    await resolveMaybeGenerated(value, ...generatorArgs),
-  );
+  return await resolveMaybePromise(await resolveMaybeGenerated(value, ...generatorArgs));
 }
 
 let randomFloatRng = prand.xoroshiro128plus(performance.now());
@@ -124,8 +118,7 @@ export function randomFloat(): number {
   const resolution = 1 << 24;
 
   const ret =
-    prand.unsafeUniformIntDistribution(0, resolution - 1, randomFloatRng) /
-    resolution;
+    prand.unsafeUniformIntDistribution(0, resolution - 1, randomFloatRng) / resolution;
 
   // randomFloatRng.next();
 
@@ -133,12 +126,7 @@ export function randomFloat(): number {
 }
 
 export function distance(p1: Point, p2: Point): number;
-export function distance(
-  x1: number,
-  y1: number,
-  x2: number,
-  y2: number,
-): number;
+export function distance(x1: number, y1: number, x2: number, y2: number): number;
 export function distance(
   x1: number | Point,
   y1: number | Point,
@@ -211,12 +199,7 @@ export function rectContainsPoint(rect: Rect, point: Point) {
   const right = rect.x + rect.w;
   const bottom = rect.y + rect.h;
 
-  return (
-    point.x >= rect.x &&
-    point.x <= right &&
-    point.y >= rect.y &&
-    point.y <= bottom
-  );
+  return point.x >= rect.x && point.x <= right && point.y >= rect.y && point.y <= bottom;
 }
 
 export function pointArray(pt: Point): [number, number] {
@@ -235,8 +218,7 @@ export function polygonContainsPoint(polygon: Point[], point: Point) {
     const { x: xi, y: yi } = polygon[i];
     const { x: xj, y: yj } = polygon[j];
 
-    const intersect =
-      yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi;
+    const intersect = yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi;
     if (intersect) inside = !inside;
   }
 
@@ -252,9 +234,7 @@ export function inflateRect(rect: Rect, amount: number): Rect {
   };
 }
 
-type MutableRefList<T> = Array<
-  RefCallback<T> | MutableRefObject<T> | undefined | null
->;
+type MutableRefList<T> = Array<RefCallback<T> | MutableRefObject<T> | undefined | null>;
 
 export function mergeRefs<T>(...refs: MutableRefList<T>): RefCallback<T> {
   return (val: T) => {
@@ -281,12 +261,7 @@ export function multiplyPt(pt: Point, factor: Point | number): Point {
 }
 
 function isRect(r: any): r is Rect {
-  return (
-    r.x !== undefined &&
-    r.y !== undefined &&
-    r.h !== undefined &&
-    r.w !== undefined
-  );
+  return r.x !== undefined && r.y !== undefined && r.h !== undefined && r.w !== undefined;
 }
 
 export function viewportToDocument(
@@ -327,18 +302,13 @@ export function pointFromEvent(e: { offsetX: number; offsetY: number }): Point {
   return { x: e.offsetX, y: e.offsetY };
 }
 
-export function pointFromEventClient(e: {
-  clientX: number;
-  clientY: number;
-}): Point {
+export function pointFromEventClient(e: { clientX: number; clientY: number }): Point {
   return { x: e.clientX, y: e.clientY };
 }
 
 export function getContext<T extends HTMLCanvasElement | OffscreenCanvas>(
   canvas: T,
-): T extends HTMLCanvasElement
-  ? CanvasRenderingContext2D
-  : OffscreenCanvasRenderingContext2D {
+): T extends HTMLCanvasElement ? CanvasRenderingContext2D : OffscreenCanvasRenderingContext2D {
   const ctx = canvas.getContext("2d");
   if (!ctx) throw "no context :o";
   return ctx as T extends HTMLCanvasElement
@@ -369,10 +339,7 @@ export const enum PointerEventButton {
   PenEraser = 32,
 }
 
-export function buttonDown(
-  e: PointerEvent,
-  ...buttons: PointerEventButton[]
-): boolean {
+export function buttonDown(e: PointerEvent, ...buttons: PointerEventButton[]): boolean {
   return !!(e.buttons & buttons.reduce((acc, v) => acc | v, 0));
 }
 
@@ -393,9 +360,7 @@ export function arrayWithModifiedIndexes<T, E extends T = T>(
   updateFn: (old: E) => T,
 ): T[] {
   const copy = array.slice(0);
-  const normalizedIndexex = wrapArray(indexes).map((i) =>
-    normalizeIndex(i, copy),
-  );
+  const normalizedIndexex = wrapArray(indexes).map((i) => normalizeIndex(i, copy));
   for (const i of normalizedIndexex) {
     copy[i] = updateFn(copy[i] as E);
   }
@@ -498,4 +463,23 @@ export function mapToObject<T, K extends string | number | symbol, V>(
   });
 
   return obj;
+}
+
+export function formatNumberSmall(n: number): string {
+  if (n === 0) return n.toString();
+  const log = Math.log10(Math.abs(n));
+
+  const roundedLog = log < 0 ? Math.ceil(log) : Math.floor(log);
+  const roundedNextLog = roundedLog < 0 ? roundedLog - 1 : roundedLog + 1;
+  const short = round(n / Math.pow(10, roundedLog), 3);
+
+  if (log >= 4 || log <= -3) {
+    return `${short}e${roundedNextLog}`;
+  } else {
+    return round(short * Math.pow(10, roundedLog), Math.abs(roundedNextLog)).toString();
+  }
+}
+
+export function roundMod(n: number, roundTo: number, modulo: number): number {
+  return mod(round(n, roundTo), modulo);
 }

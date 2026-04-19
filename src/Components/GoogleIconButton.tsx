@@ -8,9 +8,7 @@ interface Props {
 }
 
 const GoogleIconButton: React.FC<
-  React.PropsWithChildren<
-    GoogleIconProps & React.JSX.IntrinsicElements["button"] & Props
-  >
+  React.PropsWithChildren<GoogleIconProps & React.JSX.IntrinsicElements["button"] & Props>
 > = React.memo(function GoogleIconButton(props) {
   const {
     icon,

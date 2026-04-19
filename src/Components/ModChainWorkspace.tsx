@@ -223,7 +223,7 @@ export default function ModChainWorkspace(props: Props) {
             naked
             icon="output"
             buttonStyle="rounded"
-            size={10}
+            size={5}
           />
         </div>
 
@@ -294,6 +294,24 @@ export default function ModChainWorkspace(props: Props) {
             }}
           >
             Add Lerp
+          </GoogleIconButton>
+          <GoogleIconButton
+            icon="tune"
+            size={1}
+            onClick={() => {
+              addModChainItem({
+                __type: "midiCc",
+                controllerNumber: 16,
+                ui: {
+                  x: -modChainContext.offset.x + 8,
+                  y: -modChainContext.offset.y + 8,
+                },
+                isDefault: false,
+                removeable: true,
+              });
+            }}
+          >
+            Add MIDI CC
           </GoogleIconButton>
         </div>
 

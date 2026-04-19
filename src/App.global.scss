@@ -1490,6 +1490,10 @@ button.showInspector {
     flex-direction: row;
     gap: 0.5rem;
     align-items: center;
+
+    &:has(> .modChainOutputNode) {
+      margin-left: auto;
+    }
   }
 
   .modChainOutputNode {
@@ -1500,7 +1504,6 @@ button.showInspector {
     cursor: pointer;
     transform: rotate(45deg);
     position: relative;
-    margin-left: auto;
 
     &:hover,
     &.connected {

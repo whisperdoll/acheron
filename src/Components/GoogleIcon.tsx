@@ -3718,8 +3718,7 @@ export const CodePoints = {
 export type CodePoint = keyof typeof CodePoints;
 const sizes = ["small", "medium", "large"] as const satisfies string[];
 type Size = (typeof sizes)[number];
-const isValidSize = (size: any): size is Size =>
-  (sizes as string[]).includes(size);
+const isValidSize = (size: any): size is Size => (sizes as string[]).includes(size);
 
 export type Style = "rounded" | "outlined" | "sharp";
 
@@ -3744,7 +3743,7 @@ const axes = {
 
 export type Props = {
   icon: CodePoint;
-  buttonStyle: Style;
+  buttonStyle?: Style;
   size?: (typeof sizes)[number] | number;
   fill?: boolean;
   grade?: number;
@@ -3752,55 +3751,51 @@ export type Props = {
   weight?: number;
 };
 
-const GoogleIcon: React.FC<Props & React.JSX.IntrinsicElements["span"]> =
-  React.memo(
-    ({
-      icon,
-      buttonStyle,
-      size,
-      fill,
-      grade,
-      opticalSize,
-      weight,
+const GoogleIcon: React.FC<Props & React.JSX.IntrinsicElements["span"]> = React.memo(
+  ({
+    icon,
+    buttonStyle = "rounded",
+    size,
+    fill,
+    grade,
+    opticalSize,
+    weight,
 
-      className,
-      style,
+    className,
+    style,
 
-      ...rest
-    }) => {
-      // font-variation-settings: "wght" 100, "whatever" 893;
-      const addedStyle: React.CSSProperties = useMemo(
-        () => ({
-          fontSize: typeof size === "number" ? `${size}rem` : undefined,
-          fontVariationSettings: Object.entries({
-            fill,
-            grade,
-            opticalSize,
-            weight,
-          })
-            .map(([key, value]) =>
-              value !== undefined ? `"${axes[key].key}" ${+value}` : undefined
-            )
-            .filter((_) => _)
-            .join(", "),
-        }),
-        [size, fill, grade, opticalSize, weight]
-      );
-      const addedClassName = useMemo(
-        () => (isValidSize(size) ? size : ""),
-        [size]
-      );
+    ...rest
+  }) => {
+    // font-variation-settings: "wght" 100, "whatever" 893;
+    const addedStyle: React.CSSProperties = useMemo(
+      () => ({
+        fontSize: typeof size === "number" ? `${size}rem` : undefined,
+        fontVariationSettings: Object.entries({
+          fill,
+          grade,
+          opticalSize,
+          weight,
+        })
+          .map(([key, value]) =>
+            value !== undefined ? `"${axes[key].key}" ${+value}` : undefined,
+          )
+          .filter((_) => _)
+          .join(", "),
+      }),
+      [size, fill, grade, opticalSize, weight],
+    );
+    const addedClassName = useMemo(() => (isValidSize(size) ? size : ""), [size]);
 
-      return (
-        <span
-          style={{ ...addedStyle, ...style }}
-          className={`icon material-symbol ${className} ${addedClassName} ${buttonStyle}`}
-          {...rest}
-        >
-          {icon}
-        </span>
-      );
-    }
-  );
+    return (
+      <span
+        style={{ ...addedStyle, ...style }}
+        className={`icon material-symbol ${className} ${addedClassName} ${buttonStyle}`}
+        {...rest}
+      >
+        {icon}
+      </span>
+    );
+  },
+);
 
 export default GoogleIcon;

@@ -25,11 +25,13 @@ import Dict from "../lib/dict";
 import { confirmPrompt } from "../utils/desktop";
 import useContextMenu from "../Hooks/useContextMenu";
 import { Driver } from "../utils/driver";
-import { mapTouches } from "../lib/utils";
+import { filterMapObject, mapTouches } from "../lib/utils";
 import Midi from "../utils/midi";
 import HexGridContextMenu from "./HexGridContextMenu";
 import Color from "colorjs.io";
 import { modes, notesForKey } from "../utils/scales";
+import useNow from "../Hooks/useNow";
+import { objectWithoutKeys } from "../utils/utils";
 
 interface Props {
   layerIndex: number;
@@ -40,6 +42,7 @@ type DragType = "copy" | "move" | "none";
 
 export default function HexGrid(props: Props) {
   const { state, setState } = useContext(AppContext)!;
+  const now = useNow();
   const canvasEl = useRef<HTMLCanvasElement | null>(null);
   const canvas = useRef<Canvas | null>(null);
   const backCanvasEl = useRef<HTMLCanvasElement | null>(null);
@@ -649,7 +652,17 @@ export default function HexGrid(props: Props) {
       document.body.removeEventListener("mouseup", documentMouseUp);
       canvas.current?.canvas.removeEventListener("contextmenu", contextMenu);
     };
-  }, [props.layerIndex, state]);
+  }, [
+    props.layerIndex,
+    state.layers[props.layerIndex].tokenIds,
+    state.draggingDestHex,
+    state.draggingSourceHex,
+    state.draggingType,
+    state.isDragging,
+    state.performingNotes,
+    state.selectedHex,
+    Object.keys(state.tokens).length,
+  ]);
 
   /////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////// BACK CANVAS //////////////////////////////////

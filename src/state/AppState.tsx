@@ -26,6 +26,7 @@ import {
   ModChainItem,
   MathMod,
   LerpMod,
+  MidiCcMod,
 } from "../Types.ts";
 import {
   buildFromDefs,
@@ -35,7 +36,7 @@ import {
   PlayerControlKey,
   PlayerControlKeys,
 } from "../utils/DefaultDefinitions.ts";
-import { MidiDevice, MidiNote } from "../utils/midi.ts";
+import Midi, { MidiDevice, MidiNote } from "../utils/midi.ts";
 import { buildToken, copyToken, tokenDefinitions } from "../Tokens.ts";
 import List from "../lib/list.ts";
 import {
@@ -45,6 +46,7 @@ import {
   MaybeGeneratedPromise,
   mapObject,
   KeysOfUnion,
+  roundMod,
 } from "../lib/utils.ts";
 import appSettingsStore from "./AppSettings.ts";
 import AbsorbToken from "../tokens/absorb.ts";
@@ -758,6 +760,15 @@ export function resolveModItem(
       const interpol = resolveInputtableValue<LerpMod>(state, modChain, modItemId, "interpol");
       return value1 + (value2 - value1) * interpol;
     }
+    case "midiCc": {
+      const controller = resolveInputtableValue<MidiCcMod>(
+        state,
+        modChain,
+        modItemId,
+        "controllerNumber",
+      );
+      return Midi.ccValue(roundMod(controller, 0, 128));
+    }
   }
 }
 
@@ -850,7 +861,7 @@ export function connectModItems(
           [modChainId]: {
             ...modChain,
             connections: [
-              ...modChain.connections,
+              ...modChain.connections.filter((c) => c.to !== inputItemId),
               {
                 from: outputItemId,
                 to: inputItemId,

@@ -55,6 +55,8 @@ function InputtableValue<T extends ModChainItem>({
     return resolveModItem(state, modChain, connection.from);
   }, [now, inputtableValue, state.modChains, modChain]);
 
+  const coerce = numberInputProps?.coerce || ((_: number) => _);
+
   return (
     <div className="inputtableValue row">
       <ModChainInputNode
@@ -64,7 +66,7 @@ function InputtableValue<T extends ModChainItem>({
       {!connection ? (
         <NumberInput {...numberInputProps} onChange={updateRawValue} value={inputtableValue} />
       ) : (
-        <div className="inputValue">{inputValue}</div>
+        <div className="inputValue">{coerce(inputValue!)}</div>
       )}
     </div>
   );

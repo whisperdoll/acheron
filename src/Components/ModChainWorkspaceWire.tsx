@@ -61,7 +61,7 @@ export default function ModChainWorkspaceWire(props: Props) {
     modChainWorkspaceContext.zoom,
   ]);
 
-  const targetPosition = useMemo(() => {
+  const calcTargetPosition = useCallback(() => {
     if ("to" in props) {
       return props.to;
     } else if ("toId" in props) {
@@ -95,6 +95,12 @@ export default function ModChainWorkspaceWire(props: Props) {
     modChainWorkspaceContext.offset,
     modChainWorkspaceContext.zoom,
   ]);
+
+  const [targetPosition, setTargetPosition] = useState(calcTargetPosition);
+
+  useEffect(() => {
+    setTimeout(() => setTargetPosition(calcTargetPosition()), 0);
+  }, [calcTargetPosition]);
 
   const qPosition = useMemo(() => {
     if (!sourcePosition || !targetPosition) return;

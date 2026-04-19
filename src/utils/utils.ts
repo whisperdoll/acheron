@@ -16,10 +16,10 @@ export function mod(x: number, m: number): number {
   }
 }
 
-export function objectWithoutKeys<
-  K extends string | number | symbol,
-  T extends Record<K, any>,
->(o: T, keys: K[]): Omit<typeof o, (typeof keys)[number]> {
+export function objectWithoutKeys<R extends Record<string, any>, K extends Partial<keyof R>>(
+  o: R,
+  keys: K[],
+): Omit<typeof o, K> {
   const ret = { ...o };
   keys.forEach((key) => delete ret[key]);
   return ret;

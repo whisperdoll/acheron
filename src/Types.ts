@@ -6,6 +6,7 @@ import { PlayerControlKey } from "./utils/DefaultDefinitions";
 import { randomFloat } from "./lib/utils";
 import * as WebMidi from "webmidi";
 import Midi from "./utils/midi";
+import { MidiCcMode } from "./utils/ccClassifier";
 
 type Entries<T> = {
   [K in keyof T]: [K, T[K]];
@@ -136,12 +137,12 @@ export function coerceControlValueFromNumber<T extends ControlDataType = Control
       case "decimal":
         return +value;
       case "direction":
-        return Math.floor(+value) % 6;
+        return Math.floor(value) % 6;
       case "int":
-        return Math.floor(+value);
+        return Math.floor(value);
       case "select":
         return control.definition.options![
-          Math.floor(+value) % control.definition.options!.length
+          Math.floor(value) % control.definition.options!.length
         ].value;
       case "triad":
         return Math.floor(+value) % 7;
@@ -361,6 +362,11 @@ export type LerpMod = SharedModChainItemAttributes & {
   interpol: number; // 0-1
 };
 
+export type MidiCcMod = SharedModChainItemAttributes & {
+  __type: "midiCc";
+  controllerNumber: number;
+};
+
 type ModChainItemID = string;
 export type ModChainItem =
   | LFOMod
@@ -369,7 +375,8 @@ export type ModChainItem =
   | FixedValueMod
   | FixedControlValueMod
   | MathMod
-  | LerpMod;
+  | LerpMod
+  | MidiCcMod;
 export type ModChain = {
   input: ControlInstanceId;
   mods: Record<ModChainItemID, ModChainItem>;

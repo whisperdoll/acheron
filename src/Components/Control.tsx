@@ -307,7 +307,7 @@ export const Value = React.memo(function ControlValue() {
   const isFixed =
     outputMod.__type === "fixedValue" || outputMod.__type === "fixedControlValue";
   const value = useMemo(() => {
-    return resolveModChain(state, context.controlId);
+    return getControlValue(state, context.controlId);
   }, [modChain, !isFixed && now]);
 
   const handleUpdate = useCallback((value: number) => {
