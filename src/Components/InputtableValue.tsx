@@ -6,18 +6,21 @@ import { produce } from "immer";
 import { KeysOfUnion, KeysWithValueType, Optional } from "../lib/utils";
 import useNow from "../Hooks/useNow";
 import ModChainInputNode from "./ModChainInputNode";
+import { getProperty, setProperty } from "dot-prop";
 
-interface Props<T extends ModChainItem> {
+interface Props<T> {
   modChainId: string;
   modChainItemId: string;
   modChainItemProperty: KeysOfUnion<T>;
   numberInputProps?: Optional<Omit<NumberInputProps, "value">, "onChange">;
+  label?: string;
 }
 
-function InputtableValue<T extends ModChainItem>({
+function InputtableValue<T>({
   modChainId,
   modChainItemId,
   modChainItemProperty,
+  label,
   numberInputProps,
 }: Props<T>) {
   const { state, setState } = useContext(AppContext)!;
@@ -25,14 +28,14 @@ function InputtableValue<T extends ModChainItem>({
 
   const modChain = state.modChains[modChainId];
   const modChainItem = modChain.mods[modChainItemId] as T;
-  const inputtableValue = modChainItem[modChainItemProperty] as number;
+  const inputtableValue = getProperty(modChainItem, modChainItemProperty as string) as number;
 
   const updateRawValue = useCallback(
     (value: number) => {
       setState(
         produce<AppState>((s) => {
           const mod = s.modChains[modChainId].mods[modChainItemId] as T;
-          (mod[modChainItemProperty] as number) = value;
+          setProperty(mod as Record<string, any>, modChainItemProperty as string, value);
         }),
       );
 
@@ -63,6 +66,7 @@ function InputtableValue<T extends ModChainItem>({
         modItemId={modChainItemId}
         property={modChainItemProperty as string}
       />
+      {label && <span className="label">{label}</span>}
       {!connection ? (
         <NumberInput {...numberInputProps} onChange={updateRawValue} value={inputtableValue} />
       ) : (
@@ -72,6 +76,4 @@ function InputtableValue<T extends ModChainItem>({
   );
 }
 
-export default React.memo(InputtableValue) as <T extends ModChainItem>(
-  props: Props<T>,
-) => ReactElement | null;
+export default React.memo(InputtableValue) as <T>(props: Props<T>) => ReactElement | null;

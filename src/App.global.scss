@@ -14,6 +14,7 @@
   --button-background-color-active: rgba(0, 0, 0, 0.2);
   --button-background-color-hover: rgba(255, 255, 255, 0.2);
   --button-background-color: rgba(255, 255, 255, 0.1);
+  --control-edit-button-active-background-color: rgba(212, 226, 23, 0.226);
   --control-header-background-color: rgba(255, 255, 255, 0.1);
   --dangerous-button-background-color-active: rgba(100, 0, 0, 0.4);
   --dangerous-button-background-color-hover: rgba(255, 100, 100, 0.3);
@@ -46,6 +47,14 @@
   font-family: Arial, Helvetica, sans-serif;
   box-sizing: border-box;
   position: relative;
+}
+
+hr {
+  width: 100%;
+  border: none;
+  background: var(--outline-color);
+  min-height: 1px;
+  max-height: 1px;
 }
 
 .grow {
@@ -946,6 +955,12 @@ $statusBarHeight: 2rem;
       }
     }
   }
+
+  .edit {
+    &.active {
+      background-color: var(--control-edit-button-active-background-color);
+    }
+  }
 }
 
 button.googleIconButton {
@@ -1496,6 +1511,14 @@ button.showInspector {
     }
   }
 
+  .inputtableValue {
+    justify-content: stretch;
+
+    .numberInput-container {
+      flex-grow: 1;
+    }
+  }
+
   .modChainOutputNode {
     min-width: 1rem;
     min-height: 1rem;
@@ -1620,7 +1643,6 @@ button.showInspector {
       display: flex;
       flex-direction: column;
       align-items: stretch;
-      justify-content: center;
       overflow: auto;
 
       .sequence {

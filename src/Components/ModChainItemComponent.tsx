@@ -10,6 +10,7 @@ import React, {
 } from "react";
 import {
   AppContext,
+  AppState,
   getControlLayer,
   getControlValue,
   playerControls,
@@ -27,6 +28,7 @@ import {
   MathModOperation,
   MidiCcMod,
   ModChainItem,
+  SequenceMod,
   ShallowControlState,
 } from "../Types";
 import { ModChainWorkspaceContext } from "../state/ModChainWorkspaceContext";
@@ -39,6 +41,7 @@ import InputtableValue from "./InputtableValue";
 import GoogleIconButton from "./GoogleIconButton";
 import Midi from "../utils/midi";
 import useNow from "../Hooks/useNow";
+import { produce } from "immer";
 
 interface Props {
   id: string;
@@ -51,6 +54,7 @@ export default React.memo(function ModChainItemComponent(
   const { state, setState } = useContext(AppContext)!;
   const { id: modChainItemId, controlId: modChainId, ...rest } = props;
 
+  const workspaceContext = useContext(ModChainWorkspaceContext);
   const now = useNow();
   const modChain = state.modChains[modChainId];
   const modChainItem = modChain.mods[modChainItemId];
@@ -153,6 +157,8 @@ export default React.memo(function ModChainItemComponent(
         return "Lerp";
       case "midiCc":
         return "MIDI CC";
+      case "sequence":
+        return "Sequence";
     }
   }, [modChainItem.__type]);
 
@@ -232,12 +238,18 @@ export default React.memo(function ModChainItemComponent(
       }
     });
 
+    const onWheel = (e: WheelEvent) => {
+      e.stopPropagation();
+    };
+
+    containerRef.current.addEventListener("wheel", onWheel);
     resizeObserver.observe(containerRef.current);
     document.body.addEventListener("pointermove", onMove);
     document.body.addEventListener("pointerup", onUp);
     document.body.addEventListener("pointercancel", onCancel);
 
     return () => {
+      containerRef.current?.removeEventListener("wheel", onWheel);
       resizeObserver.disconnect();
       document.body.removeEventListener("pointermove", onMove);
       document.body.removeEventListener("pointerup", onUp);
@@ -264,7 +276,13 @@ export default React.memo(function ModChainItemComponent(
           />
         )}
       </div>
-      <div className="contents">
+      <div
+        className="contents"
+        onScroll={(e) => {
+          // force wire refresh
+          workspaceContext.set((w) => ({ ...w, containerBounds: { ...w.containerBounds! } }));
+        }}
+      >
         {(() => {
           switch (modChainItem.__type) {
             case "lfo":
@@ -420,6 +438,52 @@ export default React.memo(function ModChainItemComponent(
                     />
                     <ModChainOutputNode value={midiCcTrigger} modItemId={modChainItemId} />
                   </div>
+                </>
+              );
+            case "sequence":
+              return (
+                <>
+                  <div className="row">
+                    <InputtableValue<SequenceMod>
+                      modChainId={modChainId}
+                      modChainItemId={modChainItemId}
+                      modChainItemProperty="index"
+                      label="Index:"
+                      numberInputProps={{
+                        min: 0,
+                        max: modChainItem.values.length - 1,
+                        coerce: (v) => roundMod(v, 0, modChainItem.values.length),
+                      }}
+                    />
+                    <ModChainOutputNode modItemId={modChainItemId} />
+                  </div>
+                  <hr />
+                  {modChainItem.values.map((value, i) => {
+                    return (
+                      <InputtableValue<Record<string, number>>
+                        modChainId={modChainId}
+                        modChainItemId={modChainItemId}
+                        modChainItemProperty={`values.${i}`}
+                        key={i}
+                      />
+                    );
+                  })}
+
+                  <GoogleIconButton
+                    icon="add"
+                    fill
+                    onClick={(e) => {
+                      setState(
+                        produce<AppState>((s) => {
+                          (
+                            s.modChains[modChainId].mods[modChainItemId] as SequenceMod
+                          ).values.push(0);
+                        }),
+                      );
+                    }}
+                  >
+                    Add value
+                  </GoogleIconButton>
                 </>
               );
           }

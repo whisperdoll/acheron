@@ -1,7 +1,16 @@
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import * as Control from "./Control";
 import GoogleIconButton from "./GoogleIconButton";
-import { Lfo, ModChainItem } from "../Types";
+import {
+  LerpMod,
+  Lfo,
+  LFOMod,
+  MathMod,
+  MidiCcMod,
+  ModChainItem,
+  SequenceMod,
+  SharedModChainItemAttributes,
+} from "../Types";
 import { v4 as uuidv4 } from "uuid";
 import LfoVisualizer from "./LfoVisualizer";
 import LfoControls from "./LfoControls";
@@ -90,7 +99,9 @@ export default function ModChainWorkspace(props: Props) {
     };
   }, [modChainContext, setModChainContext]);
 
-  function addModChainItem(item: ModChainItem) {
+  function addModChainItem<T extends ModChainItem>(
+    item: Omit<T, keyof SharedModChainItemAttributes>,
+  ) {
     const id = uuidv4();
     setState((s) => ({
       ...s,
@@ -100,7 +111,15 @@ export default function ModChainWorkspace(props: Props) {
           ...s.modChains[s.modChainControl!],
           mods: {
             ...s.modChains[s.modChainControl!].mods,
-            [id]: item,
+            [id]: {
+              ...item,
+              ui: {
+                x: -modChainContext.offset.x + 8,
+                y: -modChainContext.offset.y + 8,
+              },
+              isDefault: false,
+              removeable: true,
+            } as T,
           },
         },
       },
@@ -233,7 +252,7 @@ export default function ModChainWorkspace(props: Props) {
             size={1}
             buttonStyle="rounded"
             onClick={() => {
-              addModChainItem({
+              addModChainItem<LFOMod>({
                 __type: "lfo",
                 hiPeriod: 1,
                 lowPeriod: 2,
@@ -242,12 +261,6 @@ export default function ModChainWorkspace(props: Props) {
                 period: 1,
                 sequence: [],
                 type: "sine",
-                ui: {
-                  x: -modChainContext.offset.x + 8,
-                  y: -modChainContext.offset.y + 8,
-                },
-                isDefault: false,
-                removeable: true,
               });
             }}
           >
@@ -258,17 +271,11 @@ export default function ModChainWorkspace(props: Props) {
             size={1}
             buttonStyle="rounded"
             onClick={() => {
-              addModChainItem({
+              addModChainItem<MathMod>({
                 __type: "math",
                 value1: 0,
                 value2: 0,
                 operation: "+",
-                ui: {
-                  x: -modChainContext.offset.x + 8,
-                  y: -modChainContext.offset.y + 8,
-                },
-                isDefault: false,
-                removeable: true,
               });
             }}
           >
@@ -279,39 +286,39 @@ export default function ModChainWorkspace(props: Props) {
             size={1}
             buttonStyle="rounded"
             onClick={() => {
-              addModChainItem({
+              addModChainItem<LerpMod>({
                 __type: "lerp",
                 value1: 0,
                 value2: 100,
                 interpol: 0.5,
-                ui: {
-                  x: -modChainContext.offset.x + 8,
-                  y: -modChainContext.offset.y + 8,
-                },
-                isDefault: false,
-                removeable: true,
               });
             }}
           >
             Add Lerp
           </GoogleIconButton>
           <GoogleIconButton
-            icon="tune"
+            icon="clock_loader_10"
             size={1}
             onClick={() => {
-              addModChainItem({
+              addModChainItem<MidiCcMod>({
                 __type: "midiCc",
                 controllerNumber: 16,
-                ui: {
-                  x: -modChainContext.offset.x + 8,
-                  y: -modChainContext.offset.y + 8,
-                },
-                isDefault: false,
-                removeable: true,
               });
             }}
           >
             Add MIDI CC
+          </GoogleIconButton>
+          <GoogleIconButton
+            icon="format_list_numbered"
+            onClick={() => {
+              addModChainItem<SequenceMod>({
+                __type: "sequence",
+                index: 0,
+                values: [1, 2, 3],
+              });
+            }}
+          >
+            Add Sequence
           </GoogleIconButton>
         </div>
 

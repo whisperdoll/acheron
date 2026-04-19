@@ -355,33 +355,13 @@ export const Value = React.memo(function ControlValue() {
 export const EditIcon = React.memo(function ControlEditIcon() {
   const { state, setState } = useContext(AppContext)!;
   const context = useContext(ControlContext);
-  const controlState = context.controls[context.controlId];
-
-  const layerIndex = useMemo(() => {
-    let index = context.layers.findIndex(
-      (l) =>
-        pluck(l, PlayerControlKeys).includes(context.controlId) ||
-        l.tokenIds.some((tidArray) =>
-          tidArray.some((tid) => context.tokens[tid].controlIds.includes(context.controlId)),
-        ),
-    );
-
-    if (index === -1) {
-      index = context.selectedLayer;
-    }
-
-    return index;
-  }, [context.controlId, context.selectedLayer]);
-
-  const controlValue = useMemo(() => {
-    return coerceControlValueToNumber(getControlValue(state, controlState), controlState);
-  }, [controlState, context.layers[layerIndex].currentBeat]);
 
   return (
     <GoogleIconButton
       icon="adjust"
       buttonStyle="rounded"
       title="Edit modchain"
+      className={cx("edit", { active: state.modChainControl === context.controlId })}
       onClick={() => {
         setState((s) => ({
           ...s,

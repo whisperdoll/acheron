@@ -367,6 +367,12 @@ export type MidiCcMod = SharedModChainItemAttributes & {
   controllerNumber: number;
 };
 
+export type SequenceMod = SharedModChainItemAttributes & {
+  __type: "sequence";
+  values: number[];
+  index: number;
+};
+
 type ModChainItemID = string;
 export type ModChainItem =
   | LFOMod
@@ -376,7 +382,8 @@ export type ModChainItem =
   | FixedControlValueMod
   | MathMod
   | LerpMod
-  | MidiCcMod;
+  | MidiCcMod
+  | SequenceMod;
 export type ModChain = {
   input: ControlInstanceId;
   mods: Record<ModChainItemID, ModChainItem>;

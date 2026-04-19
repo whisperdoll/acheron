@@ -1,6 +1,7 @@
 import StateStore from "./state.ts";
 import App from "../App.tsx";
 import React, { useReducer, FunctionComponent, useState } from "react";
+import { getProperty } from "dot-prop";
 import { objectWithoutKeys, sliceObject } from "../utils/utils.ts";
 import { buildLayer } from "../Layers.ts";
 import {
@@ -27,6 +28,7 @@ import {
   MathMod,
   LerpMod,
   MidiCcMod,
+  SequenceMod,
 } from "../Types.ts";
 import {
   buildFromDefs,
@@ -769,10 +771,19 @@ export function resolveModItem(
       );
       return Midi.ccValue(roundMod(controller, 0, 128));
     }
+    case "sequence": {
+      const index = roundMod(
+        resolveInputtableValue<SequenceMod>(state, modChain, modItemId, "index"),
+        0,
+        modItem.values.length,
+      );
+      const value = resolveInputtableValue(state, modChain, modItemId, `values.${index}`);
+      return value;
+    }
   }
 }
 
-export function resolveInputtableValue<T extends ModChainItem>(
+export function resolveInputtableValue<T = Record<string, unknown>>(
   state: AppState,
   modChain: ModChain,
   modChainItemId: string,
@@ -782,9 +793,11 @@ export function resolveInputtableValue<T extends ModChainItem>(
     state,
     modChain,
     modChainItemId,
-    property,
+    property as string,
   );
-  if (!connection) return (modChain.mods[modChainItemId] as T)[property] as number;
+
+  if (!connection)
+    return getProperty(modChain.mods[modChainItemId], property as string) as number;
 
   return resolveModItem(state, modChain, connection.from);
 }
