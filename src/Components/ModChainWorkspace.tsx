@@ -1,11 +1,4 @@
-import {
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import * as Control from "./Control";
 import GoogleIconButton from "./GoogleIconButton";
 import { Lfo, ModChainItem } from "../Types";
@@ -21,12 +14,14 @@ import {
 import ModChainWorkspaceWires from "./ModChainWorkspaceWires";
 import { cx, resolveMaybeGenerated } from "../lib/utils";
 import { AppContext } from "../state/AppState";
+import { getDefaultModChainItemUI } from "../utils/elysiumutils";
 
 interface Props {}
 
 export default function ModChainWorkspace(props: Props) {
   const { state, setState } = useContext(AppContext)!;
   const containerRef = useRef<HTMLDivElement>(null);
+  const mainRowRef = useRef<HTMLDivElement>(null);
   const scrollPartContainerRef = useRef<HTMLDivElement>(null);
   const { modChainControl, control, modChain } = {
     modChainControl: state.modChainControl!,
@@ -35,7 +30,7 @@ export default function ModChainWorkspace(props: Props) {
   };
 
   function calculateContainerBounds() {
-    if (!containerRef.current || !scrollPartContainerRef.current) return;
+    if (!containerRef.current) return;
 
     const bounds = containerRef.current.getBoundingClientRect();
 
@@ -44,24 +39,25 @@ export default function ModChainWorkspace(props: Props) {
       height: bounds.height,
       top: bounds.top,
       left: bounds.left,
-      scrollHeight: scrollPartContainerRef.current.scrollHeight,
-      scrollWidth: scrollPartContainerRef.current.scrollWidth,
-      scrollTop: scrollPartContainerRef.current.scrollTop,
-      scrollLeft: scrollPartContainerRef.current.scrollLeft,
+      scrollHeight: containerRef.current.scrollHeight,
+      scrollWidth: containerRef.current.scrollWidth,
+      scrollTop: containerRef.current.scrollTop,
+      scrollLeft: containerRef.current.scrollLeft,
     };
   }
 
-  const [modChainContext, _setModChainContext] =
-    useState<IModChainWorkspaceContextProps>(() => ({
+  const [modChainContext, _setModChainContext] = useState<IModChainWorkspaceContextProps>(
+    () => ({
       connectingOutput: undefined,
       modChainId: modChainControl,
       containerRef,
       containerBounds: calculateContainerBounds(),
-    }));
+      offset: { x: 0, y: 0 },
+      zoom: 1,
+    }),
+  );
 
-  const setModChainContext = useCallback<
-    NonNullable<IModChainWorkspaceContext["set"]>
-  >(
+  const setModChainContext = useCallback<NonNullable<IModChainWorkspaceContext["set"]>>(
     (values) => {
       _setModChainContext((p) => {
         return {
@@ -74,33 +70,25 @@ export default function ModChainWorkspace(props: Props) {
   );
 
   useEffect(() => {
-    if (!containerRef.current || !scrollPartContainerRef.current) return;
+    if (!containerRef.current) return;
 
     const observer = new ResizeObserver(() => {
       setModChainContext({ containerBounds: calculateContainerBounds() });
     });
 
-    observer.observe(scrollPartContainerRef.current);
-
-    const onScroll = () => {
-      setModChainContext({ containerBounds: calculateContainerBounds() });
-    };
-
-    scrollPartContainerRef.current.addEventListener("scroll", onScroll);
+    observer.observe(containerRef.current);
 
     return () => {
-      scrollPartContainerRef.current?.removeEventListener("scroll", onScroll);
       observer.disconnect();
     };
   }, [setModChainContext]);
 
-  const modChainContextProviderValue: IModChainWorkspaceContext =
-    useMemo(() => {
-      return {
-        ...modChainContext,
-        set: setModChainContext,
-      };
-    }, [modChainContext, setModChainContext]);
+  const modChainContextProviderValue: IModChainWorkspaceContext = useMemo(() => {
+    return {
+      ...modChainContext,
+      set: setModChainContext,
+    };
+  }, [modChainContext, setModChainContext]);
 
   function addModChainItem(item: ModChainItem) {
     const id = uuidv4();
@@ -119,18 +107,68 @@ export default function ModChainWorkspace(props: Props) {
     }));
   }
 
-  function addLfo() {
-    addModChainItem({
-      __type: "lfo",
-      hiPeriod: 1,
-      lowPeriod: 2,
-      max: 1,
-      min: -1,
-      period: 1,
-      sequence: [],
-      type: "sine",
-    });
-  }
+  const draggingMainRow = useRef<boolean>(false);
+  const draggingModChainItem = useRef<string | null>(null);
+  const zoom = modChainContext.zoom;
+
+  useEffect(() => {
+    if (!mainRowRef.current) return;
+
+    const onDown = (e: PointerEvent) => {
+      if (e.target !== mainRowRef.current) return;
+
+      e.preventDefault();
+      draggingMainRow.current = true;
+    };
+
+    const onMove = (e: PointerEvent) => {
+      if (!draggingMainRow.current) return;
+
+      e.preventDefault();
+      setModChainContext((c) => ({
+        ...c,
+        offset: { x: c.offset.x + e.movementX, y: c.offset.y + e.movementY },
+      }));
+    };
+
+    const onUp = (e: PointerEvent) => {
+      if (!draggingMainRow.current) return;
+
+      e.preventDefault();
+      draggingMainRow.current = false;
+    };
+
+    const onCancel = (e: PointerEvent) => {
+      if (!draggingMainRow.current) return;
+
+      e.preventDefault();
+      draggingMainRow.current = false;
+    };
+
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+
+      if (e.deltaY < 0) {
+        setModChainContext((c) => ({ ...c, zoom: c.zoom * 1.1 }));
+      } else if (e.deltaY > 0) {
+        setModChainContext((c) => ({ ...c, zoom: c.zoom / 1.1 }));
+      }
+    };
+
+    mainRowRef.current.addEventListener("wheel", onWheel);
+    mainRowRef.current.addEventListener("pointerdown", onDown);
+    document.body.addEventListener("pointermove", onMove);
+    document.body.addEventListener("pointerup", onUp);
+    document.body.addEventListener("pointercancel", onCancel);
+
+    return () => {
+      mainRowRef.current?.removeEventListener("wheel", onWheel);
+      mainRowRef.current?.removeEventListener("pointerdown", onDown);
+      document.body.removeEventListener("pointermove", onMove);
+      document.body.removeEventListener("pointerup", onUp);
+      document.body.removeEventListener("pointercancel", onCancel);
+    };
+  }, []);
 
   if (!modChain) return null;
 
@@ -140,8 +178,7 @@ export default function ModChainWorkspace(props: Props) {
         controlId={control.id}
         bald
         className={cx("modChainWorkspace", {
-          listeningForConnections:
-            modChainContextProviderValue.connectingOutput,
+          listeningForConnections: modChainContextProviderValue.connectingOutput,
         })}
         ref={containerRef}
       >
@@ -160,32 +197,34 @@ export default function ModChainWorkspace(props: Props) {
           />
         </div>
 
-        <div className="mainRow">
-          <div className="scrollPart" ref={scrollPartContainerRef}>
-            {Object.entries(modChain.mods).map(
-              ([modChainItemId, modChainItem]) => {
-                return (
-                  <ModChainItemComponent
-                    key={modChainItemId}
-                    id={modChainItemId}
-                    controlId={modChainControl}
-                  />
-                );
-              },
-            )}
-          </div>
-          <div className="fixedPart">
-            <GoogleIconButton
-              className={cx("modChainWorkspaceOutput", {
-                connected: !!modChain.output,
-              })}
-              data-mod-chain-output={true}
-              naked
-              icon="output"
-              buttonStyle="rounded"
-              size={10}
-            />
-          </div>
+        <div className="mainRow" ref={mainRowRef}>
+          {Object.entries(modChain.mods).map(([modChainItemId, modChainItem], i) => {
+            return (
+              <ModChainItemComponent
+                key={modChainItemId}
+                id={modChainItemId}
+                controlId={modChainControl}
+                style={{
+                  left: `${(modChainItem.ui.x + modChainContext.offset.x) * zoom}px`,
+                  top: `${(modChainItem.ui.y + modChainContext.offset.y) * zoom}px`,
+                  transform: `scale(${zoom})`,
+                }}
+              />
+            );
+          })}
+        </div>
+
+        <div className="mainOutput">
+          <GoogleIconButton
+            className={cx("modChainWorkspaceOutput", {
+              connected: !!modChain.output,
+            })}
+            data-mod-chain-output={true}
+            naked
+            icon="output"
+            buttonStyle="rounded"
+            size={10}
+          />
         </div>
 
         <div className="addButtons">
@@ -193,9 +232,68 @@ export default function ModChainWorkspace(props: Props) {
             icon="airwave"
             size={1}
             buttonStyle="rounded"
-            onClick={addLfo}
+            onClick={() => {
+              addModChainItem({
+                __type: "lfo",
+                hiPeriod: 1,
+                lowPeriod: 2,
+                max: 1,
+                min: -1,
+                period: 1,
+                sequence: [],
+                type: "sine",
+                ui: {
+                  x: -modChainContext.offset.x + 8,
+                  y: -modChainContext.offset.y + 8,
+                },
+                isDefault: false,
+                removeable: true,
+              });
+            }}
           >
             Add LFO
+          </GoogleIconButton>
+          <GoogleIconButton
+            icon="calculate"
+            size={1}
+            buttonStyle="rounded"
+            onClick={() => {
+              addModChainItem({
+                __type: "math",
+                value1: 0,
+                value2: 0,
+                operation: "+",
+                ui: {
+                  x: -modChainContext.offset.x + 8,
+                  y: -modChainContext.offset.y + 8,
+                },
+                isDefault: false,
+                removeable: true,
+              });
+            }}
+          >
+            Add Math
+          </GoogleIconButton>
+          <GoogleIconButton
+            icon="linear_scale"
+            size={1}
+            buttonStyle="rounded"
+            onClick={() => {
+              addModChainItem({
+                __type: "lerp",
+                value1: 0,
+                value2: 100,
+                interpol: 0.5,
+                ui: {
+                  x: -modChainContext.offset.x + 8,
+                  y: -modChainContext.offset.y + 8,
+                },
+                isDefault: false,
+                removeable: true,
+              });
+            }}
+          >
+            Add Lerp
           </GoogleIconButton>
         </div>
 

@@ -15,7 +15,6 @@ import { Driver } from "./utils/driver";
 import Midi from "./utils/midi";
 import Settings from "./Components/Settings";
 import { buildMenu } from "./Menu";
-import { deserializeComposition } from "./Serialization";
 import settings, { AppSettings } from "./state/AppSettings";
 import useTimer from "./Hooks/useTimer";
 import StatusBar from "./Components/StatusBar";
@@ -42,6 +41,7 @@ import {
   removeLayer,
   togglePlaying,
 } from "./state/AppState";
+import { deserializeComposition } from "./Serialization";
 
 export default function App() {
   const [state, setState] = useState(initialState);

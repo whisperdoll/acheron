@@ -23,6 +23,9 @@ import {
   coerceControlValueToNumber,
   LfoConnectableProperty,
   coerceControlValueFromNumber,
+  ModChainItem,
+  MathMod,
+  LerpMod,
 } from "../Types.ts";
 import {
   buildFromDefs,
@@ -41,15 +44,14 @@ import {
   arrayWithoutIndexes,
   MaybeGeneratedPromise,
   mapObject,
+  KeysOfUnion,
 } from "../lib/utils.ts";
 import appSettingsStore from "./AppSettings.ts";
 import AbsorbToken from "../tokens/absorb.ts";
 import Dict from "../lib/dict.ts";
 import env from "../lib/env.ts";
-import {
-  getControlFromInheritParts,
-  getInheritParts,
-} from "../utils/elysiumutils.ts";
+import { getControlFromInheritParts, getInheritParts } from "../utils/elysiumutils.ts";
+import { produce } from "immer";
 
 export interface AppState {
   selectedHex: { hexIndex: number; layerIndex: number };
@@ -126,9 +128,7 @@ export interface LayerState {
   playingNotes: LayerNote[]; // from tokens
 }
 
-export function buildControlLayers(
-  appState: AppState,
-): AppState["controlLayers"] {
+export function buildControlLayers(appState: AppState): AppState["controlLayers"] {
   const controlLayers: Record<ControlInstanceId, number> = {};
   appState.layers.forEach((layer, layerIndex) => {
     layer.tokenIds.forEach((tokenIds) => {
@@ -140,28 +140,22 @@ export function buildControlLayers(
       });
     });
 
-    Object.entries(sliceObject(layer, LayerControlTypes)).forEach(
-      ([key, controlId]) => {
-        controlLayers[controlId] = layerIndex;
-      },
-    );
+    Object.entries(sliceObject(layer, LayerControlTypes)).forEach(([key, controlId]) => {
+      controlLayers[controlId] = layerIndex;
+    });
   });
 
   return controlLayers;
 }
 
-const [initialPlayerControls, initialPlayerModChains] =
-  buildFromDefs(playerControlDefs);
+const [initialPlayerControls, initialPlayerModChains] = buildFromDefs(playerControlDefs);
 
 export const initialState: AppState = {
   selectedHex: { hexIndex: -1, layerIndex: 0 },
   hoveredHex: { hexIndex: -1, layerIndex: 0 },
   controls: { ...initialPlayerControls }, // appended to after layer contruction
   tokens: {},
-  ...mapObject(initialPlayerControls, (k, v) => [
-    v.key as PlayerControlKey,
-    v.id,
-  ]),
+  ...mapObject(initialPlayerControls, (k, v) => [v.key as PlayerControlKey, v.id]),
   controlLayers: {},
   layers: [], // appended to after layer contruction
   isPlaying: false,
@@ -272,32 +266,19 @@ export function addTokenToHex(
       },
       controlLayers: {
         ...state.controlLayers,
-        ...mapObject(controls, (key, value) => [
-          value.id,
-          resolvedOpts.layerIndex,
-        ]),
+        ...mapObject(controls, (key, value) => [value.id, resolvedOpts.layerIndex]),
       },
-      layers: List.withIndexReplaced(
-        state.layers,
-        resolvedOpts.layerIndex,
-        (layer) => ({
-          ...layer,
-          tokenIds: List.withIndexReplaced(
-            layer.tokenIds,
-            resolvedOpts.hexIndex,
-            (old) => old.concat([tokenState.id]),
-          ),
-        }),
-      ),
+      layers: List.withIndexReplaced(state.layers, resolvedOpts.layerIndex, (layer) => ({
+        ...layer,
+        tokenIds: List.withIndexReplaced(layer.tokenIds, resolvedOpts.hexIndex, (old) =>
+          old.concat([tokenState.id]),
+        ),
+      })),
     };
   });
 }
 
-export function addTokenToSelected(
-  setState: SetState,
-  tokenKey: TokenUID,
-  why: string,
-) {
+export function addTokenToSelected(setState: SetState, tokenKey: TokenUID, why: string) {
   addTokenToHex(
     setState,
     tokenKey,
@@ -319,22 +300,13 @@ export function removeTokenFromHexStatic(
   return {
     ...state,
     tokens: objectWithoutKeys(state.tokens, [tokenId]),
-    controls: objectWithoutKeys(
-      state.controls,
-      state.tokens[tokenId].controlIds,
-    ),
-    layers: List.withIndexReplaced(
-      state.layers,
-      resolvedOpts.layerIndex,
-      (layer) => ({
-        ...layer,
-        tokenIds: List.withIndexReplaced(
-          layer.tokenIds,
-          resolvedOpts.hexIndex,
-          (old) => old.filter((id) => id !== tokenId),
-        ),
-      }),
-    ),
+    controls: objectWithoutKeys(state.controls, state.tokens[tokenId].controlIds),
+    layers: List.withIndexReplaced(state.layers, resolvedOpts.layerIndex, (layer) => ({
+      ...layer,
+      tokenIds: List.withIndexReplaced(layer.tokenIds, resolvedOpts.hexIndex, (old) =>
+        old.filter((id) => id !== tokenId),
+      ),
+    })),
   };
 }
 
@@ -421,9 +393,7 @@ export function removeLayer(
   setState((state) => {
     const resolvedIndex = resolveMaybeGenerated(index, state);
     const tokensToRemove = state.layers[resolvedIndex].tokenIds.flat();
-    const controlsToRemove = tokensToRemove.flatMap(
-      (tid) => state.tokens[tid].controlIds,
-    );
+    const controlsToRemove = tokensToRemove.flatMap((tid) => state.tokens[tid].controlIds);
 
     return {
       ...state,
@@ -482,18 +452,14 @@ export function copyHex(
       ...state,
       controls: { ...state.controls, ...newControls },
       tokens: { ...state.tokens, ...newTokens },
-      layers: List.withIndexReplaced(
-        state.layers,
-        resolvedOpts.destLayerIndex,
-        (layer) => ({
-          ...layer,
-          tokenIds: List.withIndexReplaced(
-            layer.tokenIds,
-            resolvedOpts.destHexIndex,
-            Object.keys(newTokens),
-          ),
-        }),
-      ),
+      layers: List.withIndexReplaced(state.layers, resolvedOpts.destLayerIndex, (layer) => ({
+        ...layer,
+        tokenIds: List.withIndexReplaced(
+          layer.tokenIds,
+          resolvedOpts.destHexIndex,
+          Object.keys(newTokens),
+        ),
+      })),
     };
   });
 }
@@ -517,34 +483,20 @@ export function moveHex(
     let layers = state.layers;
 
     // copy
-    layers = List.withIndexReplaced(
-      layers,
-      resolvedOpts.destLayerIndex,
-      (layer) => ({
-        ...layer,
-        tokenIds: List.withIndexReplaced(
-          layer.tokenIds,
-          resolvedOpts.destHexIndex,
-          layers[resolvedOpts.srcLayerIndex].tokenIds[
-            resolvedOpts.srcHexIndex
-          ].slice(0),
-        ),
-      }),
-    );
+    layers = List.withIndexReplaced(layers, resolvedOpts.destLayerIndex, (layer) => ({
+      ...layer,
+      tokenIds: List.withIndexReplaced(
+        layer.tokenIds,
+        resolvedOpts.destHexIndex,
+        layers[resolvedOpts.srcLayerIndex].tokenIds[resolvedOpts.srcHexIndex].slice(0),
+      ),
+    }));
 
     // delete src
-    layers = List.withIndexReplaced(
-      layers,
-      resolvedOpts.srcLayerIndex,
-      (layer) => ({
-        ...layer,
-        tokenIds: List.withIndexReplaced(
-          layer.tokenIds,
-          resolvedOpts.srcHexIndex,
-          [],
-        ),
-      }),
-    );
+    layers = List.withIndexReplaced(layers, resolvedOpts.srcLayerIndex, (layer) => ({
+      ...layer,
+      tokenIds: List.withIndexReplaced(layer.tokenIds, resolvedOpts.srcHexIndex, []),
+    }));
 
     return { ...state, layers };
   });
@@ -564,9 +516,9 @@ export function clearHex(
   setState((state) => {
     const resolvedOpts = resolveMaybeGenerated(opts, state);
 
-    const tokens = state.layers[resolvedOpts.layerIndex].tokenIds[
-      resolvedOpts.hexIndex
-    ].map((tid) => state.tokens[tid]);
+    const tokens = state.layers[resolvedOpts.layerIndex].tokenIds[resolvedOpts.hexIndex].map(
+      (tid) => state.tokens[tid],
+    );
 
     return {
       ...state,
@@ -578,18 +530,10 @@ export function clearHex(
         state.tokens,
         tokens.map((t) => t.id),
       ),
-      layers: List.withIndexReplaced(
-        state.layers,
-        resolvedOpts.layerIndex,
-        (layer) => ({
-          ...layer,
-          tokenIds: List.withIndexReplaced(
-            layer.tokenIds,
-            resolvedOpts.hexIndex,
-            [],
-          ),
-        }),
-      ),
+      layers: List.withIndexReplaced(state.layers, resolvedOpts.layerIndex, (layer) => ({
+        ...layer,
+        tokenIds: List.withIndexReplaced(layer.tokenIds, resolvedOpts.hexIndex, []),
+      })),
     };
   });
 }
@@ -603,9 +547,7 @@ export function bufferMidi(
     const resolvedOpts = resolveMaybeGenerated(opts, state);
 
     const buffer = state.layers[resolvedOpts.layerIndex].midiBuffer.slice(0);
-    const index = buffer.findIndex(
-      (n) => n.number === resolvedOpts.note.number,
-    );
+    const index = buffer.findIndex((n) => n.number === resolvedOpts.note.number);
     if (index === -1) {
       buffer.push(resolvedOpts.note);
     } else {
@@ -614,11 +556,10 @@ export function bufferMidi(
 
     return {
       ...state,
-      layers: List.withIndexReplaced(
-        state.layers,
-        resolvedOpts.layerIndex,
-        (layer) => ({ ...layer, midiBuffer: buffer }),
-      ),
+      layers: List.withIndexReplaced(state.layers, resolvedOpts.layerIndex, (layer) => ({
+        ...layer,
+        midiBuffer: buffer,
+      })),
     };
   });
 }
@@ -633,14 +574,10 @@ export function debufferOffNotes(
 
     return {
       ...state,
-      layers: List.withIndexReplaced(
-        state.layers,
-        resolvedOpts.layerIndex,
-        (layer) => ({
-          ...layer,
-          midiBuffer: layer.midiBuffer.filter((n) => n.isOn),
-        }),
-      ),
+      layers: List.withIndexReplaced(state.layers, resolvedOpts.layerIndex, (layer) => ({
+        ...layer,
+        midiBuffer: layer.midiBuffer.filter((n) => n.isOn),
+      })),
     };
   });
 }
@@ -730,13 +667,9 @@ export function getControlValue<T extends ControlDataType = ControlDataType>(
     typeof control === "string"
       ? (state.controls[control] as ControlState<T>)
       : "layerControl" in control
-        ? (state.controls[
-            resolvedLayer[control.layerControl]
-          ] as ControlState<T>)
+        ? (state.controls[resolvedLayer[control.layerControl]] as ControlState<T>)
         : "playerControl" in control
-          ? (state.controls[
-              playerControls(state)[control.playerControl]
-            ] as ControlState<T>)
+          ? (state.controls[playerControls(state)[control.playerControl]] as ControlState<T>)
           : control;
 
   return coerceControlValueFromNumber<T>(
@@ -774,10 +707,7 @@ export function resolveModItem(
         controlLayer,
         inheritParts,
       );
-      return coerceControlValueToNumber(
-        getControlValue(state, control),
-        control,
-      );
+      return coerceControlValueToNumber(getControlValue(state, control), control);
     case "fixedControlValue":
       return modItem.value;
     case "fixedValue":
@@ -786,11 +716,7 @@ export function resolveModItem(
       const props = { ...modItem } as Lfo;
       modChain.connections.forEach(({ from, to, property }) => {
         if (to === modItemId) {
-          props[property as LfoConnectableProperty] = resolveModItem(
-            state,
-            modChain,
-            from,
-          );
+          props[property as LfoConnectableProperty] = resolveModItem(state, modChain, from);
         }
       });
       return getLfoValue(
@@ -801,12 +727,86 @@ export function resolveModItem(
         },
         "ms",
       );
+    case "math": {
+      const value1 = resolveInputtableValue<MathMod>(state, modChain, modItemId, "value1");
+      const value2 = resolveInputtableValue<MathMod>(state, modChain, modItemId, "value2");
+      switch (modItem.operation) {
+        case "*":
+          return value1 * value2;
+        case "**":
+          return Math.pow(value1, value2);
+        case "+":
+          return value1 + value2;
+        case "-":
+          return value1 - value2;
+        case "/":
+          return value1 / value2;
+        default:
+          throw "unexpected math operation";
+      }
+    }
+    case "lerp": {
+      const value1 = resolveInputtableValue<LerpMod>(state, modChain, modItemId, "value1");
+      const value2 = resolveInputtableValue<LerpMod>(state, modChain, modItemId, "value2");
+      const interpol = resolveInputtableValue<LerpMod>(state, modChain, modItemId, "interpol");
+      return value1 + (value2 - value1) * interpol;
+    }
   }
+}
+
+export function resolveInputtableValue<T extends ModChainItem>(
+  state: AppState,
+  modChain: ModChain,
+  modChainItemId: string,
+  property: KeysOfUnion<T>,
+): number {
+  const connection = getIncomingModChainItemConnection(
+    state,
+    modChain,
+    modChainItemId,
+    property,
+  );
+  if (!connection) return (modChain.mods[modChainItemId] as T)[property] as number;
+
+  return resolveModItem(state, modChain, connection.from);
+}
+
+export function getIncomingModChainItemConnection(
+  state: AppState,
+  modChain: ModChain,
+  to: string,
+  property: string,
+) {
+  return modChain.connections.find((c) => c.property === property && c.to === to);
 }
 
 export function resolveModChain(state: AppState, modChainId: string): number {
   const modChain = state.modChains[modChainId];
   return resolveModItem(state, modChain, modChain.output);
+}
+
+export function removeModItem(
+  state: AppState,
+  modChainId: string,
+  modChainItemId: string,
+): AppState {
+  return produce(state, (s) => {
+    const modChain = s.modChains[modChainId];
+
+    if (modChain.output === modChainItemId) {
+      const existingInput = modChain.connections.find((c) => c.to === modChainItemId);
+      if (existingInput) {
+        modChain.output = existingInput.from;
+      } else {
+        modChain.output = Object.entries(modChain.mods).find(([id, m]) => m.isDefault)![0];
+      }
+    }
+
+    modChain.connections = modChain.connections.filter(
+      (c) => c.from !== modChainItemId && c.to !== modChainItemId,
+    );
+    delete modChain.mods[modChainItemId];
+  });
 }
 
 export function connectModItems(

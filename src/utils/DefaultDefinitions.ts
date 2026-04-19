@@ -11,7 +11,7 @@ import {
   coerceControlValueToNumber,
 } from "../Types";
 import { v4 as uuidv4 } from "uuid";
-import { getInheritParts } from "./elysiumutils";
+import { getDefaultModChainItemUI, getInheritParts } from "./elysiumutils";
 import { NumMIDIChannels } from "../constants";
 import { modes } from "./scales";
 import { AppState } from "../state/AppState";
@@ -235,6 +235,9 @@ export function buildFromDefs<K extends string>(
           __type: "fixedControlValue",
           controlId: id,
           value: 0,
+          ui: getDefaultModChainItemUI("fixedControlValue"),
+          removeable: false,
+          isDefault: !controlDef.inherit,
         },
       },
       output: modId,
@@ -257,15 +260,20 @@ export function buildFromDefs<K extends string>(
       modChains[id].mods[inheritModId] = {
         __type: "inheritedControlValue",
         inherit: controlDef.inherit!,
+        ui: { ...getDefaultModChainItemUI("inheritedControlValue"), y: 100 },
+        isDefault: true,
+        removeable: false,
       };
       modChains[id].output = inheritModId;
     }
 
-    (modChains[id].mods[modId] as FixedControlValueMod).value =
-      coerceControlValueToNumber(parentDef.defaultValue, {
+    (modChains[id].mods[modId] as FixedControlValueMod).value = coerceControlValueToNumber(
+      parentDef.defaultValue,
+      {
         key,
         definition: parentDef,
-      });
+      },
+    );
 
     const control: ControlState = {
       id,

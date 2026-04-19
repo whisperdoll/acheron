@@ -38,10 +38,8 @@ export default function ModChainWorkspaceWires(props: Props) {
   return (
     <div className="modChainWorkspaceWires">
       <svg
-        viewBox={`0 0 ${documentBounds?.width ?? 0} ${
-          documentBounds?.height ?? 0
-        }`}
-        stroke="red"
+        viewBox={`0 0 ${documentBounds?.width ?? 0} ${documentBounds?.height ?? 0}`}
+        stroke="rgba(255, 0, 0, 0.5)"
         strokeWidth={2}
         fill="transparent"
       >
@@ -51,9 +49,7 @@ export default function ModChainWorkspaceWires(props: Props) {
             to={mousePosition}
           />
         )}
-        {modChain.output && (
-          <ModChainWorkspaceWire from={modChain.output} toOutput />
-        )}
+        {modChain.output && <ModChainWorkspaceWire from={modChain.output} toOutput />}
         {modChain.connections.map((connection) => {
           return (
             <ModChainWorkspaceWire

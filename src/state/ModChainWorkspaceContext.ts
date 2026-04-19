@@ -16,6 +16,8 @@ export interface IModChainWorkspaceContextProps {
     scrollLeft: number;
     scrollTop: number;
   };
+  offset: { x: number; y: number };
+  zoom: number;
 }
 
 export interface IModChainWorkspaceContext extends IModChainWorkspaceContextProps {
@@ -27,7 +29,8 @@ export interface IModChainWorkspaceContext extends IModChainWorkspaceContextProp
   ) => unknown;
 }
 
-export const ModChainWorkspaceContext =
-  React.createContext<IModChainWorkspaceContext>({
-    set: () => ({}),
-  });
+export const ModChainWorkspaceContext = React.createContext<IModChainWorkspaceContext>({
+  set: () => ({}),
+  offset: { x: 0, y: 0 },
+  zoom: 1,
+});

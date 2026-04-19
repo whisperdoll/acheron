@@ -1,6 +1,6 @@
 import { AppState } from "../state/AppState";
 import { LayerState } from "../state/AppState";
-import { ControlState } from "../Types";
+import { ControlState, ModChainItem, ModChainItemUIAttributes } from "../Types";
 import {
   LayerControlKey,
   LayerControlTypes,
@@ -51,24 +51,19 @@ export function transposeNote(note: string, semitones: number) {
 
 export function getInheritParts(
   str: string | undefined,
-):
-  | [p1: "global", p2: PlayerControlKey]
-  | [p1: "layer", p2: LayerControlKey]
-  | false {
+): [p1: "global", p2: PlayerControlKey] | [p1: "layer", p2: LayerControlKey] | false {
   if (str === undefined) return false;
   const parts = str.split(".");
   if (parts.length === 2) {
     if (parts[0] === "global") {
       return (
-        PlayerControlKeys.includes(
-          parts[1] as (typeof PlayerControlKeys)[number],
-        ) && (parts as [p1: "global", p2: PlayerControlKey])
+        PlayerControlKeys.includes(parts[1] as (typeof PlayerControlKeys)[number]) &&
+        (parts as [p1: "global", p2: PlayerControlKey])
       );
     } else if (parts[0] === "layer") {
       return (
-        LayerControlTypes.includes(
-          parts[1] as (typeof PlayerControlKeys)[number],
-        ) && (parts as [p1: "layer", p2: LayerControlKey])
+        LayerControlTypes.includes(parts[1] as (typeof PlayerControlKeys)[number]) &&
+        (parts as [p1: "layer", p2: LayerControlKey])
       );
     }
   }
@@ -80,9 +75,7 @@ export function getControlFromInheritParts(
   controls: AppState["controls"],
   playerControls: Pick<AppState, PlayerControlKey>,
   layer: LayerState,
-  inheritParts:
-    | [p1: "global", p2: PlayerControlKey]
-    | [p1: "layer", p2: LayerControlKey],
+  inheritParts: [p1: "global", p2: PlayerControlKey] | [p1: "layer", p2: LayerControlKey],
 ): ControlState {
   if (inheritParts[0] === "global") {
     return controls[playerControls[inheritParts[1]]];
@@ -111,10 +104,7 @@ export function getAdjacentHex(
 
     switch (direction) {
       case 0: // up
-        val = mod(
-          isTop ? val + (gridRows - 1) : val - 1,
-          gridRows * gridColumns,
-        );
+        val = mod(isTop ? val + (gridRows - 1) : val - 1, gridRows * gridColumns);
         break;
       case 1: // up-right
         val = mod(
@@ -128,19 +118,12 @@ export function getAdjacentHex(
         break;
       case 2: // down-right
         val = mod(
-          isBottom && isLow
-            ? val + 1
-            : isLow
-              ? val + (gridRows + 1)
-              : val + gridRows,
+          isBottom && isLow ? val + 1 : isLow ? val + (gridRows + 1) : val + gridRows,
           gridRows * gridColumns,
         );
         break;
       case 3: // down
-        val = mod(
-          isBottom ? val - (gridRows - 1) : val + 1,
-          gridRows * gridColumns,
-        );
+        val = mod(isBottom ? val - (gridRows - 1) : val + 1, gridRows * gridColumns);
         break;
       case 4: // down-left
         val = mod(
@@ -154,11 +137,7 @@ export function getAdjacentHex(
         break;
       case 5: // up-left
         val = mod(
-          isTop && !isLow
-            ? val - 1
-            : isLow
-              ? val - gridRows
-              : val - (gridRows + 1),
+          isTop && !isLow ? val - 1 : isLow ? val - gridRows : val - (gridRows + 1),
           gridRows * gridColumns,
         );
         break;
@@ -169,10 +148,7 @@ export function getAdjacentHex(
 }
 
 export function noteFromIndex(index: number): string {
-  return (
-    noteArray[index % noteArray.length] +
-    Math.floor(index / noteArray.length).toString()
-  );
+  return noteArray[index % noteArray.length] + Math.floor(index / noteArray.length).toString();
 }
 
 export function indexFromNote(note: string): number {
@@ -199,11 +175,7 @@ export function hexIndexesFromNote(note: string, hexNotes: string[]): number[] {
   }
 }
 
-export function generateGridNotes(
-  startingNote: string,
-  rows: number,
-  cols: number,
-) {
+export function generateGridNotes(startingNote: string, rows: number, cols: number) {
   const ret = [];
   let cursor = startingNote;
 
@@ -240,3 +212,12 @@ export const noteColors: Record<string, string> = {
 
 /*
 -7, -7, -7, -7, -19, +5, -19, +5, -7, -7, -7, -7, */
+
+export function getDefaultModChainItemUI(
+  type: ModChainItem["__type"],
+): ModChainItemUIAttributes {
+  const x = 8;
+  const y = 8;
+
+  return { x, y };
+}

@@ -1,9 +1,5 @@
 import { v4 as uuidv4 } from "uuid";
-import {
-  getControlFromInheritParts,
-  getInheritParts,
-  noteArray,
-} from "./utils/elysiumutils";
+import { getControlFromInheritParts, getInheritParts, noteArray } from "./utils/elysiumutils";
 import { AppState, LayerState } from "./state/AppState";
 import { sliceObject } from "./utils/utils";
 import { PlayerControlKey } from "./utils/DefaultDefinitions";
@@ -96,9 +92,7 @@ export interface Playhead {
   store: Record<TokenUID, Record<string, any>>;
 }
 
-export interface ControlDefinition<
-  T extends ControlDataType = ControlDataType,
-> {
+export interface ControlDefinition<T extends ControlDataType = ControlDataType> {
   label?: string;
   type?: T;
   min?: number;
@@ -117,8 +111,10 @@ export interface ControlState<T extends ControlDataType = ControlDataType> {
   definition: ControlDefinition<T>; // convenience
 }
 
-export type ShallowControlState<T extends ControlDataType = ControlDataType> =
-  Pick<ControlState<T>, "key" | "definition">;
+export type ShallowControlState<T extends ControlDataType = ControlDataType> = Pick<
+  ControlState<T>,
+  "key" | "definition"
+>;
 
 export function copyControl(control: ControlState): ControlState {
   const ret = {
@@ -129,9 +125,10 @@ export function copyControl(control: ControlState): ControlState {
   return ret;
 }
 
-export function coerceControlValueFromNumber<
-  T extends ControlDataType = ControlDataType,
->(value: number, control: ControlState<T>): TypeForControlDataType<T> {
+export function coerceControlValueFromNumber<T extends ControlDataType = ControlDataType>(
+  value: number,
+  control: ControlState<T>,
+): TypeForControlDataType<T> {
   return (() => {
     switch (control.definition.type) {
       case "bool":
@@ -154,9 +151,7 @@ export function coerceControlValueFromNumber<
   })() as TypeForControlDataType<T>;
 }
 
-export function coerceControlValueToNumber<
-  T extends ControlDataType = ControlDataType,
->(
+export function coerceControlValueToNumber<T extends ControlDataType = ControlDataType>(
   value: TypeForControlDataType<ControlDataType>,
   control: ShallowControlState<T>,
 ): number {
@@ -175,9 +170,7 @@ export interface TokenCallbacks<StoreType extends TokenStore = TokenStore> {
   onTick?: TickCallback<StoreType>;
 }
 
-export interface Token<
-  StoreType extends TokenStore = TokenStore,
-> extends TokenDefinition {
+export interface Token<StoreType extends TokenStore = TokenStore> extends TokenDefinition {
   controlIds: string[];
   callbacks: TokenCallbacks;
   store: StoreType;
@@ -218,12 +211,7 @@ export interface Lfo {
   period: number;
   sequence: number[];
 }
-export type LfoConnectableProperty =
-  | "min"
-  | "max"
-  | "lowPeriod"
-  | "hiPeriod"
-  | "period";
+export type LfoConnectableProperty = "min" | "max" | "lowPeriod" | "hiPeriod" | "period";
 
 // export function findPropertyConnection(
 //   modChainItemId: ModChainItemID,
@@ -313,7 +301,20 @@ export interface PerformanceNote {
 
 export const ModOutput = Symbol("mod output");
 
-export type LFOMod = {
+export interface ModChainItemUIAttributes {
+  x: number;
+  y: number;
+  width?: number;
+  height?: number;
+}
+
+export interface SharedModChainItemAttributes {
+  removeable: boolean;
+  isDefault: boolean;
+  ui: ModChainItemUIAttributes;
+}
+
+export type LFOMod = SharedModChainItemAttributes & {
   __type: "lfo";
   type: LfoType;
   min: number;
@@ -324,25 +325,40 @@ export type LFOMod = {
   sequence: number[]; // for sequence ...
 };
 
-export type ControlValueMod = {
+export type ControlValueMod = SharedModChainItemAttributes & {
   __type: "controlValue";
   controlId: string;
 };
 
-export type InheritedControlValueMod = {
+export type InheritedControlValueMod = SharedModChainItemAttributes & {
   __type: "inheritedControlValue";
   inherit: string;
 };
 
-export type FixedValueMod = {
+export type FixedValueMod = SharedModChainItemAttributes & {
   __type: "fixedValue";
   value: number;
 };
 
-export type FixedControlValueMod = {
+export type FixedControlValueMod = SharedModChainItemAttributes & {
   __type: "fixedControlValue";
   value: number;
   controlId: string;
+};
+
+export type MathModOperation = "+" | "-" | "*" | "/" | "**";
+export type MathMod = SharedModChainItemAttributes & {
+  __type: "math";
+  operation: MathModOperation;
+  value1: number;
+  value2: number;
+};
+
+export type LerpMod = SharedModChainItemAttributes & {
+  __type: "lerp";
+  value1: number;
+  value2: number;
+  interpol: number; // 0-1
 };
 
 type ModChainItemID = string;
@@ -351,7 +367,9 @@ export type ModChainItem =
   | ControlValueMod
   | InheritedControlValueMod
   | FixedValueMod
-  | FixedControlValueMod;
+  | FixedControlValueMod
+  | MathMod
+  | LerpMod;
 export type ModChain = {
   input: ControlInstanceId;
   mods: Record<ModChainItemID, ModChainItem>;

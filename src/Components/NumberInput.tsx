@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 
-interface Props {
+export interface NumberInputProps {
   max?: number;
   min?: number;
   step?: number;
@@ -10,7 +10,7 @@ interface Props {
   value: number;
 }
 
-export default function NumberInput(props: Props) {
+export default function NumberInput(props: NumberInputProps) {
   const [savedValue, setSavedValue] = useState<string | number>(props.value);
   const mouseIsDown = useRef<boolean>(false);
   const mouseDownTime = useRef<number>(0);

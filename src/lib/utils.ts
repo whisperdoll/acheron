@@ -440,6 +440,13 @@ export type ExpandRecursively<T> = T extends object
     : never
   : T;
 
+export type KeysOfUnion<T> = T extends T ? keyof T : never;
+export type Optional<T, K extends keyof T> = Pick<Partial<T>, K> & Omit<T, K>;
+
+export type KeysWithValueType<T, V> = {
+  [K in keyof T]: T[K] extends V ? K : never;
+}[keyof T];
+
 export function mapObject<
   K extends string | number | symbol,
   V,

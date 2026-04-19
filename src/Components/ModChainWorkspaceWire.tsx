@@ -32,12 +32,9 @@ export default function ModChainWorkspaceWire(props: Props) {
   const currentModChain = state.modChains[state.modChainControl!];
 
   function calcSourcePosition() {
-    const el = document.querySelector(
-      `[data-mod-chain-output-node="${props.from}"]`,
-    );
+    const el = document.querySelector(`[data-mod-chain-output-node="${props.from}"]`);
 
     if (!el) {
-      console.log("missed wire");
       return;
     }
 
@@ -60,6 +57,8 @@ export default function ModChainWorkspaceWire(props: Props) {
     props.from,
     currentModChain.mods,
     modChainWorkspaceContext.containerBounds,
+    modChainWorkspaceContext.offset,
+    modChainWorkspaceContext.zoom,
   ]);
 
   const targetPosition = useMemo(() => {
@@ -91,7 +90,10 @@ export default function ModChainWorkspaceWire(props: Props) {
     "toId" in props && props.toId,
     "toProperty" in props && props.toProperty,
     "toOutput" in props && props.toOutput,
+    "toId" in props && currentModChain.mods[props.toId].ui,
     modChainWorkspaceContext.containerBounds,
+    modChainWorkspaceContext.offset,
+    modChainWorkspaceContext.zoom,
   ]);
 
   const qPosition = useMemo(() => {
