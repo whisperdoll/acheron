@@ -189,7 +189,7 @@ export default function ModChainWorkspace(props: Props) {
             icon="close"
             fill
             opticalSize={20}
-            title="Remove Layer"
+            title="Hide workspace"
             onClick={(e) => {
               setState((s) => ({ ...s, modChainControl: undefined }));
             }}

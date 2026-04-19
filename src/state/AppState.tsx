@@ -440,18 +440,21 @@ export function copyHex(
     ].map((id) => state.tokens[id]);
     let newControls: Record<string, ControlState> = {};
     let newTokens: Record<string, Token> = {};
+    let newModChains: Record<string, ModChain> = {};
 
     tokensToCopy.forEach((token) => {
-      const { tokenState, controls } = copyToken(state, token);
+      const { tokenState, controls, modChains } = copyToken(state, token);
 
       newControls = { ...newControls, ...controls };
       newTokens = { ...newTokens, [tokenState.id]: tokenState };
+      newModChains = { ...newModChains, ...modChains };
     });
 
     return {
       ...state,
       controls: { ...state.controls, ...newControls },
       tokens: { ...state.tokens, ...newTokens },
+      modChains: { ...state.modChains, ...newModChains },
       layers: List.withIndexReplaced(state.layers, resolvedOpts.destLayerIndex, (layer) => ({
         ...layer,
         tokenIds: List.withIndexReplaced(
@@ -460,6 +463,10 @@ export function copyHex(
           Object.keys(newTokens),
         ),
       })),
+      controlLayers: {
+        ...state.controlLayers,
+        ...mapObject(newControls, (cid, control) => [cid, resolvedOpts.destLayerIndex]),
+      },
     };
   });
 }
@@ -699,7 +706,7 @@ export function resolveModItem(
       }
       const controlLayer = getControlLayer(state, modChain.input);
       if (!controlLayer) {
-        throw "bad inherit situation";
+        throw "bad inherit situation (did you update control layer cache?)";
       }
       const control = getControlFromInheritParts(
         state.controls,

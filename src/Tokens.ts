@@ -4,6 +4,7 @@ import {
   TokenDefinition,
   Token,
   copyControl,
+  ModChain,
 } from "./Types";
 import { buildFromDefs } from "./utils/DefaultDefinitions";
 import { v4 as uuidv4 } from "uuid";
@@ -60,12 +61,21 @@ export function buildToken(appState: AppState, uid: string) {
 export function copyToken(
   appState: AppState,
   token: Token,
-): { tokenState: Token; controls: Record<string, ControlState> } {
+): {
+  tokenState: Token;
+  controls: Record<string, ControlState>;
+  modChains: Record<string, ModChain>;
+} {
   const controls: Record<string, ControlState> = {};
+  const modChains: Record<string, ModChain> = {};
 
   token.controlIds.forEach((cid) => {
     const copied = copyControl(appState.controls[cid]);
     controls[copied.id] = copied;
+    modChains[copied.id] = {
+      ...appState.modChains[cid],
+      input: copied.id,
+    };
   });
 
   const tokenState: Token = {
@@ -74,5 +84,5 @@ export function copyToken(
     controlIds: Object.keys(controls),
   };
 
-  return { tokenState, controls };
+  return { tokenState, controls, modChains };
 }
