@@ -49,7 +49,6 @@ export default function HexGrid(props: Props) {
   const hexPoints = useRef<Point[]>([]);
   const mouseLocation = useRef<Point | null>(null);
 
-  const start = noteArray.indexOf("D#") + noteArray.length * 7;
   const hexRadius = 38;
   const lineWidth = 2;
   const startPosition = new Point(hexRadius + lineWidth / 2, hexRadius + lineWidth / 2);
