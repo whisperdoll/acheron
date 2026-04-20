@@ -33,7 +33,7 @@ export default function ModChainWorkspaceWire(props: Props) {
     };
   }, [modChainWorkspaceContext.containerBounds]);
   const currentModChain = state.modChains[state.modChainControl!];
-  const fromOutput = props.fromOutput || "output";
+  const fromOutput = props.fromOutput;
 
   function calcSourcePosition() {
     const el = document.querySelector(

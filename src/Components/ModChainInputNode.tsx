@@ -14,6 +14,7 @@ export default function ModChainInputNode(props: Props) {
   const connected = !!findModChainConnection(state.modChains[state.modChainControl!], {
     to: props.modItemId,
     toProperty: props.property,
+    fromOutput: null,
   });
 
   return (

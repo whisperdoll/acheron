@@ -55,6 +55,7 @@ function InputtableValue<T>({
     return findModChainConnection(modChain, {
       to: modChainItemId,
       toProperty: modChainItemProperty as string,
+      fromOutput: null,
     });
   }, [modChain.connections]);
 

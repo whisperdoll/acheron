@@ -85,6 +85,7 @@ export default React.memo(function ModChainItemComponent(
       modChain,
       modChainItemId,
       "controllerNumber",
+      null,
     );
 
     setMidiCcTrigger(Midi.ccValue(roundMod(controllerNumber, 0, 128)));
