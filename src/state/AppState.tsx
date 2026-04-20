@@ -874,7 +874,9 @@ export function connectModItems(
           [modChainId]: {
             ...modChain,
             connections: [
-              ...modChain.connections.filter((c) => c.to !== inputItemId),
+              ...modChain.connections.filter(
+                (c) => !(c.to === inputItemId && c.property === inputItemProperty),
+              ),
               {
                 from: outputItemId,
                 to: inputItemId,
