@@ -477,12 +477,35 @@ export default React.memo(function ModChainItemComponent(
                   <hr />
                   {modChainItem.values.map((value, i) => {
                     return (
-                      <InputtableValue<Record<string, number>>
-                        modChainId={modChainId}
-                        modChainItemId={modChainItemId}
-                        modChainItemProperty={`values.${i}`}
-                        key={i}
-                      />
+                      <div className="row">
+                        <InputtableValue<Record<string, number>>
+                          modChainId={modChainId}
+                          modChainItemId={modChainItemId}
+                          modChainItemProperty={`values.${i}`}
+                          key={i}
+                        />
+                        <GoogleIconButton
+                          buttonStyle="rounded"
+                          icon="close"
+                          fill
+                          opticalSize={20}
+                          title="Remove Node"
+                          onClick={(e) => {
+                            setState(
+                              produce<AppState>((s) => {
+                                const values = (
+                                  s.modChains[modChainId].mods[modChainItemId] as SequenceMod
+                                ).values;
+
+                                if (values.length === 1) return s;
+
+                                values.splice(i, 1);
+                              }),
+                            );
+                          }}
+                          className="nostyle remove"
+                        />
+                      </div>
                     );
                   })}
 
