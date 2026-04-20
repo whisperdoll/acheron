@@ -31,10 +31,11 @@ export default React.memo(function LfoVisualizer({
 
     modChain.connections.forEach((connection) => {
       if (connection.to === modItemId) {
-        ret[connection.property as LfoConnectableProperty] = resolveModItem(
+        ret[connection.toProperty as LfoConnectableProperty] = resolveModItem(
           state,
           modChain,
           connection.from,
+          connection.fromOutput,
         );
       }
     });

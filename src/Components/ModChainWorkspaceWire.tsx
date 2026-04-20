@@ -6,15 +6,18 @@ import { AppContext } from "../state/AppState";
 type Props =
   | {
       from: string;
+      fromOutput: string;
       to: { x: number; y: number } | null;
     }
   | {
       from: string;
+      fromOutput: string;
       toId: string;
       toProperty: string;
     }
   | {
       from: string;
+      fromOutput: string;
       toOutput: boolean;
     };
 
@@ -30,9 +33,12 @@ export default function ModChainWorkspaceWire(props: Props) {
     };
   }, [modChainWorkspaceContext.containerBounds]);
   const currentModChain = state.modChains[state.modChainControl!];
+  const fromOutput = props.fromOutput || "output";
 
   function calcSourcePosition() {
-    const el = document.querySelector(`[data-mod-chain-output-node="${props.from}"]`);
+    const el = document.querySelector(
+      `[data-mod-chain-output-node="${props.from}-${fromOutput}"]`,
+    );
 
     if (!el) {
       return;
@@ -55,6 +61,7 @@ export default function ModChainWorkspaceWire(props: Props) {
     setTimeout(() => setSourcePosition(calcSourcePosition), 0);
   }, [
     props.from,
+    fromOutput,
     currentModChain.mods,
     modChainWorkspaceContext.containerBounds,
     modChainWorkspaceContext.offset,

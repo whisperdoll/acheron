@@ -693,6 +693,7 @@ export function resolveModItem(
   state: AppState,
   modChain: ModChain,
   modItemId: string,
+  outputKey: string,
 ): number {
   const modItem = modChain.mods[modItemId];
 
@@ -725,9 +726,14 @@ export function resolveModItem(
       return modItem.value;
     case "lfo":
       const props = { ...modItem } as Lfo;
-      modChain.connections.forEach(({ from, to, property }) => {
+      modChain.connections.forEach(({ from, to, toProperty }) => {
         if (to === modItemId) {
-          props[property as LfoConnectableProperty] = resolveModItem(state, modChain, from);
+          props[toProperty as LfoConnectableProperty] = resolveModItem(
+            state,
+            modChain,
+            from,
+            outputKey,
+          );
         }
       });
       return getLfoValue(
@@ -772,6 +778,10 @@ export function resolveModItem(
       return Midi.ccValue(roundMod(controller, 0, 128));
     }
     case "sequence": {
+      if (outputKey === "lengthOutput") {
+        return modItem.values.length;
+      }
+
       const index = roundMod(
         resolveInputtableValue<SequenceMod>(state, modChain, modItemId, "index"),
         0,
@@ -799,7 +809,7 @@ export function resolveInputtableValue<T = Record<string, unknown>>(
   if (!connection)
     return getProperty(modChain.mods[modChainItemId], property as string) as number;
 
-  return resolveModItem(state, modChain, connection.from);
+  return resolveModItem(state, modChain, connection.from, connection.fromOutput);
 }
 
 export function getIncomingModChainItemConnection(
@@ -808,12 +818,12 @@ export function getIncomingModChainItemConnection(
   to: string,
   property: string,
 ) {
-  return modChain.connections.find((c) => c.property === property && c.to === to);
+  return findModChainConnection(modChain, { to, toProperty: property });
 }
 
 export function resolveModChain(state: AppState, modChainId: string): number {
   const modChain = state.modChains[modChainId];
-  return resolveModItem(state, modChain, modChain.output);
+  return resolveModItem(state, modChain, modChain.output.from, modChain.output.fromOutput);
 }
 
 export function removeModItem(
@@ -824,12 +834,13 @@ export function removeModItem(
   return produce(state, (s) => {
     const modChain = s.modChains[modChainId];
 
-    if (modChain.output === modChainItemId) {
+    if (modChain.output.from === modChainItemId) {
       const existingInput = modChain.connections.find((c) => c.to === modChainItemId);
       if (existingInput) {
-        modChain.output = existingInput.from;
+        modChain.output = { from: existingInput.from, fromOutput: "output" };
       } else {
-        modChain.output = Object.entries(modChain.mods).find(([id, m]) => m.isDefault)![0];
+        const defaultMod = Object.entries(modChain.mods).find(([id, m]) => m.isDefault)![0];
+        modChain.output = { from: defaultMod, fromOutput: "output" };
       }
     }
 
@@ -840,31 +851,61 @@ export function removeModItem(
   });
 }
 
+export function findModChainConnection(
+  modChain: ModChain,
+  opts: { from?: string; to: string; toProperty: string; fromOutput?: string },
+) {
+  const { from, to, toProperty, fromOutput = "output" } = opts;
+
+  return modChain.connections.find(
+    (c) =>
+      (!from || c.from === from) &&
+      c.to === to &&
+      c.toProperty === toProperty &&
+      c.fromOutput === fromOutput,
+  );
+}
+
 export function connectModItems(
   setState: SetState,
   modChainId: string,
-  outputItemId: string,
-  inputItemId: string | typeof ModOutput,
-  inputItemProperty?: string,
+  opts:
+    | {
+        from: string;
+        to: string;
+        fromOutput: string;
+        toProperty: string;
+      }
+    | {
+        from: string;
+        to: typeof ModOutput;
+        fromOutput: string;
+      },
 ) {
   setState((state) => {
     const modChain = state.modChains[modChainId];
-    const outputItem = modChain.mods[outputItemId];
 
-    if (inputItemId === ModOutput) {
+    if (opts.to === ModOutput) {
       return {
         ...state,
         modChains: {
           ...state.modChains,
           [modChainId]: {
             ...modChain,
-            output: outputItemId,
+            output: {
+              from: opts.from,
+              fromOutput: opts.fromOutput,
+            },
           },
         },
       };
     } else {
-      if (!inputItemProperty) {
-        throw new Error("inputItemProperty is required");
+      const existing = findModChainConnection(modChain, opts);
+      if (existing) {
+        return produce(state, (s) => {
+          const conns = s.modChains[modChainId].connections;
+          conns.splice(conns.indexOf(existing));
+        });
       }
 
       return {
@@ -875,13 +916,9 @@ export function connectModItems(
             ...modChain,
             connections: [
               ...modChain.connections.filter(
-                (c) => !(c.to === inputItemId && c.property === inputItemProperty),
+                (c) => !(c.to === opts.to && c.toProperty === opts.toProperty),
               ),
-              {
-                from: outputItemId,
-                to: inputItemId,
-                property: inputItemProperty,
-              },
+              opts,
             ],
           },
         },

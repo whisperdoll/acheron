@@ -1,7 +1,12 @@
 import React, { ReactElement, useCallback, useContext, useMemo } from "react";
 import { ModChain, ModChainItem } from "../Types";
 import NumberInput, { NumberInputProps } from "./NumberInput";
-import { AppContext, AppState, resolveModItem } from "../state/AppState";
+import {
+  AppContext,
+  AppState,
+  findModChainConnection,
+  resolveModItem,
+} from "../state/AppState";
 import { produce } from "immer";
 import { KeysOfUnion, KeysWithValueType, Optional } from "../lib/utils";
 import useNow from "../Hooks/useNow";
@@ -47,15 +52,16 @@ function InputtableValue<T>({
   );
 
   const connection = useMemo(() => {
-    return modChain.connections.find(
-      (c) => c.to === modChainItemId && c.property === modChainItemProperty,
-    );
+    return findModChainConnection(modChain, {
+      to: modChainItemId,
+      toProperty: modChainItemProperty as string,
+    });
   }, [modChain.connections]);
 
   const inputValue = useMemo(() => {
     if (!connection) return undefined;
 
-    return resolveModItem(state, modChain, connection.from);
+    return resolveModItem(state, modChain, connection.from, connection.fromOutput);
   }, [now, inputtableValue, state.modChains, modChain]);
 
   const coerce = numberInputProps?.coerce || ((_: number) => _);

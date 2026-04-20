@@ -238,9 +238,10 @@ export function buildFromDefs<K extends string>(
           ui: getDefaultModChainItemUI("fixedControlValue"),
           removeable: false,
           isDefault: !controlDef.inherit,
+          outputs: ["output"],
         },
       },
-      output: modId,
+      output: { from: modId, fromOutput: "output" },
     };
 
     if (controlDef.inherit) {
@@ -263,8 +264,9 @@ export function buildFromDefs<K extends string>(
         ui: { ...getDefaultModChainItemUI("inheritedControlValue"), y: 100 },
         isDefault: true,
         removeable: false,
+        outputs: ["output"],
       };
-      modChains[id].output = inheritModId;
+      modChains[id].output = { from: inheritModId, fromOutput: "output" };
     }
 
     (modChains[id].mods[modId] as FixedControlValueMod).value = coerceControlValueToNumber(

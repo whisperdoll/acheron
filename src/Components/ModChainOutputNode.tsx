@@ -8,6 +8,7 @@ import NonShrinking from "./NonShrinking";
 
 interface Props {
   modItemId: string;
+  outputKey: string;
   value?: number | null;
 }
 
@@ -26,6 +27,7 @@ export default function ModChainOutputNode(props: Props) {
       state,
       state.modChains[state.modChainControl!],
       props.modItemId,
+      props.outputKey,
     );
     return formatNumberSmall(resolved);
   }, [props.modItemId, state.modChains, now, props.value]);
@@ -33,7 +35,9 @@ export default function ModChainOutputNode(props: Props) {
   const handleMouseDown: React.PointerEventHandler<HTMLDivElement> = useCallback(
     (e) => {
       e.preventDefault();
-      modChainWorkspaceContext.set({ connectingOutput: props.modItemId });
+      modChainWorkspaceContext.set({
+        connectingOutput: { modItemId: props.modItemId, outputKey: props.outputKey },
+      });
 
       const onMouseUp = (mouseUpEvent: PointerEvent) => {
         mouseUpEvent.preventDefault();
@@ -45,7 +49,11 @@ export default function ModChainOutputNode(props: Props) {
 
         // if direct to output
         if (target.parentElement?.dataset.modChainOutput) {
-          connectModItems(setState, state.modChainControl!, props.modItemId, ModOutput);
+          connectModItems(setState, state.modChainControl!, {
+            from: props.modItemId,
+            fromOutput: props.outputKey,
+            to: ModOutput,
+          });
 
           return;
         }
@@ -56,13 +64,12 @@ export default function ModChainOutputNode(props: Props) {
 
         if (!modChainInputNodeId || !modChainInputNodeProperty) return;
 
-        connectModItems(
-          setState,
-          state.modChainControl!,
-          props.modItemId,
-          modChainInputNodeId,
-          modChainInputNodeProperty,
-        );
+        connectModItems(setState, state.modChainControl!, {
+          from: props.modItemId,
+          to: modChainInputNodeId,
+          toProperty: modChainInputNodeProperty,
+          fromOutput: props.outputKey,
+        });
       };
 
       document.addEventListener("pointerup", onMouseUp);
@@ -76,7 +83,7 @@ export default function ModChainOutputNode(props: Props) {
       <div
         className={cx("modChainOutputNode", { connected })}
         onPointerDown={handleMouseDown}
-        data-mod-chain-output-node={props.modItemId}
+        data-mod-chain-output-node={`${props.modItemId}-${props.outputKey}`}
       ></div>
     </div>
   );

@@ -1,7 +1,7 @@
 import { useCallback, useContext } from "react";
 import { ModChainWorkspaceContext } from "../state/ModChainWorkspaceContext";
 import { cx } from "../lib/utils";
-import { AppContext } from "../state/AppState";
+import { AppContext, findModChainConnection } from "../state/AppState";
 
 interface Props {
   modItemId: string;
@@ -11,9 +11,10 @@ interface Props {
 export default function ModChainInputNode(props: Props) {
   const { state, setState } = useContext(AppContext)!;
 
-  const connected = state.modChains[state.modChainControl!].connections.some(
-    (c) => c.to === props.modItemId && c.property === props.property,
-  );
+  const connected = !!findModChainConnection(state.modChains[state.modChainControl!], {
+    to: props.modItemId,
+    toProperty: props.property,
+  });
 
   return (
     <div

@@ -4,7 +4,7 @@ import { ControlInstanceId } from "../Types";
 import { MaybeGenerated } from "../lib/utils";
 
 export interface IModChainWorkspaceContextProps {
-  connectingOutput?: string; // modChainItem ID
+  connectingOutput?: { modItemId: string; outputKey: string };
   containerRef?: React.RefObject<HTMLDivElement | null>;
   containerBounds?: {
     width: number;

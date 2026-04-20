@@ -315,27 +315,32 @@ export type LFOMod = SharedModChainItemAttributes & {
   hiPeriod: number; // for square wave
   period: number;
   sequence: number[]; // for sequence ...
+  outputs: ["output"];
 };
 
 export type ControlValueMod = SharedModChainItemAttributes & {
   __type: "controlValue";
   controlId: string;
+  outputs: ["output"];
 };
 
 export type InheritedControlValueMod = SharedModChainItemAttributes & {
   __type: "inheritedControlValue";
   inherit: string;
+  outputs: ["output"];
 };
 
 export type FixedValueMod = SharedModChainItemAttributes & {
   __type: "fixedValue";
   value: number;
+  outputs: ["output"];
 };
 
 export type FixedControlValueMod = SharedModChainItemAttributes & {
   __type: "fixedControlValue";
   value: number;
   controlId: string;
+  outputs: ["output"];
 };
 
 export type MathModOperation = "+" | "-" | "*" | "/" | "**";
@@ -344,6 +349,7 @@ export type MathMod = SharedModChainItemAttributes & {
   operation: MathModOperation;
   value1: number;
   value2: number;
+  outputs: ["output"];
 };
 
 export type LerpMod = SharedModChainItemAttributes & {
@@ -351,17 +357,20 @@ export type LerpMod = SharedModChainItemAttributes & {
   value1: number;
   value2: number;
   interpol: number; // 0-1
+  outputs: ["output"];
 };
 
 export type MidiCcMod = SharedModChainItemAttributes & {
   __type: "midiCc";
   controllerNumber: number;
+  outputs: ["output"];
 };
 
 export type SequenceMod = SharedModChainItemAttributes & {
   __type: "sequence";
   values: number[];
   index: number;
+  outputs: ["output", "lengthOutput"];
 };
 
 type ModChainItemID = string;
@@ -378,6 +387,11 @@ export type ModChainItem =
 export type ModChain = {
   input: ControlInstanceId;
   mods: Record<ModChainItemID, ModChainItem>;
-  output: ModChainItemID;
-  connections: { from: ModChainItemID; to: ModChainItemID; property: string }[];
+  output: { from: ModChainItemID; fromOutput: string };
+  connections: {
+    from: ModChainItemID;
+    to: ModChainItemID;
+    fromOutput: string;
+    toProperty: string;
+  }[];
 };

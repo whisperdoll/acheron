@@ -301,7 +301,7 @@ export const Value = React.memo(function ControlValue() {
   const context = useContext(ControlContext);
   const [_, forceUpdate] = useReducer((x) => x + 1, 0);
   const modChain = state.modChains[context.controlId];
-  const outputMod = modChain.mods[modChain.output];
+  const outputMod = modChain.mods[modChain.output.from];
   const now = Math.round(state.layers[0].currentTimeMs / 60);
   const control = state.controls[context.controlId];
   const isFixed =
@@ -319,8 +319,8 @@ export const Value = React.memo(function ControlValue() {
           ...s.modChains[context.controlId],
           mods: {
             ...s.modChains[context.controlId].mods,
-            [modChain.output]: {
-              ...s.modChains[context.controlId].mods[modChain.output],
+            [modChain.output.from]: {
+              ...s.modChains[context.controlId].mods[modChain.output.from],
               value,
             },
           },

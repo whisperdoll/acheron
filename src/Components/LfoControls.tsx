@@ -34,10 +34,11 @@ export default React.memo(function LfoControls({ control, lfo, onUpdate, modItem
 
     modChain.connections.forEach((connection) => {
       if (connection.to === modItemId) {
-        ret[connection.property as LfoConnectableProperty] = resolveModItem(
+        ret[connection.toProperty as LfoConnectableProperty] = resolveModItem(
           state,
           modChain,
           connection.from,
+          connection.fromOutput,
         );
       }
     });

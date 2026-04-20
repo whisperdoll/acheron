@@ -45,18 +45,26 @@ export default function ModChainWorkspaceWires(props: Props) {
       >
         {modChainWorkspaceContext.connectingOutput && (
           <ModChainWorkspaceWire
-            from={modChainWorkspaceContext.connectingOutput}
+            from={modChainWorkspaceContext.connectingOutput.modItemId}
+            fromOutput={modChainWorkspaceContext.connectingOutput.outputKey}
             to={mousePosition}
           />
         )}
-        {modChain.output && <ModChainWorkspaceWire from={modChain.output} toOutput />}
+        {modChain.output && (
+          <ModChainWorkspaceWire
+            from={modChain.output.from}
+            fromOutput={modChain.output.fromOutput}
+            toOutput
+          />
+        )}
         {modChain.connections.map((connection) => {
           return (
             <ModChainWorkspaceWire
-              key={`${connection.from}__${connection.to}__${connection.property}`}
+              key={`${connection.from}__${connection.to}__${connection.toProperty}__${connection.fromOutput}`}
               from={connection.from}
+              fromOutput={connection.fromOutput}
               toId={connection.to}
-              toProperty={connection.property}
+              toProperty={connection.toProperty}
             />
           );
         })}

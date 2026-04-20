@@ -297,7 +297,7 @@ export default React.memo(function ModChainItemComponent(
                       resolutionY={100}
                       modItemId={modChainItemId}
                     />
-                    <ModChainOutputNode modItemId={modChainItemId} />
+                    <ModChainOutputNode modItemId={modChainItemId} outputKey="output" />
                   </div>
                   <LfoControls
                     lfo={modChainItem}
@@ -329,7 +329,7 @@ export default React.memo(function ModChainItemComponent(
                   <Control.Container controlId={modChainItem.controlId} bald>
                     <Control.Value />
                   </Control.Container>
-                  <ModChainOutputNode modItemId={modChainItemId} />
+                  <ModChainOutputNode modItemId={modChainItemId} outputKey="output" />
                 </div>
               );
             case "inheritedControlValue":
@@ -341,7 +341,7 @@ export default React.memo(function ModChainItemComponent(
                       value={getControlValue(state, inheritedControl!)}
                     />
                   </Control.Container>
-                  <ModChainOutputNode modItemId={modChainItemId} />
+                  <ModChainOutputNode modItemId={modChainItemId} outputKey="output" />
                 </div>
               );
             case "fixedControlValue":
@@ -356,7 +356,7 @@ export default React.memo(function ModChainItemComponent(
                     selectOptions={sourceControl.definition.options}
                     step={sourceControl.definition.step}
                   />
-                  <ModChainOutputNode modItemId={modChainItemId} />
+                  <ModChainOutputNode modItemId={modChainItemId} outputKey="output" />
                 </div>
               );
             case "math":
@@ -382,7 +382,7 @@ export default React.memo(function ModChainItemComponent(
                       <option value="/">/</option>
                       <option value="**">^</option>
                     </select>
-                    <ModChainOutputNode modItemId={modChainItemId} />
+                    <ModChainOutputNode modItemId={modChainItemId} outputKey="output" />
                   </div>
                   <InputtableValue<MathMod>
                     modChainId={modChainId}
@@ -410,7 +410,7 @@ export default React.memo(function ModChainItemComponent(
                         step: 0.1,
                       }}
                     />
-                    <ModChainOutputNode modItemId={modChainItemId} />
+                    <ModChainOutputNode modItemId={modChainItemId} outputKey="output" />
                   </div>
                   <InputtableValue<LerpMod>
                     modChainId={modChainId}
@@ -436,14 +436,18 @@ export default React.memo(function ModChainItemComponent(
                         },
                       }}
                     />
-                    <ModChainOutputNode value={midiCcTrigger} modItemId={modChainItemId} />
+                    <ModChainOutputNode
+                      value={midiCcTrigger}
+                      modItemId={modChainItemId}
+                      outputKey="output"
+                    />
                   </div>
                 </>
               );
             case "sequence":
               return (
                 <>
-                  <div className="row">
+                  <div className="row gap-1">
                     <InputtableValue<SequenceMod>
                       modChainId={modChainId}
                       modChainItemId={modChainItemId}
@@ -455,7 +459,19 @@ export default React.memo(function ModChainItemComponent(
                         coerce: (v) => roundMod(v, 0, modChainItem.values.length),
                       }}
                     />
-                    <ModChainOutputNode modItemId={modChainItemId} />
+                    <div className="col gap-0-5">
+                      <div className="row">
+                        Value:{" "}
+                        <ModChainOutputNode modItemId={modChainItemId} outputKey="output" />
+                      </div>
+                      <div className="row">
+                        Length:{" "}
+                        <ModChainOutputNode
+                          modItemId={modChainItemId}
+                          outputKey="lengthOutput"
+                        />
+                      </div>
+                    </div>
                   </div>
                   <hr />
                   {modChainItem.values.map((value, i) => {

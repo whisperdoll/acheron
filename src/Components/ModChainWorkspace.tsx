@@ -261,6 +261,7 @@ export default function ModChainWorkspace(props: Props) {
                 period: 1,
                 sequence: [],
                 type: "sine",
+                outputs: ["output"],
               });
             }}
           >
@@ -276,6 +277,7 @@ export default function ModChainWorkspace(props: Props) {
                 value1: 0,
                 value2: 0,
                 operation: "+",
+                outputs: ["output"],
               });
             }}
           >
@@ -291,6 +293,7 @@ export default function ModChainWorkspace(props: Props) {
                 value1: 0,
                 value2: 100,
                 interpol: 0.5,
+                outputs: ["output"],
               });
             }}
           >
@@ -303,6 +306,7 @@ export default function ModChainWorkspace(props: Props) {
               addModChainItem<MidiCcMod>({
                 __type: "midiCc",
                 controllerNumber: 16,
+                outputs: ["output"],
               });
             }}
           >
@@ -315,6 +319,7 @@ export default function ModChainWorkspace(props: Props) {
                 __type: "sequence",
                 index: 0,
                 values: [1, 2, 3],
+                outputs: ["output", "lengthOutput"],
               });
             }}
           >
