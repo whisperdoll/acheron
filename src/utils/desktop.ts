@@ -74,17 +74,18 @@ export async function saveComposition(composition: SerializedComposition) {
     const fs = await import("@tauri-apps/plugin-fs");
     const dialog = await import("@tauri-apps/plugin-dialog");
 
-    const filepath = await dialog.open({
-      title: "Open Composition...",
-      filters: [{ name: "Acheron Composition", extensions: ["ache"] }],
+    const filepath = await dialog.save({
+      title: "Save Composition...",
+	  filters: [{ name: "Acheron Composition", extensions: ["ache"] }],
       canCreateDirectories: true,
-      directory: false,
-      multiple: false,
     });
-
+	
     if (!filepath) return;
-
-    return JSON.parse(await fs.readTextFile(filepath));
+	
+    await fs.writeTextFile(filepath, JSON.stringify(composition));
+	
+    return;
+	
   } else {
     return new Promise((resolve, reject) => {
       try {
