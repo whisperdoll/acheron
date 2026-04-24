@@ -370,6 +370,7 @@ export type SequenceMod = SharedModChainItemAttributes & {
   __type: "sequence";
   values: number[];
   index: number;
+  indexPc?: number;
   outputs: ["output", "lengthOutput"];
 };
 

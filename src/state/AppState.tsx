@@ -49,6 +49,7 @@ import {
   mapObject,
   KeysOfUnion,
   roundMod,
+  mod,
 } from "../lib/utils.ts";
 import appSettingsStore from "./AppSettings.ts";
 import AbsorbToken from "../tokens/absorb.ts";
@@ -726,13 +727,13 @@ export function resolveModItem(
       return modItem.value;
     case "lfo":
       const props = { ...modItem } as Lfo;
-      modChain.connections.forEach(({ from, to, toProperty }) => {
+      modChain.connections.forEach(({ from, to, toProperty, fromOutput }) => {
         if (to === modItemId) {
           props[toProperty as LfoConnectableProperty] = resolveModItem(
             state,
             modChain,
             from,
-            outputKey,
+            fromOutput,
           );
         }
       });
@@ -806,18 +807,37 @@ export function resolveModItem(
         "controllerNumber",
         null,
       );
-      return Midi.ccValue(roundMod(controller, 0, 128));
+      return Midi.ccValue(roundMod(controller, 0, 128)) / 127;
     }
     case "sequence": {
       if (outputKey === "lengthOutput") {
         return modItem.values.length;
       }
-
-      const index = roundMod(
-        resolveInputtableValue<SequenceMod>(state, modChain, modItemId, "index", null),
-        0,
-        modItem.values.length,
+      const rawIndexPc = resolveInputtableValue<SequenceMod>(
+        state,
+        modChain,
+        modItemId,
+        "indexPc",
+        null,
       );
+      let index;
+
+      if (rawIndexPc === undefined) {
+        index = mod(
+          Math.floor(
+            resolveInputtableValue<SequenceMod>(state, modChain, modItemId, "index", null),
+          ),
+          modItem.values.length,
+        );
+      } else {
+        const indexPc = mod(rawIndexPc, 1);
+        if (rawIndexPc === 1) {
+          index = modItem.values.length - 1;
+        } else {
+          index = Math.floor(indexPc * modItem.values.length);
+        }
+      }
+
       const value = resolveInputtableValue(
         state,
         modChain,
@@ -944,7 +964,7 @@ export function connectModItems(
       if (existing) {
         return produce(state, (s) => {
           const conns = s.modChains[modChainId].connections;
-          conns.splice(conns.indexOf(existing));
+          conns.splice(conns.indexOf(existing), 1);
         });
       }
 

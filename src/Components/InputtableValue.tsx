@@ -8,7 +8,13 @@ import {
   resolveModItem,
 } from "../state/AppState";
 import { produce } from "immer";
-import { KeysOfUnion, KeysWithValueType, Optional } from "../lib/utils";
+import {
+  formatNumberSmall,
+  isNil,
+  KeysOfUnion,
+  KeysWithValueType,
+  Optional,
+} from "../lib/utils";
 import useNow from "../Hooks/useNow";
 import ModChainInputNode from "./ModChainInputNode";
 import { getProperty, setProperty } from "dot-prop";
@@ -66,6 +72,10 @@ function InputtableValue<T>({
   }, [now, inputtableValue, state.modChains, modChain]);
 
   const coerce = numberInputProps?.coerce || ((_: number) => _);
+  const coerced = useMemo(
+    () => (connection ? coerce(inputValue!) : undefined),
+    [connection, inputValue],
+  );
 
   return (
     <div className="inputtableValue row">
@@ -77,7 +87,9 @@ function InputtableValue<T>({
       {!connection ? (
         <NumberInput {...numberInputProps} onChange={updateRawValue} value={inputtableValue} />
       ) : (
-        <div className="inputValue">{coerce(inputValue!)}</div>
+        <div className="inputValue" title={coerced!.toString()}>
+          {formatNumberSmall(coerced!)}
+        </div>
       )}
     </div>
   );

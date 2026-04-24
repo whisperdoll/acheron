@@ -475,6 +475,8 @@ export function formatNumberSmall(n: number): string {
 
   if (log >= 4 || log <= -3) {
     return `${short}e${roundedNextLog}`;
+  } else if (log < 0 && roundedLog === 0) {
+    return short.toString();
   } else {
     return round(short * Math.pow(10, roundedLog), Math.abs(roundedNextLog)).toString();
   }

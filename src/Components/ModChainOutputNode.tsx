@@ -77,9 +77,9 @@ export default function ModChainOutputNode(props: Props) {
     [modChainWorkspaceContext.set, state.modChainControl],
   );
 
-  if (props.outputKey !== "output") {
-    console.log(props.modItemId, state.modChains[state.modChainControl!].connections);
-  }
+  // if (props.outputKey !== "output") {
+  //   console.log(props.modItemId, state.modChains[state.modChainControl!].connections);
+  // }
 
   return (
     <div className="row">

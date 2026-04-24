@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useMemo, useRef } from "react";
+import React, { useCallback, useContext, useEffect, useMemo, useRef } from "react";
 import { getLfoValue, Lfo, LfoConnectableProperty } from "../Types";
 import Point from "../utils/point";
 import { clamp, minAndMax } from "../lib/utils";
@@ -22,7 +22,7 @@ export default React.memo(function LfoVisualizer({
   const { state, setState } = useContext(AppContext)!;
 
   const modChain = state.modChainControl ? state.modChains[state.modChainControl] : null;
-  const now = Math.round(currentTimeMs / 10);
+  const now = Math.round(currentTimeMs / 20);
 
   const inputValues = useMemo(() => {
     const ret: Partial<Record<LfoConnectableProperty, number>> = {};
@@ -92,68 +92,53 @@ export default React.memo(function LfoVisualizer({
     ctx.stroke();
   }, [lfo, resolutionX, resolutionY]);
 
+  const clearTime = useCallback(() => {
+    const ctx = progressCanvasRef.current?.getContext("2d");
+    if (!ctx) return;
+
+    ctx.clearRect(0, 0, resolutionX, resolutionY);
+  }, []);
+
+  const drawTime = useCallback(() => {
+    const ctx = progressCanvasRef.current?.getContext("2d");
+    if (!ctx) return;
+
+    const pNow = performance.now();
+    const delta = pNow - state.startTime;
+
+    const pc = (delta % periodMs) / periodMs;
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = "#FF0000";
+    ctx.beginPath();
+    ctx.moveTo(pc * resolutionX, 0);
+    ctx.lineTo(pc * resolutionX, resolutionY);
+    ctx.stroke();
+
+    const min = Math.min(lfo.min, lfo.max);
+    const max = Math.max(lfo.min, lfo.max);
+    const amp = max - min;
+
+    const value = getLfoValue(lfo, { beat: 0, ms: pc * periodMs }, "ms");
+
+    const y = resolutionY - ((value - min) / amp) * resolutionY;
+
+    ctx.stroke();
+
+    ctx.fillStyle = "#ffe96f";
+    ctx.beginPath();
+    ctx.arc(pc * resolutionX, y, 5, 0, 2 * Math.PI, false);
+    ctx.fill();
+  }, []);
+
   useEffect(() => {
+    clearTime();
+
     if (!state.isPlaying) {
-      if (animHandle.current) {
-        cancelAnimationFrame(animHandle.current);
-      }
-
-      requestAnimationFrame(() => {
-        const ctx = progressCanvasRef.current?.getContext("2d");
-        if (!ctx) return;
-
-        ctx.clearRect(0, 0, resolutionX, resolutionY);
-      });
-
       return;
     }
 
-    const drawTime = () => {
-      const ctx = progressCanvasRef.current?.getContext("2d");
-      if (!ctx) return;
-
-      ctx.clearRect(0, 0, resolutionX, resolutionY);
-
-      const pNow = performance.now();
-      const delta = pNow - state.startTime;
-
-      const pc = (delta % periodMs) / periodMs;
-      ctx.lineWidth = 1;
-      ctx.strokeStyle = "#FF0000";
-      ctx.beginPath();
-      ctx.moveTo(pc * resolutionX, 0);
-      ctx.lineTo(pc * resolutionX, resolutionY);
-      ctx.stroke();
-
-      const min = Math.min(lfo.min, lfo.max);
-      const max = Math.max(lfo.min, lfo.max);
-      const amp = max - min;
-
-      const value = getLfoValue(lfo, { beat: 0, ms: pc * periodMs }, "ms");
-
-      const y = resolutionY - ((value - min) / amp) * resolutionY;
-
-      ctx.stroke();
-
-      ctx.fillStyle = "#ffe96f";
-      ctx.beginPath();
-      ctx.arc(pc * resolutionX, y, 5, 0, 2 * Math.PI, false);
-      ctx.fill();
-
-      if (animHandle.current) {
-        animHandle.current = requestAnimationFrame(drawTime);
-      }
-    };
-
-    animHandle.current = requestAnimationFrame(drawTime);
-
-    return () => {
-      if (animHandle.current) {
-        animHandle.current = 0;
-        cancelAnimationFrame(animHandle.current);
-      }
-    };
-  }, [state.isPlaying, resolutionX, resolutionY, lfo]);
+    drawTime();
+  }, [state.isPlaying, resolutionX, resolutionY, lfo, now]);
 
   return (
     <div className="lfoVisualizer">

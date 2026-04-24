@@ -35,7 +35,7 @@ import { ModChainWorkspaceContext } from "../state/ModChainWorkspaceContext";
 import ModChainOutputNode from "./ModChainOutputNode";
 import { getControlFromInheritParts, getInheritParts } from "../utils/elysiumutils";
 import NumberInput from "./NumberInput";
-import { isFunction, roundMod } from "../lib/utils";
+import { isFunction, mod, roundMod } from "../lib/utils";
 import ModChainInputNode from "./ModChainInputNode";
 import InputtableValue from "./InputtableValue";
 import GoogleIconButton from "./GoogleIconButton";
@@ -75,7 +75,23 @@ export default React.memo(function ModChainItemComponent(
     );
   }, [modChainItem, sourceControl]);
 
-  const [midiCcTrigger, setMidiCcTrigger] = useState(0);
+  const [midiCcTrigger, _setMidiCcTrigger] = useState(0);
+
+  const setMidiCcTrigger = useCallback((value: number) => {
+    _setMidiCcTrigger(value);
+
+    setState(
+      produce<AppState>((s) => {
+        s.modChains[modChainId] = {
+          ...s.modChains[modChainId],
+          mods: {
+            ...s.modChains[modChainId].mods,
+            [modChainItemId]: { ...s.modChains[modChainId].mods[modChainItemId] },
+          },
+        };
+      }),
+    );
+  }, []);
 
   useEffect(() => {
     if (modChainItem.__type !== "midiCc") return;
@@ -88,12 +104,12 @@ export default React.memo(function ModChainItemComponent(
       null,
     );
 
-    setMidiCcTrigger(Midi.ccValue(roundMod(controllerNumber, 0, 128)));
+    setMidiCcTrigger(Midi.ccValue(roundMod(controllerNumber, 0, 128)) / 127);
 
     const onChange: (typeof Midi.onCC)[number] = ({ number, value }) => {
       if (number !== controllerNumber) return;
 
-      setMidiCcTrigger(value);
+      setMidiCcTrigger(value / 127);
     };
 
     Midi.onCC.push(onChange);
@@ -449,17 +465,31 @@ export default React.memo(function ModChainItemComponent(
               return (
                 <>
                   <div className="row gap-1">
-                    <InputtableValue<SequenceMod>
-                      modChainId={modChainId}
-                      modChainItemId={modChainItemId}
-                      modChainItemProperty="index"
-                      label="Index:"
-                      numberInputProps={{
-                        min: 0,
-                        max: modChainItem.values.length - 1,
-                        coerce: (v) => roundMod(v, 0, modChainItem.values.length),
-                      }}
-                    />
+                    <div className="col gap-0-5">
+                      <InputtableValue<SequenceMod>
+                        modChainId={modChainId}
+                        modChainItemId={modChainItemId}
+                        modChainItemProperty="index"
+                        label="Index:"
+                        numberInputProps={{
+                          min: 0,
+                          max: modChainItem.values.length - 1,
+                          coerce: (v) => roundMod(v, 0, modChainItem.values.length),
+                        }}
+                      />
+                      <InputtableValue<SequenceMod>
+                        modChainId={modChainId}
+                        modChainItemId={modChainItemId}
+                        modChainItemProperty="indexPc"
+                        label="Percent:"
+                        numberInputProps={{
+                          min: 0,
+                          max: 1,
+                          step: 0.01,
+                          coerce: (v) => (v === undefined ? 0 : mod(v, 1)),
+                        }}
+                      />
+                    </div>
                     <div className="col gap-0-5">
                       <div className="row">
                         Value:{" "}
