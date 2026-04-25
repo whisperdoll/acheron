@@ -3,6 +3,7 @@ import ReactDOM from "react-dom/client";
 import App from "./App";
 import Synth from "./Components/Synth";
 import { AppContextProvider } from "./state/AppState";
+import { setAutoFreeze } from "immer";
 
 // import { warn, debug, trace, info, error } from "@tauri-apps/plugin-log";
 
@@ -22,6 +23,8 @@ import { AppContextProvider } from "./state/AppState";
 // forwardConsole("info", info);
 // forwardConsole("warn", warn);
 // forwardConsole("error", error);
+
+setAutoFreeze(false);
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>

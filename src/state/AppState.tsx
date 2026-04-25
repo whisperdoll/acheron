@@ -108,6 +108,8 @@ export interface AppState {
   modChainControl?: ControlInstanceId;
   modChains: Record<ControlInstanceId, ModChain>;
   controlLayers: Record<ControlInstanceId, number>; // convenience map control->layer
+  listeningForControlValue: boolean; // for modchains' "add control"
+  listeningForControlValueSelection: ControlInstanceId | null; // selection for the above
 }
 
 export interface LayerState {
@@ -197,6 +199,8 @@ export const initialState: AppState = {
     ...initialPlayerModChains,
   },
   modChainControl: undefined,
+  listeningForControlValue: false,
+  listeningForControlValueSelection: null,
 };
 
 const initialLayer = buildLayer(initialState);
@@ -692,11 +696,23 @@ export function getControlValue<T extends ControlDataType = ControlDataType>(
 
 export function resolveModItem(
   state: AppState,
-  modChain: ModChain,
+  modChainId: string,
   modItemId: string,
   outputKey: string | null,
+  stack?: Set<string>, // modItemId_outputKey
 ): number {
+  const modChain = state.modChains[modChainId];
   const modItem = modChain.mods[modItemId];
+  const stackKey = `${modChainId}_${modItemId}_${outputKey}`;
+  if (!stack) {
+    stack = new Set();
+  }
+
+  if (stack.has(stackKey)) {
+    return 0;
+  } else {
+    stack.add(stackKey);
+  }
 
   switch (modItem.__type) {
     case "controlValue":
@@ -731,9 +747,10 @@ export function resolveModItem(
         if (to === modItemId) {
           props[toProperty as LfoConnectableProperty] = resolveModItem(
             state,
-            modChain,
+            modChainId,
             from,
             fromOutput,
+            stack,
           );
         }
       });
@@ -748,17 +765,19 @@ export function resolveModItem(
     case "math": {
       const value1 = resolveInputtableValue<MathMod>(
         state,
-        modChain,
+        modChainId,
         modItemId,
         "value1",
         null,
+        stack,
       );
       const value2 = resolveInputtableValue<MathMod>(
         state,
-        modChain,
+        modChainId,
         modItemId,
         "value2",
         null,
+        stack,
       );
       switch (modItem.operation) {
         case "*":
@@ -778,34 +797,38 @@ export function resolveModItem(
     case "lerp": {
       const value1 = resolveInputtableValue<LerpMod>(
         state,
-        modChain,
+        modChainId,
         modItemId,
         "value1",
         null,
+        stack,
       );
       const value2 = resolveInputtableValue<LerpMod>(
         state,
-        modChain,
+        modChainId,
         modItemId,
         "value2",
         null,
+        stack,
       );
       const interpol = resolveInputtableValue<LerpMod>(
         state,
-        modChain,
+        modChainId,
         modItemId,
         "interpol",
         null,
+        stack,
       );
       return value1 + (value2 - value1) * interpol;
     }
     case "midiCc": {
       const controller = resolveInputtableValue<MidiCcMod>(
         state,
-        modChain,
+        modChainId,
         modItemId,
         "controllerNumber",
         null,
+        stack,
       );
       return Midi.ccValue(roundMod(controller, 0, 128)) / 127;
     }
@@ -815,17 +838,25 @@ export function resolveModItem(
       }
       const rawIndexPc = resolveInputtableValue<SequenceMod>(
         state,
-        modChain,
+        modChainId,
         modItemId,
         "indexPc",
         null,
+        stack,
       );
       let index;
 
       if (rawIndexPc === undefined) {
         index = mod(
           Math.floor(
-            resolveInputtableValue<SequenceMod>(state, modChain, modItemId, "index", null),
+            resolveInputtableValue<SequenceMod>(
+              state,
+              modChainId,
+              modItemId,
+              "index",
+              null,
+              stack,
+            ),
           ),
           modItem.values.length,
         );
@@ -840,10 +871,11 @@ export function resolveModItem(
 
       const value = resolveInputtableValue(
         state,
-        modChain,
+        modChainId,
         modItemId,
         `values.${index}`,
         null,
+        stack,
       );
       return value;
     }
@@ -852,11 +884,13 @@ export function resolveModItem(
 
 export function resolveInputtableValue<T = Record<string, unknown>>(
   state: AppState,
-  modChain: ModChain,
+  modChainId: string,
   modChainItemId: string,
   property: KeysOfUnion<T>,
   outputKey: string | null,
+  stack?: Set<string>,
 ): number {
+  const modChain = state.modChains[modChainId];
   const connection = getIncomingModChainItemConnection(
     state,
     modChain,
@@ -868,7 +902,7 @@ export function resolveInputtableValue<T = Record<string, unknown>>(
   if (!connection)
     return getProperty(modChain.mods[modChainItemId], property as string) as number;
 
-  return resolveModItem(state, modChain, connection.from, connection.fromOutput);
+  return resolveModItem(state, modChainId, connection.from, connection.fromOutput, stack);
 }
 
 export function getIncomingModChainItemConnection(
@@ -883,7 +917,7 @@ export function getIncomingModChainItemConnection(
 
 export function resolveModChain(state: AppState, modChainId: string): number {
   const modChain = state.modChains[modChainId];
-  return resolveModItem(state, modChain, modChain.output.from, modChain.output.fromOutput);
+  return resolveModItem(state, modChainId, modChain.output.from, modChain.output.fromOutput);
 }
 
 export function removeModItem(

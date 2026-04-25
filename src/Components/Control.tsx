@@ -7,6 +7,8 @@ import React, {
   useMemo,
   useReducer,
 } from "react";
+import { v4 as uuidv4 } from "uuid";
+
 import {
   coerceControlValueToNumber,
   ControlDataType,
@@ -45,10 +47,12 @@ import GoogleIconButton from "./GoogleIconButton";
 import { ControlContext, IControlContext } from "../state/ControlContext";
 import {
   AppContext,
+  AppState,
   getControlType,
   getControlValue,
   resolveModChain,
 } from "../state/AppState";
+import { produce } from "immer";
 
 const directionIcons = [
   direction0,
@@ -275,6 +279,7 @@ export const ReadOnlyValue = React.memo(function ReadOnlyControlValue({
               style={{
                 backgroundImage: `url(${directionIcons[i]})`,
               }}
+              disabled
             ></button>
           ))}
         </div>
@@ -361,12 +366,21 @@ export const EditIcon = React.memo(function ControlEditIcon() {
       icon="adjust"
       buttonStyle="rounded"
       title="Edit modchain"
-      className={cx("edit", { active: state.modChainControl === context.controlId })}
+      className={cx("edit", {
+        active: state.modChainControl === context.controlId,
+        listening: state.listeningForControlValue,
+      })}
       onClick={() => {
-        setState((s) => ({
-          ...s,
-          modChainControl: context.controlId,
-        }));
+        setState(
+          produce<AppState>((s) => {
+            if (s.listeningForControlValue) {
+              s.listeningForControlValueSelection = context.controlId;
+              s.listeningForControlValue = false;
+            } else {
+              s.modChainControl = context.controlId;
+            }
+          }),
+        );
       }}
     />
   );

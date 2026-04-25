@@ -1071,6 +1071,7 @@ export const CodePoints = {
   e911_emergency: "f119",
   e_mobiledata: "f002",
   e_mobiledata_badge: "f7e3",
+  ear_sound: "f356",
   earbuds: "f003",
   earbuds_battery: "f004",
   early_on: "e2ba",

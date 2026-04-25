@@ -68,7 +68,7 @@ function InputtableValue<T>({
   const inputValue = useMemo(() => {
     if (!connection) return undefined;
 
-    return resolveModItem(state, modChain, connection.from, connection.fromOutput);
+    return resolveModItem(state, modChainId, connection.from, connection.fromOutput);
   }, [now, inputtableValue, state.modChains, modChain]);
 
   const coerce = numberInputProps?.coerce || ((_: number) => _);

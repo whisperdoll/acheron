@@ -63,13 +63,14 @@ const ReboundToken: TokenDefinition<Store> = {
         if (gateOn + gateOff === 0) {
           tryPerformRebound(playheadIndex);
         } else {
-          if (
-            store.gateCounter >= gateOffset + gateOff ||
-            store.gateCounter < gateOffset
-          ) {
+          if (store.gateCounter >= gateOffset + gateOff || store.gateCounter < gateOffset) {
             tryPerformRebound(playheadIndex);
           }
-          store.gateCounter++;
+          try {
+            store.gateCounter++;
+          } catch (e) {
+            console.log({ store });
+          }
           if (store.gateCounter >= gateOffset + gateOff + gateOn) {
             store.gateCounter = 0;
           }

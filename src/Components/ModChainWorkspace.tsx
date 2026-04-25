@@ -2,6 +2,7 @@ import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "r
 import * as Control from "./Control";
 import GoogleIconButton from "./GoogleIconButton";
 import {
+  ControlValueMod,
   LerpMod,
   Lfo,
   LFOMod,
@@ -22,8 +23,10 @@ import {
 } from "../state/ModChainWorkspaceContext";
 import ModChainWorkspaceWires from "./ModChainWorkspaceWires";
 import { cx, resolveMaybeGenerated } from "../lib/utils";
-import { AppContext } from "../state/AppState";
+import { AppContext, playerControls } from "../state/AppState";
 import { getDefaultModChainItemUI } from "../utils/elysiumutils";
+import { sliceObject } from "../utils/utils";
+import { LayerControlTypes } from "../utils/DefaultDefinitions";
 
 interface Props {}
 
@@ -189,6 +192,39 @@ export default function ModChainWorkspace(props: Props) {
     };
   }, []);
 
+  useEffect(() => {
+    if (state.listeningForControlValueSelection === null) return;
+
+    addModChainItem<ControlValueMod>({
+      __type: "controlValue",
+      controlId: state.listeningForControlValueSelection,
+      outputs: ["output"],
+    });
+
+    setState((s) => ({ ...s, listeningForControlValueSelection: null }));
+  }, [state.listeningForControlValueSelection]);
+
+  const label = useMemo<string>(() => {
+    const base = control.definition.label!;
+    if (Object.values(playerControls(state)).includes(control.id)) {
+      return `${base} (Global)`;
+    }
+
+    const layer = state.layers.find((l) =>
+      Object.values(sliceObject(l, LayerControlTypes)).includes(control.id),
+    );
+    if (layer) {
+      return `${base} (${layer.name})`;
+    }
+
+    const token = Object.values(state.tokens).find((t) => t.controlIds.includes(control.id));
+    if (token) {
+      return `${base} (${token.label})`;
+    }
+
+    return base;
+  }, [control]);
+
   if (!modChain) return null;
 
   return (
@@ -202,7 +238,7 @@ export default function ModChainWorkspace(props: Props) {
         ref={containerRef}
       >
         <div className="header">
-          <Control.Label trailingColon={false} />
+          <span className="label">{label}</span>
           <GoogleIconButton
             buttonStyle="rounded"
             icon="close"
@@ -325,6 +361,26 @@ export default function ModChainWorkspace(props: Props) {
           >
             Add Sequence
           </GoogleIconButton>
+          {state.listeningForControlValue ? (
+            <GoogleIconButton
+              icon="ear_sound"
+              onClick={() => {
+                setState((s) => ({ ...s, listeningForControlValue: false }));
+              }}
+              className="listening"
+            >
+              Listening... Click to cancel
+            </GoogleIconButton>
+          ) : (
+            <GoogleIconButton
+              icon="search"
+              onClick={() => {
+                setState((s) => ({ ...s, listeningForControlValue: true }));
+              }}
+            >
+              Add Control Value
+            </GoogleIconButton>
+          )}
         </div>
 
         <ModChainWorkspaceWires />

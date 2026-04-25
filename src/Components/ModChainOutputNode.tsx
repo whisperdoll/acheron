@@ -25,7 +25,7 @@ export default function ModChainOutputNode(props: Props) {
 
     const resolved = resolveModItem(
       state,
-      state.modChains[state.modChainControl!],
+      state.modChainControl!,
       props.modItemId,
       props.outputKey,
     );

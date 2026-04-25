@@ -317,6 +317,7 @@ export default function HexGrid(props: Props) {
     state.gridCols,
     state.gridRows,
     state.gridStartingNote,
+    // now,
   ]);
 
   const [contextMenuNode, showContextMenu] = useContextMenu(

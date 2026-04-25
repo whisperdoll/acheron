@@ -16,91 +16,90 @@ export async function toggleDevtools() {
   invoke("plugin:webview|internal_toggle_devtools");
 }
 
-export async function openComposition(): Promise<
-  SerializedComposition | undefined
-> {
-  if (isOnDesktop()) {
-    const fs = await import("@tauri-apps/plugin-fs");
-    const dialog = await import("@tauri-apps/plugin-dialog");
+export async function openComposition(): Promise<SerializedComposition | undefined> {
+  // if (isOnDesktop()) {
+  //   const fs = await import("@tauri-apps/plugin-fs");
+  //   const dialog = await import("@tauri-apps/plugin-dialog");
 
-    const filepath = await dialog.open({
-      title: "Open Composition...",
-      filters: [{ name: "Acheron Composition", extensions: ["ache"] }],
-      canCreateDirectories: true,
-      directory: false,
-      multiple: false,
-    });
+  //   const filepath = await dialog.open({
+  //     title: "Open Composition...",
+  //     filters: [{ name: "Acheron Composition", extensions: ["ache"] }],
+  //     canCreateDirectories: true,
+  //     directory: false,
+  //     multiple: false,
+  //   });
 
-    if (!filepath) return;
+  //   if (!filepath) return;
 
-    return JSON.parse(await fs.readTextFile(filepath));
-  } else {
-    return new Promise((resolve, reject) => {
-      try {
-        const fileInput = document.createElement("input");
-        fileInput.type = "file";
-        fileInput.accept = ".ache";
+  //   return JSON.parse(await fs.readTextFile(filepath));
+  // } else {
+  return new Promise((resolve, reject) => {
+    try {
+      const fileInput = document.createElement("input");
+      fileInput.type = "file";
+      fileInput.accept = ".ache";
+      fileInput.value = "";
 
-        fileInput.onchange = () => {
-          if (!fileInput.files || !fileInput.files[0]) {
+      fileInput.onchange = () => {
+        if (!fileInput.files || !fileInput.files[0]) {
+          resolve(undefined);
+          return;
+        }
+
+        const file = fileInput.files[0];
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const fileContent = e.target?.result;
+          if (typeof fileContent !== "string") {
             resolve(undefined);
             return;
           }
 
-          const file = fileInput.files[0];
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            const fileContent = e.target?.result;
-            if (typeof fileContent !== "string") {
-              resolve(undefined);
-              return;
-            }
-
-            resolve(JSON.parse(fileContent));
-          };
-          reader.readAsText(file);
+          resolve(JSON.parse(fileContent));
         };
+        reader.readAsText(file);
+      };
 
-        fileInput.click();
-      } catch (e) {
-        reject(e);
-      }
-    });
-  }
+      fileInput.click();
+    } catch (e) {
+      reject(e);
+    }
+  });
+  // }
 }
 
 export async function saveComposition(composition: SerializedComposition) {
-  if (isOnDesktop()) {
-    const fs = await import("@tauri-apps/plugin-fs");
-    const dialog = await import("@tauri-apps/plugin-dialog");
+  // if (isOnDesktop()) {
+  //   const fs = await import("@tauri-apps/plugin-fs");
+  //   const dialog = await import("@tauri-apps/plugin-dialog");
 
-    const filepath = await dialog.open({
-      title: "Open Composition...",
-      filters: [{ name: "Acheron Composition", extensions: ["ache"] }],
-      canCreateDirectories: true,
-      directory: false,
-      multiple: false,
-    });
+  //   const filepath = await dialog.open({
+  //     title: "Open Composition...",
+  //     filters: [{ name: "Acheron Composition", extensions: ["ache"] }],
+  //     canCreateDirectories: true,
+  //     directory: false,
+  //     multiple: false,
+  //   });
 
-    if (!filepath) return;
+  //   if (!filepath) return;
 
-    return JSON.parse(await fs.readTextFile(filepath));
-  } else {
-    return new Promise((resolve, reject) => {
-      try {
-        const blob = new Blob([JSON.stringify(composition)], {
-          type: "application/json",
-        });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "composition.ache";
-        a.click();
-      } catch (e) {
-        reject(e);
-      }
-    });
-  }
+  //   return JSON.parse(await fs.readTextFile(filepath));
+  // } else {
+  return new Promise((resolve, reject) => {
+    try {
+      const blob = new Blob([JSON.stringify(composition)], {
+        type: "application/json",
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "composition.ache";
+      a.click();
+    } catch (e) {
+      reject(e);
+    }
+  });
+  // }
 }
 
 export async function openUrl(url: string) {
@@ -112,10 +111,7 @@ export async function openUrl(url: string) {
   }
 }
 
-export async function confirmPrompt(
-  prompt: string,
-  title: string,
-): Promise<boolean> {
+export async function confirmPrompt(prompt: string, title: string): Promise<boolean> {
   if (false) {
     const { ask } = await import("@tauri-apps/plugin-dialog");
     return await ask(prompt, {

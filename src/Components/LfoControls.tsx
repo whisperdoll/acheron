@@ -36,7 +36,7 @@ export default React.memo(function LfoControls({ control, lfo, onUpdate, modItem
       if (connection.to === modItemId) {
         ret[connection.toProperty as LfoConnectableProperty] = resolveModItem(
           state,
-          modChain,
+          state.modChainControl!,
           connection.from,
           connection.fromOutput,
         );

@@ -42,6 +42,8 @@ import GoogleIconButton from "./GoogleIconButton";
 import Midi from "../utils/midi";
 import useNow from "../Hooks/useNow";
 import { produce } from "immer";
+import { sliceObject } from "../utils/utils";
+import { LayerControlTypes } from "../utils/DefaultDefinitions";
 
 interface Props {
   id: string;
@@ -98,7 +100,7 @@ export default React.memo(function ModChainItemComponent(
 
     const controllerNumber = resolveInputtableValue<MidiCcMod>(
       state,
-      modChain,
+      modChainId,
       modChainItemId,
       "controllerNumber",
       null,
@@ -164,8 +166,29 @@ export default React.memo(function ModChainItemComponent(
         return `Fixed ${state.controls[modChainItem.controlId].definition.type} value`;
       case "fixedValue":
         return "Fixed value";
-      case "controlValue":
-        return state.controls[modChainItem.controlId].definition.label!;
+      case "controlValue": {
+        const control = state.controls[modChainItem.controlId];
+        const base = control.definition.label!;
+        if (Object.values(playerControls(state)).includes(control.id)) {
+          return `${base} (Global)`;
+        }
+
+        const layer = state.layers.find((l) =>
+          Object.values(sliceObject(l, LayerControlTypes)).includes(control.id),
+        );
+        if (layer) {
+          return `${base} (${layer.name})`;
+        }
+
+        const token = Object.values(state.tokens).find((t) =>
+          t.controlIds.includes(control.id),
+        );
+        if (token) {
+          return `${base} (${token.label})`;
+        }
+
+        return base;
+      }
       case "inheritedControlValue":
         return "Inherited value";
       case "math":
@@ -188,6 +211,9 @@ export default React.memo(function ModChainItemComponent(
   useEffect(() => {
     const onDown = (e: PointerEvent) => {
       e.preventDefault();
+
+      if (e.target !== headerRef.current) return;
+
       dragging.current = true;
       modPosStart.current = modChainItem.ui;
       draggingStart.current = { x: e.clientX, y: e.clientY };
@@ -277,7 +303,36 @@ export default React.memo(function ModChainItemComponent(
   return (
     <div ref={containerRef} className={`modChainItem ${modChainItem.__type}`} {...rest}>
       <div className="header" ref={headerRef}>
-        <span>{label}</span>
+        <span title={label} className="label">
+          {label}
+        </span>
+
+        <span className="spacer" />
+
+        {(modChainItem.__type === "controlValue" ||
+          modChainItem.__type === "inheritedControlValue") && (
+          <GoogleIconButton
+            buttonStyle="rounded"
+            icon="open_in_new"
+            fill
+            opticalSize={20}
+            title="Goto Control Modchain"
+            onPointerDown={(e) => {
+              e.stopPropagation();
+              console.log("icon");
+            }}
+            onClick={(e) => {
+              setState((s) => ({
+                ...s,
+                modChainControl:
+                  modChainItem.__type === "controlValue"
+                    ? modChainItem.controlId
+                    : inheritedControl!.id,
+              }));
+            }}
+            className="nostyle"
+          />
+        )}
 
         {modChainItem.removeable && (
           <GoogleIconButton
@@ -289,7 +344,7 @@ export default React.memo(function ModChainItemComponent(
             onClick={(e) => {
               setState((s) => removeModItem(s, modChainId, modChainItemId));
             }}
-            className="nostyle remove"
+            className="nostyle"
           />
         )}
       </div>
@@ -507,7 +562,7 @@ export default React.memo(function ModChainItemComponent(
                   <hr />
                   {modChainItem.values.map((value, i) => {
                     return (
-                      <div className="row">
+                      <div className="row" key={i}>
                         <InputtableValue<Record<string, number>>
                           modChainId={modChainId}
                           modChainItemId={modChainItemId}

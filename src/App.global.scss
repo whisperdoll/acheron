@@ -15,6 +15,7 @@
   --button-background-color-hover: rgba(255, 255, 255, 0.2);
   --button-background-color: rgba(255, 255, 255, 0.1);
   --control-edit-button-active-background-color: rgba(212, 226, 23, 0.226);
+  --control-edit-button-listening-background-color: rgba(255, 166, 0, 0.623);
   --control-header-background-color: rgba(255, 255, 255, 0.1);
   --dangerous-button-background-color-active: rgba(100, 0, 0, 0.4);
   --dangerous-button-background-color-hover: rgba(255, 100, 100, 0.3);
@@ -164,6 +165,21 @@ select {
   }
 }
 
+select {
+  appearance: none;
+  -webkit-appearance: none;
+
+  background-image: url("data:image/svg+xml;utf8,\
+    <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'>\
+    <path fill='white' d='M0 0l5 6 5-6z'/>\
+    </svg>");
+
+  padding-right: 2rem;
+  background-repeat: no-repeat;
+  background-position: right 0.5rem center;
+  background-size: 10px 6px;
+}
+
 select,
 input[type="checkbox"] {
   cursor: pointer;
@@ -208,6 +224,10 @@ button:not(.nostyle),
 
     & > svg {
     }
+  }
+
+  &:disabled {
+    cursor: default;
   }
 }
 
@@ -960,6 +980,10 @@ $statusBarHeight: 2rem;
     &.active {
       background-color: var(--control-edit-button-active-background-color);
     }
+
+    &.listening {
+      background-color: var(--control-edit-button-listening-background-color);
+    }
   }
 }
 
@@ -1498,6 +1522,10 @@ button.showInspector {
     flex-direction: row;
     padding-top: 0;
     gap: 0.5rem;
+
+    .listening {
+      background-color: var(--control-edit-button-listening-background-color);
+    }
   }
 
   .row {
@@ -1624,6 +1652,23 @@ button.showInspector {
     background: var(--mod-background-color);
     user-select: none;
 
+    .controlRow {
+      display: flex;
+      flex-direction: row;
+      justify-content: stretch;
+      align-items: center;
+      gap: inherit;
+      flex-grow: 1;
+
+      input,
+      .numberInput-container,
+      select {
+        flex-grow: 1;
+        min-width: 0;
+        width: 0;
+      }
+    }
+
     .header {
       display: flex;
       flex-direction: row;
@@ -1632,8 +1677,16 @@ button.showInspector {
       padding: 0.25rem 0.5rem;
       background-color: var(--header-background-color);
       cursor: move;
+      white-space: nowrap;
 
-      .remove {
+      & > .label {
+        pointer-events: none;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .spacer {
         margin-left: auto;
       }
     }

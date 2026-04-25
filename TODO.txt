@@ -1,6 +1,7 @@
 TODO
-- midi channel selection is messed up in some weird kind of way
-- add/multiply
+- current time in modchains
+
+- fix resize handles
 - undo/redo
 - builtin synth
 - mobile layout
@@ -8,7 +9,17 @@ TODO
 - time signature
 - write tests
 
+?
+- if you load a composition, close acheron, then try to load the same composition nothing happens. loading it a second time works...
+- also changing a value from the sidebar after opening a file crashes
+- linux build styles for <select>
+- tauri
+
 DONE
+- control values in modchains
+- go to the tempo modchain, add a sequence, change a value of the sequence while running; brrrrrr.ache
+- midi channel selection is messed up in some weird kind of way
+- add/multiply
 - direction control should be 2 rows
 - fix dropping hex into void
 - sidebar sizing
