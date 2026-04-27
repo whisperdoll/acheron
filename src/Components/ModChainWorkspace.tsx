@@ -22,7 +22,7 @@ import {
   ModChainWorkspaceContext,
 } from "../state/ModChainWorkspaceContext";
 import ModChainWorkspaceWires from "./ModChainWorkspaceWires";
-import { cx, resolveMaybeGenerated } from "../lib/utils";
+import { cx, preventDefault, resolveMaybeGenerated } from "../lib/utils";
 import { AppContext, playerControls } from "../state/AppState";
 import { getDefaultModChainItemUI } from "../utils/elysiumutils";
 import { sliceObject } from "../utils/utils";
@@ -179,6 +179,7 @@ export default function ModChainWorkspace(props: Props) {
 
     mainRowRef.current.addEventListener("wheel", onWheel);
     mainRowRef.current.addEventListener("pointerdown", onDown);
+    mainRowRef.current.addEventListener("touchstart", preventDefault);
     document.body.addEventListener("pointermove", onMove);
     document.body.addEventListener("pointerup", onUp);
     document.body.addEventListener("pointercancel", onCancel);
@@ -186,6 +187,7 @@ export default function ModChainWorkspace(props: Props) {
     return () => {
       mainRowRef.current?.removeEventListener("wheel", onWheel);
       mainRowRef.current?.removeEventListener("pointerdown", onDown);
+      mainRowRef.current?.removeEventListener("touchstart", preventDefault);
       document.body.removeEventListener("pointermove", onMove);
       document.body.removeEventListener("pointerup", onUp);
       document.body.removeEventListener("pointercancel", onCancel);
