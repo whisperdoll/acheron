@@ -63,7 +63,7 @@ export default React.memo(function ModChainItemComponent(
   const sourceControl = state.controls[modChainId];
   const currentTimeMs = state.layers[0].currentTimeMs;
   const inheritedControl = useMemo(() => {
-    getInheritedControl(state, sourceControl);
+    return getInheritedControl(state, sourceControl);
   }, [modChainItem, sourceControl]);
 
   const [midiCcTrigger, _setMidiCcTrigger] = useState(0);
