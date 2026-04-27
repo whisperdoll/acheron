@@ -1,7 +1,7 @@
-import { useCallback, useContext, useMemo } from "react";
+import { useCallback, useContext, useEffect, useMemo, useRef } from "react";
 import { ModChainWorkspaceContext } from "../state/ModChainWorkspaceContext";
 import { ModOutput } from "../Types";
-import { cx, formatNumberSmall } from "../lib/utils";
+import { cx, formatNumberSmall, preventDefault } from "../lib/utils";
 import { AppContext, connectModItems, resolveModItem } from "../state/AppState";
 import useNow from "../Hooks/useNow";
 import NonShrinking from "./NonShrinking";
@@ -31,6 +31,7 @@ export default function ModChainOutputNode(props: Props) {
     );
     return formatNumberSmall(resolved);
   }, [props.modItemId, state.modChains, now, props.value]);
+  const ref = useRef<HTMLDivElement>(null);
 
   const handleMouseDown: React.PointerEventHandler<HTMLDivElement> = useCallback(
     (e) => {
@@ -46,12 +47,21 @@ export default function ModChainOutputNode(props: Props) {
   //   console.log(props.modItemId, state.modChains[state.modChainControl!].connections);
   // }
 
+  useEffect(() => {
+    ref.current?.addEventListener("touchstart", preventDefault);
+
+    return () => {
+      ref.current?.removeEventListener("touchstart", preventDefault);
+    };
+  }, []);
+
   return (
     <div className="row">
       {value !== null && <NonShrinking style={{ whiteSpace: "nowrap" }}>{value}</NonShrinking>}
       <div
         className={cx("modChainOutputNode", { connected })}
         onPointerDown={handleMouseDown}
+        ref={ref}
         data-mod-chain-output-node={`${props.modItemId}-${props.outputKey}`}
       ></div>
     </div>

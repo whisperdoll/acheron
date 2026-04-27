@@ -30,6 +30,8 @@ export default function ModChainWorkspaceWires(props: Props) {
 
     document.body.addEventListener("pointermove", onMouseMove);
 
+    setMousePosition(null);
+
     return () => {
       document.body.removeEventListener("pointermove", onMouseMove);
     };

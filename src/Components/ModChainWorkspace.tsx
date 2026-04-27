@@ -178,9 +178,15 @@ export default function ModChainWorkspace(props: Props) {
       }
     };
 
+    const onTouch = (e: TouchEvent) => {
+      if (e.target === mainRowRef.current) {
+        e.preventDefault();
+      }
+    };
+
     mainRowRef.current.addEventListener("wheel", onWheel);
     mainRowRef.current.addEventListener("pointerdown", onDown);
-    mainRowRef.current.addEventListener("touchstart", preventDefault);
+    mainRowRef.current.addEventListener("touchstart", onTouch);
     document.body.addEventListener("pointermove", onMove);
     document.body.addEventListener("pointerup", onUp);
     document.body.addEventListener("pointercancel", onCancel);
@@ -188,7 +194,7 @@ export default function ModChainWorkspace(props: Props) {
     return () => {
       mainRowRef.current?.removeEventListener("wheel", onWheel);
       mainRowRef.current?.removeEventListener("pointerdown", onDown);
-      mainRowRef.current?.removeEventListener("touchstart", preventDefault);
+      mainRowRef.current?.removeEventListener("touchstart", onTouch);
       document.body.removeEventListener("pointermove", onMove);
       document.body.removeEventListener("pointerup", onUp);
       document.body.removeEventListener("pointercancel", onCancel);
