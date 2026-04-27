@@ -38,43 +38,8 @@ export default function ModChainOutputNode(props: Props) {
       modChainWorkspaceContext.set({
         connectingOutput: { modItemId: props.modItemId, outputKey: props.outputKey },
       });
-
-      const onMouseUp = (mouseUpEvent: PointerEvent) => {
-        mouseUpEvent.preventDefault();
-        document.removeEventListener("pointerup", onMouseUp);
-        modChainWorkspaceContext.set({ connectingOutput: undefined });
-
-        const target = mouseUpEvent.target;
-        if (!(target instanceof HTMLElement)) return;
-
-        // if direct to output
-        if (target.parentElement?.dataset.modChainOutput) {
-          connectModItems(setState, state.modChainControl!, {
-            from: props.modItemId,
-            fromOutput: props.outputKey,
-            to: ModOutput,
-          });
-
-          return;
-        }
-
-        // elseif to a node
-        const modChainInputNodeId = target.dataset.modChainInputNodeId;
-        const modChainInputNodeProperty = target.dataset.modChainInputNodeProperty;
-
-        if (!modChainInputNodeId || !modChainInputNodeProperty) return;
-
-        connectModItems(setState, state.modChainControl!, {
-          from: props.modItemId,
-          to: modChainInputNodeId,
-          toProperty: modChainInputNodeProperty,
-          fromOutput: props.outputKey,
-        });
-      };
-
-      document.addEventListener("pointerup", onMouseUp);
     },
-    [modChainWorkspaceContext.set, state.modChainControl],
+    [modChainWorkspaceContext.set, props.modItemId, props.outputKey],
   );
 
   // if (props.outputKey !== "output") {

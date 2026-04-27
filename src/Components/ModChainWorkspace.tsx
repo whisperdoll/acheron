@@ -9,6 +9,7 @@ import {
   MathMod,
   MidiCcMod,
   ModChainItem,
+  ModOutput,
   SequenceMod,
   SharedModChainItemAttributes,
 } from "../Types";
@@ -23,7 +24,7 @@ import {
 } from "../state/ModChainWorkspaceContext";
 import ModChainWorkspaceWires from "./ModChainWorkspaceWires";
 import { cx, preventDefault, resolveMaybeGenerated } from "../lib/utils";
-import { AppContext, playerControls } from "../state/AppState";
+import { AppContext, connectModItems, playerControls } from "../state/AppState";
 import { getDefaultModChainItemUI } from "../utils/elysiumutils";
 import { sliceObject } from "../utils/utils";
 import { LayerControlTypes } from "../utils/DefaultDefinitions";
@@ -193,6 +194,48 @@ export default function ModChainWorkspace(props: Props) {
       document.body.removeEventListener("pointercancel", onCancel);
     };
   }, []);
+
+  useEffect(() => {
+    const onUp = (e: PointerEvent) => {
+      if (!modChainContext.connectingOutput) return;
+
+      e.preventDefault();
+      setModChainContext({ connectingOutput: undefined });
+
+      const target = document.elementFromPoint(e.clientX, e.clientY);
+      if (!(target instanceof HTMLElement)) return;
+
+      // if direct to output
+      if (target.parentElement?.dataset.modChainOutput) {
+        connectModItems(setState, state.modChainControl!, {
+          from: modChainContext.connectingOutput.modItemId,
+          fromOutput: modChainContext.connectingOutput.outputKey,
+          to: ModOutput,
+        });
+
+        return;
+      }
+
+      // elseif to a node
+      const modChainInputNodeId = target.dataset.modChainInputNodeId;
+      const modChainInputNodeProperty = target.dataset.modChainInputNodeProperty;
+
+      if (!modChainInputNodeId || !modChainInputNodeProperty) return;
+
+      connectModItems(setState, state.modChainControl!, {
+        from: modChainContext.connectingOutput.modItemId,
+        fromOutput: modChainContext.connectingOutput.outputKey,
+        to: modChainInputNodeId,
+        toProperty: modChainInputNodeProperty,
+      });
+    };
+
+    document.body.addEventListener("pointerup", onUp);
+
+    return () => {
+      document.body.removeEventListener("pointerup", onUp);
+    };
+  }, [modChainContext.connectingOutput]);
 
   useEffect(() => {
     if (state.listeningForControlValueSelection === null) return;
