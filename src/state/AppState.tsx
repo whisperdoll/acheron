@@ -637,22 +637,17 @@ export function getControlLayer(
   return state.layers[layerIndex];
 }
 
-export function getControlType(state: AppState, controlId: ControlInstanceId) {
-  const control = state.controls[controlId];
-  if (control.definition.type) {
-    return control.definition.type;
-  }
-
+export function getInheritedControl(state: AppState, control: ControlState) {
   const inheritParts = getInheritParts(control.definition.inherit);
-  if (!inheritParts) throw "something bad happened lol";
-
-  // otherwise, it's inherited
+  if (!inheritParts) {
+    return;
+  }
   return getControlFromInheritParts(
     state.controls,
     playerControls(state),
-    getControlLayer(state, controlId)!,
+    getControlLayer(state, control.id)!,
     inheritParts,
-  ).definition.type!;
+  );
 }
 
 export function getControlValue<T extends ControlDataType = ControlDataType>(

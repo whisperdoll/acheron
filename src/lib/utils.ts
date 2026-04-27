@@ -6,6 +6,10 @@ export function isNullish(value: any): value is Nullish {
   return value === null || value === undefined;
 }
 
+export function preventDefault(e: { preventDefault: () => unknown }) {
+  e.preventDefault();
+}
+
 export interface Point {
   x: number;
   y: number;

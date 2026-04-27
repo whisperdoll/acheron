@@ -651,6 +651,7 @@ export default function HexGrid(props: Props) {
       canvas.current?.removeEventListener("mouseup", mouseUp);
       canvas.current?.removeEventListener("mouseleave", mouseLeave);
       document.body.removeEventListener("mouseup", documentMouseUp);
+      document.body.removeEventListener("touchend", documentMouseUp);
       canvas.current?.canvas.removeEventListener("contextmenu", contextMenu);
     };
   }, [

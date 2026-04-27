@@ -13,6 +13,7 @@ import {
   AppState,
   getControlLayer,
   getControlValue,
+  getInheritedControl,
   playerControls,
   removeModItem,
   resolveInputtableValue,
@@ -33,9 +34,8 @@ import {
 } from "../Types";
 import { ModChainWorkspaceContext } from "../state/ModChainWorkspaceContext";
 import ModChainOutputNode from "./ModChainOutputNode";
-import { getControlFromInheritParts, getInheritParts } from "../utils/elysiumutils";
 import NumberInput from "./NumberInput";
-import { isFunction, mod, roundMod } from "../lib/utils";
+import { isFunction, mod, preventDefault, roundMod } from "../lib/utils";
 import ModChainInputNode from "./ModChainInputNode";
 import InputtableValue from "./InputtableValue";
 import GoogleIconButton from "./GoogleIconButton";
@@ -63,18 +63,7 @@ export default React.memo(function ModChainItemComponent(
   const sourceControl = state.controls[modChainId];
   const currentTimeMs = state.layers[0].currentTimeMs;
   const inheritedControl = useMemo(() => {
-    if (!sourceControl.definition.inherit) return;
-
-    const inheritParts = getInheritParts(sourceControl.definition.inherit!);
-    if (!inheritParts) {
-      throw "bad inherit parts";
-    }
-    return getControlFromInheritParts(
-      state.controls,
-      playerControls(state),
-      getControlLayer(state, sourceControl.id)!,
-      inheritParts,
-    );
+    getInheritedControl(state, sourceControl);
   }, [modChainItem, sourceControl]);
 
   const [midiCcTrigger, _setMidiCcTrigger] = useState(0);
@@ -220,6 +209,7 @@ export default React.memo(function ModChainItemComponent(
     };
 
     headerRef.current?.addEventListener("pointerdown", onDown);
+    headerRef.current?.addEventListener("touchstart", preventDefault);
 
     return () => headerRef.current?.removeEventListener("pointerdown", onDown);
   }, [modChainItem.ui]);

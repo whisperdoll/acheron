@@ -45,13 +45,7 @@ import Midi from "../utils/midi";
 import List from "../lib/list";
 import GoogleIconButton from "./GoogleIconButton";
 import { ControlContext, IControlContext } from "../state/ControlContext";
-import {
-  AppContext,
-  AppState,
-  getControlType,
-  getControlValue,
-  resolveModChain,
-} from "../state/AppState";
+import { AppContext, AppState, getControlValue, resolveModChain } from "../state/AppState";
 import { produce } from "immer";
 
 const directionIcons = [
@@ -342,7 +336,7 @@ export const Value = React.memo(function ControlValue() {
             <ManualValue
               mod={outputMod}
               onChange={handleUpdate}
-              type={getControlType(state, control.id)}
+              type={control.definition.type!}
               max={control.definition.max}
               min={control.definition.min}
               selectOptions={control.definition.options}
@@ -350,7 +344,7 @@ export const Value = React.memo(function ControlValue() {
             />
           );
         } else {
-          return <ReadOnlyValue value={value} type={getControlType(state, control.id)} />;
+          return <ReadOnlyValue value={value} type={control.definition.type!} />;
         }
       })()}
     </div>

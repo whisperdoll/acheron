@@ -1,4 +1,5 @@
 import {
+  useCallback,
   useContext,
   useEffect,
   useLayoutEffect,
@@ -21,16 +22,9 @@ import StatusBar from "./Components/StatusBar";
 import LayerSelect from "./Components/LayerSelect";
 import GoogleIconButton from "./Components/GoogleIconButton";
 import GoogleIcon from "./Components/GoogleIcon";
-import {
-  confirmPrompt,
-  openComposition,
-  toggleDevtools,
-} from "./utils/desktop";
+import { confirmPrompt, openComposition, toggleDevtools } from "./utils/desktop";
 import ModalController from "./Components/ModalController";
-import {
-  addKeyboardShortcutEventListeners,
-  keyboardShortcutString,
-} from "./lib/keyboard";
+import { addKeyboardShortcutEventListeners, keyboardShortcutString } from "./lib/keyboard";
 import Dict from "./lib/dict";
 import useLazyRef from "./useLazyRef";
 import ModChainWorkspace from "./Components/ModChainWorkspace";
@@ -42,6 +36,8 @@ import {
   togglePlaying,
 } from "./state/AppState";
 import { deserializeComposition } from "./Serialization";
+import { Point, preventDefault } from "./lib/utils";
+import useDrag from "./Hooks/useDrag";
 
 export default function App() {
   const [state, setState] = useState(initialState);
@@ -50,49 +46,60 @@ export default function App() {
     () => Dict.transformedValues(keyboardShortcuts, keyboardShortcutString),
     [keyboardShortcuts],
   );
-  const resizing = useRef<
-    "leftColumn" | "inspector" | "modChainWorkspace" | null
-  >(null);
+  const resizing = useRef<"leftColumn" | "inspector" | "modChainWorkspace" | null>(null);
   const lastTick = useRef(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const stopped = useRef(true);
 
+  const leftResizeHandleRef = useRef<HTMLDivElement>(null);
+  const inspectorResizeHandleRef = useRef<HTMLDivElement>(null);
+  const modChainWorkspaceResizeHandleRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
-    const triggers: Record<
-      keyof AppSettings["keyboardShortcuts"],
-      { onTrigger: () => void }
-    > = {
-      addNewLayer: {
-        onTrigger: () =>
-          addLayer(setState, true, "add layer via keyboard shortcut"),
-      },
-      play: {
-        onTrigger: () =>
-          togglePlaying(setState, "toggle play via keyboard shortcut"),
-      },
-      settings: {
-        onTrigger: () =>
-          setState((state) => ({ ...state, isShowingSettings: true })),
-      },
-      toggleMultilayerMode: {
-        onTrigger: () =>
-          setState((s) => ({ ...s, isMultiLayerMode: !s.isMultiLayerMode })),
-      },
-      toggleShowInspector: {
-        onTrigger: () =>
-          setState((s) => ({
-            ...s,
-            isShowingInspector: !s.isShowingInspector,
-          })),
-      },
-      toggleShowLeftColumn: {
-        onTrigger: () =>
-          setState((s) => ({
-            ...s,
-            isShowingLeftColumn: !s.isShowingLeftColumn,
-          })),
-      },
+    leftResizeHandleRef.current?.addEventListener("touchstart", preventDefault);
+    inspectorResizeHandleRef.current?.addEventListener("touchstart", preventDefault);
+    modChainWorkspaceResizeHandleRef.current?.addEventListener("touchstart", preventDefault);
+
+    return () => {
+      leftResizeHandleRef.current?.removeEventListener("touchstart", preventDefault);
+      inspectorResizeHandleRef.current?.removeEventListener("touchstart", preventDefault);
+      modChainWorkspaceResizeHandleRef.current?.removeEventListener(
+        "touchstart",
+        preventDefault,
+      );
     };
+  }, []);
+
+  useEffect(() => {
+    const triggers: Record<keyof AppSettings["keyboardShortcuts"], { onTrigger: () => void }> =
+      {
+        addNewLayer: {
+          onTrigger: () => addLayer(setState, true, "add layer via keyboard shortcut"),
+        },
+        play: {
+          onTrigger: () => togglePlaying(setState, "toggle play via keyboard shortcut"),
+        },
+        settings: {
+          onTrigger: () => setState((state) => ({ ...state, isShowingSettings: true })),
+        },
+        toggleMultilayerMode: {
+          onTrigger: () => setState((s) => ({ ...s, isMultiLayerMode: !s.isMultiLayerMode })),
+        },
+        toggleShowInspector: {
+          onTrigger: () =>
+            setState((s) => ({
+              ...s,
+              isShowingInspector: !s.isShowingInspector,
+            })),
+        },
+        toggleShowLeftColumn: {
+          onTrigger: () =>
+            setState((s) => ({
+              ...s,
+              isShowingLeftColumn: !s.isShowingLeftColumn,
+            })),
+        },
+      };
 
     const zipped = Dict.zip(keyboardShortcuts, triggers);
     return addKeyboardShortcutEventListeners(Object.values(zipped));
@@ -164,39 +171,15 @@ export default function App() {
     updateInspectorWidth();
     updateLeftColumnWidth();
 
-    function move(e: PointerEvent) {
-      if (resizing.current === "leftColumn") {
-        setState((s) => ({
-          ...s,
-          leftColumnWidth: Math.max(s.leftColumnWidth + e.movementX, 100),
-        }));
-      } else if (resizing.current === "inspector") {
-        setState((s) => ({
-          ...s,
-          inspectorWidth: Math.max(s.inspectorWidth - e.movementX, 100),
-        }));
-      } else if (resizing.current === "modChainWorkspace") {
-        setState((s) => ({
-          ...s,
-          modChainWorkspaceHeight: Math.max(
-            s.modChainWorkspaceHeight - e.movementY,
-            100,
-          ),
-        }));
-      }
-    }
-
     function up(e: PointerEvent) {
       resizing.current = null;
       document.documentElement.style.cursor = "";
     }
 
-    document.addEventListener("pointermove", move);
-    document.addEventListener("pointerup", up);
+    document.body.addEventListener("pointerup", up);
 
     return () => {
-      document.removeEventListener("pointermove", move);
-      document.removeEventListener("pointerup", up);
+      document.body.removeEventListener("pointerup", up);
     };
   }, []);
 
@@ -331,40 +314,6 @@ export default function App() {
     }
   }
 
-  function reloadScripts() {
-    // dispatch({ type: "setLayers", payload: Tokens.refresh(state) });
-  }
-
-  function showSettings() {
-    setState((s) => ({ ...s, isShowingSettings: true }));
-  }
-
-  async function saveComposition() {
-    //  TODO
-    // serializeComposition(state)
-  }
-
-  function loadComposition() {
-    // const paths = remote.dialog.showOpenDialogSync(remote.getCurrentWindow(), {
-    //   title: "Open Composition...",
-    //   properties: ["openFile"],
-    //   filters: [{ name: "Acheron Composition", extensions: ["ache"] }],
-    // });
-    // if (paths && paths[0]) {
-    //  TODO
-    // fs.readFile(paths[0], "utf8", (err, data) => {
-    //   if (err) {
-    //     alert("There was an error reading the file :(");
-    //     return;
-    //   }
-    //   dispatch({
-    //     type: "setState",
-    //     payload: deserializeComposition(state, JSON.parse(data)),
-    //   });
-    // });
-    // }
-  }
-
   function setMultiLayerSize(n: string) {
     const size = parseInt(n);
     if (isNaN(size)) return;
@@ -375,16 +324,6 @@ export default function App() {
     }));
   }
 
-  function reportABug() {
-    open(
-      "https://github.com/whisperdoll/acheron/issues/new?assignees=&labels=bug&template=1-Bug_report.md",
-    );
-  }
-
-  function openPatreon() {
-    open("https://www.patreon.com/whisperdoll");
-  }
-
   useEffect(() => {
     document.documentElement.style.setProperty(
       "--multilayer-cols",
@@ -392,7 +331,25 @@ export default function App() {
     );
   }, [state.multiLayerSize]);
 
-  const inspector = state.isShowingInspector ? (
+  const onDrag = useCallback((pos: Point, invertedPos: Point) => {
+    switch (resizing.current) {
+      case "leftColumn":
+        setState((s) => ({ ...s, leftColumnWidth: Math.max(pos.x, 100) }));
+        break;
+      case "inspector":
+        setState((s) => ({ ...s, inspectorWidth: Math.max(invertedPos.x, 100) }));
+        break;
+      case "modChainWorkspace":
+        setState((s) => ({ ...s, modChainWorkspaceHeight: Math.max(invertedPos.y, 100) }));
+        break;
+      default:
+        throw "unknown resize";
+    }
+  }, []);
+
+  const { startDragging } = useDrag(onDrag);
+
+  const inspector = (
     <>
       <div
         className="resizeHandle"
@@ -400,88 +357,98 @@ export default function App() {
           e.preventDefault();
           document.documentElement.style.cursor = "ew-resize";
           resizing.current = "inspector";
+          startDragging(e, { x: state.inspectorWidth, y: 0 });
         }}
+        ref={inspectorResizeHandleRef}
+        style={{ display: state.isShowingInspector ? undefined : "none" }}
       ></div>
-      <Inspector layerIndex={state.selectedHex.layerIndex} />
-    </>
-  ) : (
-    <>
-      <GoogleIconButton
-        className="showInspector"
-        icon="frame_inspect"
-        buttonStyle="rounded"
-        fill
-        onClick={() =>
-          setState((s) => ({ ...s, isShowingInspector: !s.isShowingInspector }))
-        }
-        opticalSize={20}
-        title={`Show Inspector (${keyboardShortcutStrings.toggleShowInspector})`}
-      />
+
+      {state.isShowingInspector ? (
+        <>
+          <Inspector layerIndex={state.selectedHex.layerIndex} />
+        </>
+      ) : (
+        <>
+          <GoogleIconButton
+            className="showInspector"
+            icon="frame_inspect"
+            buttonStyle="rounded"
+            fill
+            onClick={() =>
+              setState((s) => ({ ...s, isShowingInspector: !s.isShowingInspector }))
+            }
+            opticalSize={20}
+            title={`Show Inspector (${keyboardShortcutStrings.toggleShowInspector})`}
+          />
+        </>
+      )}
     </>
   );
-  const leftColumn = state.isShowingLeftColumn ? (
+
+  const leftColumn = (
     <>
-      <div className="leftColumn">
-        <div className="mainHeader">
-          <GoogleIcon
+      {state.isShowingLeftColumn ? (
+        <>
+          <div className="leftColumn">
+            <div className="mainHeader">
+              <GoogleIcon icon="globe" buttonStyle="rounded" fill opticalSize={20} />
+              <span className="label">Player Properties</span>
+              <GoogleIconButton
+                className="pin"
+                icon="keep_off"
+                fill
+                buttonStyle="rounded"
+                onClick={toggleLeftColumn}
+                opticalSize={20}
+                title={`Unpin Player Properties (${keyboardShortcutStrings.toggleShowLeftColumn})`}
+              />
+            </div>
+            <div className="tabs">
+              <button
+                onClick={() => setState((s) => ({ ...s, leftColumnTab: "player" }))}
+                className={state.leftColumnTab === "player" ? "active" : ""}
+              >
+                Global
+              </button>
+              <button
+                onClick={() => setState((s) => ({ ...s, leftColumnTab: "layer" }))}
+                className={state.leftColumnTab === "layer" ? "active" : ""}
+              >
+                Layer
+              </button>
+            </div>
+            {state.leftColumnTab === "player" ? (
+              <PlayerSettings />
+            ) : (
+              <LayerSettings layerIndex={state.selectedHex.layerIndex}></LayerSettings>
+            )}
+          </div>
+        </>
+      ) : (
+        <>
+          <GoogleIconButton
+            className="showLeftColumn"
             icon="globe"
             buttonStyle="rounded"
             fill
             opticalSize={20}
-          />
-          <span className="label">Player Properties</span>
-          <GoogleIconButton
-            className="pin"
-            icon="keep_off"
-            fill
-            buttonStyle="rounded"
             onClick={toggleLeftColumn}
-            opticalSize={20}
-            title={`Unpin Player Properties (${keyboardShortcutStrings.toggleShowLeftColumn})`}
+            title={`Show Player Properties (${keyboardShortcutStrings.toggleShowLeftColumn})`}
           />
-        </div>
-        <div className="tabs">
-          <button
-            onClick={() => setState((s) => ({ ...s, leftColumnTab: "player" }))}
-            className={state.leftColumnTab === "player" ? "active" : ""}
-          >
-            Global
-          </button>
-          <button
-            onClick={() => setState((s) => ({ ...s, leftColumnTab: "layer" }))}
-            className={state.leftColumnTab === "layer" ? "active" : ""}
-          >
-            Layer
-          </button>
-        </div>
-        {state.leftColumnTab === "player" ? (
-          <PlayerSettings />
-        ) : (
-          <LayerSettings
-            layerIndex={state.selectedHex.layerIndex}
-          ></LayerSettings>
-        )}
-      </div>
+        </>
+      )}
+
       <div
         className="resizeHandle"
         onPointerDown={(e) => {
           e.preventDefault();
           document.documentElement.style.cursor = "ew-resize";
           resizing.current = "leftColumn";
+          startDragging(e, { x: state.leftColumnWidth, y: 0 });
         }}
+        ref={leftResizeHandleRef}
+        style={{ display: state.isShowingLeftColumn ? undefined : "none" }}
       ></div>
-    </>
-  ) : (
-    <>
-      <GoogleIconButton
-        className="showLeftColumn"
-        icon="globe"
-        buttonStyle="rounded"
-        fill
-        opticalSize={20}
-        onClick={toggleLeftColumn}
-        title={`Show Player Properties (${keyboardShortcutStrings.toggleShowLeftColumn})`}
-      />
     </>
   );
 
@@ -489,9 +456,7 @@ export default function App() {
     <AppContext.Provider value={{ state, setState }}>
       <div className="app">
         {state.isShowingSettings && (
-          <Settings
-            onHide={() => setState((s) => ({ ...s, isShowingSettings: false }))}
-          />
+          <Settings onHide={() => setState((s) => ({ ...s, isShowingSettings: false }))} />
         )}
         {/* {state.editingLfo && <LfoEditor />} */}
         <div className="columns">
@@ -505,9 +470,7 @@ export default function App() {
             {state.isMultiLayerMode ? (
               <>
                 <div className="multilayerSizeContainer">
-                  <span className="columnsLabel">
-                    Columns: {state.multiLayerSize}
-                  </span>
+                  <span className="columnsLabel">Columns: {state.multiLayerSize}</span>
                   <input
                     type="range"
                     min={1}
@@ -520,12 +483,9 @@ export default function App() {
                     icon="add"
                     buttonStyle="rounded"
                     fill
-                    onClick={(e) =>
-                      addLayer(setState, true, "add layer button")
-                    }
+                    onClick={(e) => addLayer(setState, true, "add layer button")}
                   >
-                    Add Layer (
-                    {keyboardShortcutString(keyboardShortcuts.addNewLayer)})
+                    Add Layer ({keyboardShortcutString(keyboardShortcuts.addNewLayer)})
                   </GoogleIconButton>
                 </div>
                 <div className="multilayer">
@@ -558,16 +518,23 @@ export default function App() {
 
           {inspector}
         </div>
+
+        <div
+          className="resizeHandle-alt"
+          onPointerDown={(e) => {
+            e.preventDefault();
+            document.documentElement.style.cursor = "ns-resize";
+            resizing.current = "modChainWorkspace";
+            startDragging(e, { x: 0, y: state.modChainWorkspaceHeight });
+          }}
+          ref={modChainWorkspaceResizeHandleRef}
+          style={{
+            display: state.modChainControl ? undefined : "none",
+          }}
+        ></div>
+
         {state.modChainControl && (
           <>
-            <div
-              className="resizeHandle-alt"
-              onPointerDown={(e) => {
-                e.preventDefault();
-                document.documentElement.style.cursor = "ns-resize";
-                resizing.current = "modChainWorkspace";
-              }}
-            ></div>
             <ModChainWorkspace />
           </>
         )}
