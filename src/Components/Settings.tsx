@@ -29,10 +29,7 @@ export default function Settings(props: Props) {
     );
   }
 
-  function handleOutputToggled(
-    e: React.ChangeEvent<HTMLInputElement>,
-    outputName: string,
-  ) {
+  function handleOutputToggled(e: React.ChangeEvent<HTMLInputElement>, outputName: string) {
     if (reactiveSettings.midiOutputs.includes(outputName)) {
       settings.set(
         { midiOutputs: List.without(reactiveSettings.midiOutputs, outputName) },
@@ -46,10 +43,7 @@ export default function Settings(props: Props) {
     }
   }
 
-  function handleInputToggled(
-    e: React.ChangeEvent<HTMLInputElement>,
-    inputName: string,
-  ) {
+  function handleInputToggled(e: React.ChangeEvent<HTMLInputElement>, inputName: string) {
     if (reactiveSettings.midiInputs.includes(inputName)) {
       settings.set(
         { midiInputs: List.without(reactiveSettings.midiInputs, inputName) },
@@ -95,6 +89,14 @@ export default function Settings(props: Props) {
           ></input>
           <span>Show confirmation prompts when removing things</span>
         </label>
+        <label className="clicky">
+          <input
+            type="checkbox"
+            checked={reactiveSettings.showMatchingSelectionNotes}
+            onChange={(e) => handleCheckChanged(e, "showMatchingSelectionNotes")}
+          ></input>
+          <span>Hilite matching notes on selection</span>
+        </label>
         <h2>MIDI</h2>
         <div className="midiSelects">
           <div className="midiSelect">
@@ -127,30 +129,28 @@ export default function Settings(props: Props) {
         <TokenManager onHide={props.onHide} />
         <h2>Keyboard Shortcuts</h2>
         <div className="keyboardShortcuts">
-          {Object.entries(reactiveSettings.keyboardShortcuts).map(
-            ([key, shortcut]) => {
-              return (
-                <div key={key} className="keyboardShortcut row">
-                  <div>{camelCaseToSentence(key)}</div>
-                  <KeyboardShortcutInput
-                    shortcut={shortcut}
-                    onChange={(newShortcut) =>
-                      settings.set(
-                        (s) => ({
-                          ...s,
-                          keyboardShortcuts: {
-                            ...s.keyboardShortcuts,
-                            [key]: (newShortcut && newShortcut) || { key: "" },
-                          },
-                        }),
-                        `set keyboard shortcut for ${key}`,
-                      )
-                    }
-                  />
-                </div>
-              );
-            },
-          )}
+          {Object.entries(reactiveSettings.keyboardShortcuts).map(([key, shortcut]) => {
+            return (
+              <div key={key} className="keyboardShortcut row">
+                <div>{camelCaseToSentence(key)}</div>
+                <KeyboardShortcutInput
+                  shortcut={shortcut}
+                  onChange={(newShortcut) =>
+                    settings.set(
+                      (s) => ({
+                        ...s,
+                        keyboardShortcuts: {
+                          ...s.keyboardShortcuts,
+                          [key]: (newShortcut && newShortcut) || { key: "" },
+                        },
+                      }),
+                      `set keyboard shortcut for ${key}`,
+                    )
+                  }
+                />
+              </div>
+            );
+          })}
         </div>
         <div className="bottomButtons">
           <button onClick={() => props.onHide()}>OK</button>

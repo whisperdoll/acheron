@@ -720,7 +720,12 @@ export default function HexGrid(props: Props) {
 
       hexNotes.forEach((hexNote, i) => {
         const hexNoteParts = getNoteParts(hexNote);
-        if (hexNoteParts.name === note.name) {
+
+        const shouldDraw = settings.values.showMatchingSelectionNotes
+          ? hexNoteParts.name === note.name
+          : i === state.selectedHex.hexIndex;
+
+        if (shouldDraw) {
           backCanvas.current?.fillHexagonCell({
             gridLocation: startPosition,
             cellCoordinate: new Point(~~(i / state.gridRows), i % state.gridRows),

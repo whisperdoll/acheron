@@ -33,6 +33,13 @@ export default function NumberInput(props: NumberInputProps) {
   }
 
   function performTransformations(value: number) {
+    if (props.max !== undefined && value > props.max) {
+      value = props.max;
+    }
+    if (props.min !== undefined && value < props.min) {
+      value = props.min;
+    }
+
     if (props.roundPlaces !== undefined && props.roundPlaces >= 0) {
       value = parseFloat(value.toFixed(props.roundPlaces));
       // const pow = Math.pow(10, Math.floor(props.roundPlaces));
@@ -56,19 +63,6 @@ export default function NumberInput(props: NumberInputProps) {
       setSavedValue(e.currentTarget.value);
     }
   }
-
-  useEffect(() => {
-    if (props.max !== undefined && props.value > props.max) {
-      emitChange(props.max);
-    }
-  }, [props.max]);
-
-  useEffect(() => {
-    if (props.min !== undefined && props.value < props.min) {
-      emitChange(props.min);
-    }
-  }, [props.min]);
-
   useEffect(() => {
     setSavedValue(props.value);
   }, [props.value]);

@@ -46,6 +46,7 @@ export interface AppSettings {
   };
   touchMode: TouchMode;
   performanceColors: string[];
+  showMatchingSelectionNotes: boolean;
 }
 
 export const defaultSettings: AppSettings = {
@@ -101,6 +102,7 @@ export const defaultSettings: AppSettings = {
       ctrl: true,
     },
   },
+  showMatchingSelectionNotes: false,
 };
 
 class SettingsStore extends StateStore<AppSettings> {
@@ -151,10 +153,7 @@ class SettingsStore extends StateStore<AppSettings> {
             },
           };
         } else {
-          localStorage.setItem(
-            localStorageKey,
-            JSON.stringify(defaultSettings),
-          );
+          localStorage.setItem(localStorageKey, JSON.stringify(defaultSettings));
           return defaultSettings;
         }
       }
