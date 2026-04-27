@@ -1,4 +1,6 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import useDrag from "../Hooks/useDrag";
+import { Point } from "../lib/utils";
 
 export interface NumberInputProps {
   max?: number;
@@ -18,6 +20,7 @@ export default function NumberInput(props: NumberInputProps) {
   const holdInterval = useRef<ReturnType<typeof setInterval> | null>(null);
   const savedIncrement = useRef<Function>(() => 0);
   const savedDecrement = useRef<Function>(() => 0);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   function emitChange(value: number, autoPerformTransformations = true) {
     if (autoPerformTransformations) {
@@ -144,9 +147,61 @@ export default function NumberInput(props: NumberInputProps) {
     }
   }
 
+  const dragLatch = useRef(false);
+  const onDrag = useCallback((position: Point, _: Point, og: Point, offset: Point) => {
+    const notch = 8;
+    const latch = 8;
+
+    if (Math.abs(offset.y) > latch) {
+      dragLatch.current = true;
+    }
+
+    if (!dragLatch.current) return;
+
+    const initialValue = og.y;
+    const delta = offset.y / notch;
+
+    const newValue = performTransformations(initialValue - delta);
+    emitChange(newValue, false);
+    setSavedValue(newValue);
+  }, []);
+
+  const { dragging, startDragging } = useDrag(onDrag);
+
+  useEffect(() => {
+    if (!inputRef.current) return;
+
+    const onDown = (e: PointerEvent) => {
+      startDragging(e, { x: props.value, y: props.value });
+      dragLatch.current = false;
+    };
+
+    const onTouch = (e: TouchEvent) => {
+      e.preventDefault();
+    };
+
+    const onTouchEnd = (e: TouchEvent) => {
+      e.preventDefault();
+      if (!dragLatch.current) {
+        inputRef.current?.focus();
+      }
+    };
+
+    inputRef.current.addEventListener("pointerdown", onDown);
+    inputRef.current.addEventListener("touchstart", onTouch);
+    inputRef.current.addEventListener("touchend", onTouchEnd);
+
+    return () => {
+      inputRef.current?.removeEventListener("pointerdown", onDown);
+      inputRef.current?.removeEventListener("touchstart", onTouch);
+      inputRef.current?.removeEventListener("touchend", onTouchEnd);
+    };
+  }, [props.value]);
+
   return (
     <div className="numberInput-container">
       <input
+        ref={inputRef}
         className="numberInput"
         type="number"
         min={props.min}
