@@ -8,6 +8,7 @@
   --multilayer-cols: 3;
   --leftColumnWidth: 280px;
   --inspectorWidth: 280px;
+  --status-bar-height: 32px;
 
   --background-color: linear-gradient(18deg, rgb(68, 21, 52) 0%, rgb(23, 24, 100) 100%);
   --mod-background-color: rgb(55, 21, 68);
@@ -444,8 +445,6 @@ button.delete {
   }
 }
 
-$statusBarHeight: 2rem;
-
 .columns {
   display: flex;
   flex-direction: row;
@@ -463,12 +462,12 @@ $statusBarHeight: 2rem;
 
 .statusBar {
   flex-shrink: 0;
-  height: $statusBarHeight;
+  height: var(--status-bar-height);
   background-color: var(--status-bar-background-color);
   display: flex;
   flex-direction: row;
   align-items: center;
-  padding: 0 calc($statusBarHeight / 4);
+  padding: 0 calc(var(--status-bar-height) / 4);
   gap: 0.25rem;
   overflow: hidden;
 
@@ -496,14 +495,21 @@ $statusBarHeight: 2rem;
     }
   }
 
+  .separator {
+    background-color: var(--outline-color);
+    max-width: 1px;
+    min-width: 1px;
+    height: 100%;
+  }
+
   button {
     background-color: transparent;
     height: 100%;
-    padding: 0 0.25rem;
+    width: var(--status-bar-height);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: calc($statusBarHeight * 0.625);
+    font-size: calc(var(--status-bar-height) * 0.625);
     color: var(--status-bar-foreground-color);
 
     &.inactive {
@@ -516,10 +522,10 @@ $statusBarHeight: 2rem;
 
   .pulse {
     margin-right: 0.5rem;
-    min-width: calc($statusBarHeight * 0.5);
-    min-height: calc($statusBarHeight * 0.5);
-    max-width: calc($statusBarHeight * 0.5);
-    max-height: calc($statusBarHeight * 0.5);
+    min-width: calc(var(--status-bar-height) * 0.5);
+    min-height: calc(var(--status-bar-height) * 0.5);
+    max-width: calc(var(--status-bar-height) * 0.5);
+    max-height: calc(var(--status-bar-height) * 0.5);
     background-color: var(--pulse-color);
     border-radius: 100%;
 
@@ -660,7 +666,7 @@ $statusBarHeight: 2rem;
 
 .gridSizeMenu {
   position: absolute;
-  bottom: $statusBarHeight;
+  bottom: var(--status-bar-height);
   background-color: rgba(15, 15, 15, 0.3);
   backdrop-filter: blur(10px);
   z-index: 2;
@@ -677,7 +683,7 @@ $statusBarHeight: 2rem;
 
 .touchModeMenu {
   position: absolute;
-  bottom: $statusBarHeight;
+  bottom: var(--status-bar-height);
   background-color: rgba(15, 15, 15, 0.3);
   backdrop-filter: blur(10px);
   z-index: 2;

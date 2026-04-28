@@ -100,6 +100,7 @@ export interface AppState {
   leftColumnWidth: number;
   inspectorWidth: number;
   modChainWorkspaceHeight: number;
+  statusBarHeight: number;
   multiLayerSize: number;
   performingNotes: PerformanceNote[];
   gridRows: number;
@@ -191,6 +192,7 @@ export const initialState: AppState = {
   inspectorWidth: 300,
   leftColumnWidth: 300,
   modChainWorkspaceHeight: 400,
+  statusBarHeight: 32,
   performingNotes: [],
   gridRows: 7,
   gridCols: 12,

@@ -20,9 +20,7 @@ export default React.memo(function StatusBar(props: Props) {
   const { state, setState } = useContext(AppContext)!;
   const reactiveState = {
     isPlaying: state.isPlaying,
-    currentBeat: Math.floor(
-      state.layers[state.selectedHex.layerIndex].currentBeat,
-    ),
+    currentBeat: Math.floor(state.layers[state.selectedHex.layerIndex].currentBeat),
     isMultiLayerMode: state.isMultiLayerMode,
     isShowingTouchModeMenu: state.isShowingTouchModeMenu,
     isShowingGridSizeMenu: state.isShowingGridSizeMenu,
@@ -32,19 +30,13 @@ export default React.memo(function StatusBar(props: Props) {
     sliceObject(s, ["wrapPlayheads", "touchMode"]),
   );
 
-  const iconProps: Pick<
-    GoogleIconProps,
-    "fill" | "buttonStyle" | "opticalSize"
-  > = {
+  const iconProps: Pick<GoogleIconProps, "fill" | "buttonStyle" | "opticalSize"> = {
     fill: true,
     buttonStyle: "rounded",
     opticalSize: 20,
   };
 
-  function withShortcut(
-    str: string,
-    shortcut: keyof typeof keyboardShortcutStrings,
-  ): string {
+  function withShortcut(str: string, shortcut: keyof typeof keyboardShortcutStrings): string {
     const shortcutString = keyboardShortcutStrings[shortcut];
     return shortcutString ? `${str} (${shortcutString})` : str;
   }
@@ -53,9 +45,7 @@ export default React.memo(function StatusBar(props: Props) {
     <>
       <div className="statusBar">
         <div
-          className={
-            "pulse " + (reactiveState.currentBeat % 2 === 1 ? "active" : "")
-          }
+          className={"pulse " + (reactiveState.currentBeat % 2 === 1 ? "active" : "")}
         ></div>
 
         <GoogleIconButton
@@ -87,13 +77,13 @@ export default React.memo(function StatusBar(props: Props) {
           }}
           {...iconProps}
         />
+
+        <div className="separator" />
+
         <GoogleIconButton
           icon={reactiveState.isPlaying ? "stop" : "play_arrow"}
           onClick={() => togglePlaying(setState, "toggle play button")}
-          title={withShortcut(
-            reactiveState.isPlaying ? "Stop" : "Play",
-            "play",
-          )}
+          title={withShortcut(reactiveState.isPlaying ? "Stop" : "Play", "play")}
           iconElementProps={{
             style: {
               transform: `scale(${reactiveState.isPlaying ? 1.2 : 1.28})`,
@@ -101,6 +91,8 @@ export default React.memo(function StatusBar(props: Props) {
           }}
           {...iconProps}
         />
+
+        <div className="separator" />
 
         <GoogleIconButton
           icon={"touch_app"}
@@ -129,9 +121,7 @@ export default React.memo(function StatusBar(props: Props) {
         <GoogleIconButton
           icon="layers"
           title={withShortcut("Toggle MultiLayer Mode", "toggleMultilayerMode")}
-          onClick={() =>
-            setState((s) => ({ ...s, isMultiLayerMode: !s.isMultiLayerMode }))
-          }
+          onClick={() => setState((s) => ({ ...s, isMultiLayerMode: !s.isMultiLayerMode }))}
           {...iconProps}
           className={cx({
             active: reactiveState.isMultiLayerMode,
@@ -140,14 +130,9 @@ export default React.memo(function StatusBar(props: Props) {
         />
         <GoogleIconButton
           icon="move_up"
-          title={`Turn ${
-            reactiveSettings.wrapPlayheads ? "off" : "on"
-          } Playhead Wrapping`}
+          title={`Turn ${reactiveSettings.wrapPlayheads ? "off" : "on"} Playhead Wrapping`}
           onClick={() =>
-            settings.set(
-              (s) => ({ wrapPlayheads: !s.wrapPlayheads }),
-              "toggle wrap playheads",
-            )
+            settings.set((s) => ({ wrapPlayheads: !s.wrapPlayheads }), "toggle wrap playheads")
           }
           {...iconProps}
           className={cx({
@@ -167,6 +152,9 @@ export default React.memo(function StatusBar(props: Props) {
           }}
           {...iconProps}
         />
+
+        <div className="separator" />
+
         <GoogleIconButton
           icon="bug_report"
           title="Report a bug"
@@ -195,9 +183,7 @@ export default React.memo(function StatusBar(props: Props) {
           icon="question_mark"
           title="Help"
           onClick={() =>
-            openUrl(
-              "https://github.com/whisperdoll/acheron/wiki/Acheron-Documentation",
-            )
+            openUrl("https://github.com/whisperdoll/acheron/wiki/Acheron-Documentation")
           }
           iconElementProps={{
             style: {
@@ -209,9 +195,7 @@ export default React.memo(function StatusBar(props: Props) {
         <div className="version">
           {env("gitHash") && (
             <a
-              href={`https://github.com/whisperdoll/acheron/commit/${env(
-                "gitHash",
-              )}`}
+              href={`https://github.com/whisperdoll/acheron/commit/${env("gitHash")}`}
               target="_blank"
             >
               {env("gitHash")}

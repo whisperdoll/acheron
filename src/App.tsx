@@ -46,7 +46,9 @@ export default function App() {
     () => Dict.transformedValues(keyboardShortcuts, keyboardShortcutString),
     [keyboardShortcuts],
   );
-  const resizing = useRef<"leftColumn" | "inspector" | "modChainWorkspace" | null>(null);
+  const resizing = useRef<
+    "leftColumn" | "inspector" | "modChainWorkspace" | "statusBar" | null
+  >(null);
   const lastTick = useRef(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const stopped = useRef(true);
@@ -54,11 +56,13 @@ export default function App() {
   const leftResizeHandleRef = useRef<HTMLDivElement>(null);
   const inspectorResizeHandleRef = useRef<HTMLDivElement>(null);
   const modChainWorkspaceResizeHandleRef = useRef<HTMLDivElement>(null);
+  const statusBarResizeHandleRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     leftResizeHandleRef.current?.addEventListener("touchstart", preventDefault);
     inspectorResizeHandleRef.current?.addEventListener("touchstart", preventDefault);
     modChainWorkspaceResizeHandleRef.current?.addEventListener("touchstart", preventDefault);
+    statusBarResizeHandleRef.current?.addEventListener("touchstart", preventDefault);
 
     return () => {
       leftResizeHandleRef.current?.removeEventListener("touchstart", preventDefault);
@@ -67,6 +71,7 @@ export default function App() {
         "touchstart",
         preventDefault,
       );
+      statusBarResizeHandleRef.current?.removeEventListener("touchstart", preventDefault);
     };
   }, []);
 
@@ -538,6 +543,18 @@ export default function App() {
             <ModChainWorkspace />
           </>
         )}
+
+        <div
+          className="resizeHandle-alt"
+          onPointerDown={(e) => {
+            e.preventDefault();
+            document.documentElement.style.cursor = "ns-resize";
+            resizing.current = "statusBar";
+            startDragging(e, { x: 0, y: state.statusBarHeight });
+          }}
+          ref={statusBarResizeHandleRef}
+        ></div>
+
         <StatusBar />
         <ModalController />
       </div>

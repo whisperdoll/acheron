@@ -428,10 +428,11 @@ export default function HexGrid(props: Props) {
       mouseLocation.current = pos;
       const hexIndex = closestHexIndex(pos);
       if (!canvasEl.current) return;
+
+      e.preventDefault();
       const isTouch = e instanceof TouchEvent;
 
       if (settings.values.touchMode === "perform") {
-        e.preventDefault();
         const notes: PerformanceNote[] = [];
 
         const touches = isTouch
@@ -505,8 +506,9 @@ export default function HexGrid(props: Props) {
 
       if (!canvasEl.current) return;
 
+      e.preventDefault();
+
       if (settings.values.touchMode === "perform") {
-        e.preventDefault();
         const newNotes = state.performingNotes.slice(0);
         let changed = false;
 
@@ -578,6 +580,7 @@ export default function HexGrid(props: Props) {
       }
 
       if (settings.values.touchMode === "edit") {
+        e.preventDefault();
         // TODO (maybe)
       }
 
