@@ -429,10 +429,10 @@ export default function HexGrid(props: Props) {
       const hexIndex = closestHexIndex(pos);
       if (!canvasEl.current) return;
 
-      e.preventDefault();
       const isTouch = e instanceof TouchEvent;
 
       if (settings.values.touchMode === "perform") {
+        e.preventDefault();
         const notes: PerformanceNote[] = [];
 
         const touches = isTouch
