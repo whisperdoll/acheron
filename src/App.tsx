@@ -168,14 +168,19 @@ export default function App() {
     );
   }
 
-  useEffect(updateInspectorWidth, [state.inspectorWidth]);
-  useEffect(updateLeftColumnWidth, [state.leftColumnWidth]);
-  useEffect(updateModChainWorkspaceHeight, [state.modChainWorkspaceHeight]);
+  function updateStatusBarHeight() {
+    document.documentElement.style.setProperty(
+      "--status-bar-height",
+      `${state.statusBarHeight}px`,
+    );
+  }
+
+  useLayoutEffect(updateInspectorWidth, [state.inspectorWidth]);
+  useLayoutEffect(updateLeftColumnWidth, [state.leftColumnWidth]);
+  useLayoutEffect(updateModChainWorkspaceHeight, [state.modChainWorkspaceHeight]);
+  useLayoutEffect(updateStatusBarHeight, [state.statusBarHeight]);
 
   useLayoutEffect(() => {
-    updateInspectorWidth();
-    updateLeftColumnWidth();
-
     function up(e: PointerEvent) {
       resizing.current = null;
       document.documentElement.style.cursor = "";
@@ -346,6 +351,9 @@ export default function App() {
         break;
       case "modChainWorkspace":
         setState((s) => ({ ...s, modChainWorkspaceHeight: Math.max(invertedPos.y, 100) }));
+        break;
+      case "statusBar":
+        setState((s) => ({ ...s, statusBarHeight: Math.max(invertedPos.y, 16) }));
         break;
       default:
         throw "unknown resize";

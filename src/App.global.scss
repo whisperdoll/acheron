@@ -470,6 +470,7 @@ button.delete {
   padding: 0 calc(var(--status-bar-height) / 4);
   gap: 0.25rem;
   overflow: hidden;
+  overflow-x: auto;
 
   .version {
     margin-left: auto;
@@ -505,7 +506,7 @@ button.delete {
   button {
     background-color: transparent;
     height: 100%;
-    width: var(--status-bar-height);
+    width: calc(var(--status-bar-height) * 0.8);
     display: flex;
     align-items: center;
     justify-content: center;
