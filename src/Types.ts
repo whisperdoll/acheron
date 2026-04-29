@@ -152,8 +152,6 @@ export function coerceControlValueFromNumber<T extends ControlDataType = Control
           ret = Math.floor(ret);
         }
 
-        console.log(control.definition.label, ret);
-
         return ret;
       }
       case "direction":
