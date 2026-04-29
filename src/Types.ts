@@ -141,7 +141,7 @@ export function coerceControlValueFromNumber<T extends ControlDataType = Control
         let ret = value;
 
         if (hasMax && hasMin) {
-          ret = mod(value, max - min) + min;
+          mod(value - min, max - min + 1) + min;
         } else if (hasMax) {
           ret = Math.min(value, max);
         } else if (hasMin) {
@@ -151,6 +151,8 @@ export function coerceControlValueFromNumber<T extends ControlDataType = Control
         if (control.definition.type === "int") {
           ret = Math.floor(ret);
         }
+
+        console.log(control.definition.label, ret);
 
         return ret;
       }
