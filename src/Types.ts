@@ -2,7 +2,7 @@ import { v4 as uuidv4 } from "uuid";
 import { AppState, LayerState } from "./state/AppState";
 import { sliceObject } from "./utils/utils";
 import { PlayerControlKey } from "./utils/DefaultDefinitions";
-import { randomFloat } from "./lib/utils";
+import { isNil, mod, randomFloat } from "./lib/utils";
 import * as WebMidi from "webmidi";
 import Midi from "./utils/midi";
 import { MidiCcMode } from "./utils/ccClassifier";
@@ -134,17 +134,34 @@ export function coerceControlValueFromNumber<T extends ControlDataType = Control
       case "bool":
         return Boolean(value);
       case "decimal":
-        return +value;
+      case "int": {
+        const { min, max } = control.definition;
+        const hasMax = !isNil(max);
+        const hasMin = !isNil(min);
+        let ret = value;
+
+        if (hasMax && hasMin) {
+          ret = mod(value, max - min) + min;
+        } else if (hasMax) {
+          ret = Math.min(value, max);
+        } else if (hasMin) {
+          ret = Math.max(value, min);
+        }
+
+        if (control.definition.type === "int") {
+          ret = Math.floor(ret);
+        }
+
+        return ret;
+      }
       case "direction":
-        return Math.floor(value) % 6;
-      case "int":
-        return Math.floor(value);
+        return mod(Math.floor(value), 6);
       case "select":
         return control.definition.options![
-          Math.floor(value) % control.definition.options!.length
+          mod(Math.floor(value), control.definition.options!.length)
         ].value;
       case "triad":
-        return Math.floor(+value) % 7;
+        return mod(Math.floor(value), 7);
       default:
         throw "no control type..?";
     }
