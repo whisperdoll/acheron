@@ -150,7 +150,7 @@ export default function ModChainWorkspace(props: Props) {
       e.preventDefault();
       setModChainContext((c) => ({
         ...c,
-        offset: { x: c.offset.x + e.movementX, y: c.offset.y + e.movementY },
+        offset: { x: c.offset.x + e.movementX / zoom, y: c.offset.y + e.movementY / zoom },
       }));
     };
 
@@ -199,7 +199,7 @@ export default function ModChainWorkspace(props: Props) {
       document.body.removeEventListener("pointerup", onUp);
       document.body.removeEventListener("pointercancel", onCancel);
     };
-  }, []);
+  }, [zoom]);
 
   useEffect(() => {
     const onUp = (e: PointerEvent) => {

@@ -196,6 +196,7 @@ export default React.memo(function ModChainItemComponent(
   const containerRef = useRef<HTMLDivElement>(null);
   const draggingStart = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
   const modPosStart = useRef<{ x: number; y: number }>(modChainItem.ui);
+  const zoom = workspaceContext.zoom;
 
   useEffect(() => {
     const onDown = (e: PointerEvent) => {
@@ -246,8 +247,8 @@ export default React.memo(function ModChainItemComponent(
         ...m,
         ui: {
           ...m.ui,
-          x: modPosStart.current.x + draggingOffset.x,
-          y: modPosStart.current.y + draggingOffset.y,
+          x: modPosStart.current.x + draggingOffset.x / zoom,
+          y: modPosStart.current.y + draggingOffset.y / zoom,
         },
       }));
     };
@@ -297,7 +298,7 @@ export default React.memo(function ModChainItemComponent(
       document.body.removeEventListener("pointerup", onUp);
       document.body.removeEventListener("pointercancel", onCancel);
     };
-  }, []);
+  }, [zoom]);
 
   return (
     <div ref={containerRef} className={`modChainItem ${modChainItem.__type}`} {...rest}>
