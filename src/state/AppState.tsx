@@ -29,6 +29,7 @@ import {
   LerpMod,
   MidiCcMod,
   SequenceMod,
+  LFOMod,
 } from "../Types.ts";
 import {
   buildFromDefs,
@@ -740,19 +741,25 @@ export function resolveModItem(
       return modItem.value;
     case "lfo":
       const props = { ...modItem } as Lfo;
-      modChain.connections.forEach(({ from, to, toProperty, fromOutput }) => {
-        if (to === modItemId) {
-          props[toProperty as LfoConnectableProperty] = resolveModItem(
-            state,
-            modChainId,
-            from,
-            fromOutput,
-            stack,
-          );
-        }
-      });
+      const r = (attr: keyof Lfo) =>
+        resolveInputtableValue<LFOMod>(
+          state,
+          modChainId,
+          modItemId,
+          attr,
+          null,
+          new Set(stack),
+        );
+
       return getLfoValue(
-        props,
+        {
+          hiPeriod: r("hiPeriod"),
+          lowPeriod: r("lowPeriod"),
+          max: r("max"),
+          min: r("min"),
+          period: r("period"),
+          type: props.type,
+        },
         {
           beat: state.layers[0].currentBeat,
           ms: state.layers[0].currentTimeMs,
@@ -766,7 +773,7 @@ export function resolveModItem(
         modItemId,
         "value1",
         null,
-        stack,
+        new Set(stack),
       );
       const value2 = resolveInputtableValue<MathMod>(
         state,
@@ -774,7 +781,7 @@ export function resolveModItem(
         modItemId,
         "value2",
         null,
-        stack,
+        new Set(stack),
       );
       switch (modItem.operation) {
         case "*":
@@ -798,7 +805,7 @@ export function resolveModItem(
         modItemId,
         "value1",
         null,
-        stack,
+        new Set(stack),
       );
       const value2 = resolveInputtableValue<LerpMod>(
         state,
@@ -806,7 +813,7 @@ export function resolveModItem(
         modItemId,
         "value2",
         null,
-        stack,
+        new Set(stack),
       );
       const interpol = resolveInputtableValue<LerpMod>(
         state,
@@ -814,7 +821,7 @@ export function resolveModItem(
         modItemId,
         "interpol",
         null,
-        stack,
+        new Set(stack),
       );
       return value1 + (value2 - value1) * interpol;
     }
@@ -825,7 +832,7 @@ export function resolveModItem(
         modItemId,
         "controllerNumber",
         null,
-        stack,
+        new Set(stack),
       );
       return Midi.ccValue(roundMod(controller, 0, 128)) / 127;
     }
@@ -839,7 +846,7 @@ export function resolveModItem(
         modItemId,
         "indexPc",
         null,
-        stack,
+        new Set(stack),
       );
       let index;
 
@@ -852,7 +859,7 @@ export function resolveModItem(
               modItemId,
               "index",
               null,
-              stack,
+              new Set(stack),
             ),
           ),
           modItem.values.length,
@@ -872,7 +879,7 @@ export function resolveModItem(
         modItemId,
         `values.${index}`,
         null,
-        stack,
+        new Set(stack),
       );
       return value;
     }
