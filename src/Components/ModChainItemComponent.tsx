@@ -208,10 +208,19 @@ export default React.memo(function ModChainItemComponent(
       draggingStart.current = { x: e.clientX, y: e.clientY };
     };
 
-    headerRef.current?.addEventListener("pointerdown", onDown);
-    headerRef.current?.addEventListener("touchstart", preventDefault);
+    const onTouch = (e: TouchEvent) => {
+      if (e.target !== headerRef.current) return;
 
-    return () => headerRef.current?.removeEventListener("pointerdown", onDown);
+      e.preventDefault();
+    };
+
+    headerRef.current?.addEventListener("pointerdown", onDown);
+    headerRef.current?.addEventListener("touchstart", onTouch);
+
+    return () => {
+      headerRef.current?.removeEventListener("pointerdown", onDown);
+      headerRef.current?.removeEventListener("touchstart", onTouch);
+    };
   }, [modChainItem.ui]);
 
   useEffect(() => {
