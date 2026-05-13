@@ -40,7 +40,7 @@ import { pluck, sliceObject } from "../utils/utils";
 import { PlayerControlKeys } from "../utils/DefaultDefinitions";
 import LfoVisualizer from "./LfoVisualizer";
 import LfoControls from "./LfoControls";
-import { cx, tryParseInt } from "../lib/utils";
+import { cx, formatNumberSmall, tryParseInt } from "../lib/utils";
 import Midi from "../utils/midi";
 import List from "../lib/list";
 import GoogleIconButton from "./GoogleIconButton";
@@ -260,7 +260,7 @@ export const ReadOnlyValue = React.memo(function ReadOnlyControlValue({
     case "decimal":
     case "int":
     default:
-      return <div>{value}</div>;
+      return <div>{typeof value === "number" ? formatNumberSmall(value) : value}</div>;
     case "select":
       return <div>{value}</div>;
     case "direction":

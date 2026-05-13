@@ -44,6 +44,7 @@ import useNow from "../Hooks/useNow";
 import { produce } from "immer";
 import { sliceObject } from "../utils/utils";
 import { LayerControlTypes } from "../utils/DefaultDefinitions";
+import NonShrinking from "./NonShrinking";
 
 interface Props {
   id: string;
@@ -408,10 +409,12 @@ export default React.memo(function ModChainItemComponent(
               return (
                 <div className="row">
                   <Control.Container controlId={modChainId} bald>
-                    <Control.ReadOnlyValue
-                      type={sourceControl.definition.type!}
-                      value={getControlValue(state, inheritedControl!)}
-                    />
+                    <NonShrinking>
+                      <Control.ReadOnlyValue
+                        type={sourceControl.definition.type!}
+                        value={getControlValue(state, inheritedControl!)}
+                      />
+                    </NonShrinking>
                   </Control.Container>
                   <ModChainOutputNode modItemId={modChainItemId} outputKey="output" />
                 </div>
