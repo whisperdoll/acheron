@@ -484,6 +484,20 @@ export default function HexGrid(props: Props) {
           },
         }));
 
+        if (e.ctrlKey) {
+          if (!canvas.current) return;
+          if (hexIndex === -1) return;
+
+          e.stopPropagation(); // otherwise it will instantly close
+
+          const pos = canvas.current.localPointToGlobal(hexPoints.current[hexIndex]);
+
+          showContextMenu(e, {
+            position: pos.toJSON(),
+          });
+          return;
+        }
+
         if (!state.layers[props.layerIndex].tokenIds[hexIndex]?.length) return;
 
         setState((s) => ({

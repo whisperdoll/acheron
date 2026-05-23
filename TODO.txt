@@ -1,7 +1,6 @@
 TODO
 - current time in modchains
 
-- fix resize handles
 - undo/redo
 - builtin synth
 - mobile layout
@@ -16,6 +15,7 @@ TODO
 - tauri
 
 DONE
+- fix resize handles
 - control values in modchains
 - go to the tempo modchain, add a sequence, change a value of the sequence while running; brrrrrr.ache
 - midi channel selection is messed up in some weird kind of way

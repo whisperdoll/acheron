@@ -31,10 +31,7 @@ export interface ContextMenu {
   items: (ContextMenuOption | ContextMenu)[];
 }
 
-export type ContextMenuItem =
-  | ContextMenuOption
-  | ContextMenu
-  | { type: "separator" };
+export type ContextMenuItem = ContextMenuOption | ContextMenu | { type: "separator" };
 
 export const SeparatorItem: ContextMenuItem = { type: "separator" };
 
@@ -53,9 +50,7 @@ function ContextMenuItemElement(props: ContextMenuItem) {
   } else {
     return (
       <div
-        onClick={(e) =>
-          props.handler && props.handler(e.nativeEvent as PointerEvent)
-        }
+        onClick={(e) => props.handler && props.handler(e.nativeEvent as PointerEvent)}
         className={cx("context-menu-item", { "has-handler": !!props.handler })}
       >
         {props.contents}
@@ -113,15 +108,10 @@ const ContextMenuElement = React.memo(
         }),
       };
       const documentBounds = document.body.getBoundingClientRect();
-      const displayOffset = resolveMaybeGenerated(
-        unresolvedDisplayOffset,
-        bounds
-      );
+      const displayOffset = resolveMaybeGenerated(unresolvedDisplayOffset, bounds);
       const displayOffsetI: { x: number; y: number } =
         typeof unresolvedDisplayOffset === "function"
-          ? Point.fromPointLike(
-              unresolvedDisplayOffset(boundsI)
-            ).swapped.toJSON()
+          ? Point.fromPointLike(unresolvedDisplayOffset(boundsI)).swapped.toJSON()
           : {
               x: unresolvedDisplayOffset.y,
               y: unresolvedDisplayOffset.x,
@@ -153,10 +143,7 @@ const ContextMenuElement = React.memo(
         if (position[x] + displayOffset[x] < 0) {
           // console.log("resize", { x }, "too far up");
           newOffset[x] = -displayOffset[x];
-        } else if (
-          position[x] + displayOffset[x] + bounds[width] >
-          documentBounds[width]
-        ) {
+        } else if (position[x] + displayOffset[x] + bounds[width] > documentBounds[width]) {
           // console.log("resize", { x }, "too far down");
 
           const otherSideX = position[x] - bounds[width] - displayOffset[x];
@@ -164,18 +151,13 @@ const ContextMenuElement = React.memo(
             // console.log(">", "other side");
 
             if (
-              position[x] +
-                (-bounds[width] - displayOffset[x]) +
-                bounds[width] <=
+              position[x] + (-bounds[width] - displayOffset[x]) + bounds[width] <=
               documentBounds[width]
             ) {
               newOffset[x] = -bounds[width] - displayOffset[x];
             } else {
               const overflow =
-                position[x] +
-                bounds[width] +
-                displayOffset[x] -
-                documentBounds[width];
+                position[x] + bounds[width] + displayOffset[x] - documentBounds[width];
 
               newOffset[x] = displayOffset[x] - overflow;
             }
@@ -253,7 +235,7 @@ const ContextMenuElement = React.memo(
         ))}
       </div>
     );
-  })
+  }),
 );
 
 type TriggerOpts = {
@@ -262,13 +244,10 @@ type TriggerOpts = {
 
 type ReturnType = [
   React.JSX.Element, // node
-  (
-    e: MouseEvent | TouchEvent | PointerEvent,
-    opts?: TriggerOpts
-  ) => Promise<void>, // trigger
+  (e: MouseEvent | TouchEvent | PointerEvent, opts?: TriggerOpts) => Promise<void>, // trigger
   (opts?: TriggerOpts) => void, // update
   boolean, // is showing
-  React.Dispatch<React.SetStateAction<boolean>> // set is showing
+  React.Dispatch<React.SetStateAction<boolean>>, // set is showing
 ];
 
 type MenuType = MaybeGeneratedPromise<
@@ -283,7 +262,7 @@ type MenuType = MaybeGeneratedPromise<
         }>
       >;
       isShowing: boolean;
-    }
+    },
   ]
 >;
 
@@ -292,19 +271,15 @@ type Opts = { offset?: MaybeGenerated<{ x: number; y: number }, [DOMRect]> };
 export default function useContextMenu(
   menu: MenuType,
   opts: Opts,
-  dependencyArray?: any[]
+  dependencyArray?: any[],
 ): ReturnType;
-export default function useContextMenu(
-  menu: MenuType,
-  dependencyArray?: any[]
-): ReturnType;
+export default function useContextMenu(menu: MenuType, dependencyArray?: any[]): ReturnType;
 export default function useContextMenu(
   menu: MenuType,
   optsOrDependencyArray?: Opts | any[],
-  dependencyArray?: any[]
+  dependencyArray?: any[],
 ): ReturnType {
-  const passedOpts =
-    optsOrDependencyArray && !Array.isArray(optsOrDependencyArray);
+  const passedOpts = optsOrDependencyArray && !Array.isArray(optsOrDependencyArray);
   const opts: Required<Opts> = useMemo(
     () =>
       passedOpts
@@ -315,7 +290,7 @@ export default function useContextMenu(
         : {
             offset: { x: 0, y: 0 },
           },
-    [optsOrDependencyArray]
+    [optsOrDependencyArray],
   );
   const dependencyArrayResolved: any[] | undefined = passedOpts
     ? dependencyArray
@@ -328,9 +303,8 @@ export default function useContextMenu(
     x: 0,
     y: 0,
   });
-  const triggeringEvent = useRef<MouseEvent | TouchEvent | PointerEvent | null>(
-    null
-  );
+  const triggeringEvent = useRef<MouseEvent | TouchEvent | PointerEvent | null>(null);
+  const triggeringOpts = useRef<TriggerOpts | undefined>(undefined);
 
   useEffect(() => {
     function onDocumentClick(e: MouseEvent | TouchEvent | PointerEvent) {
@@ -357,6 +331,7 @@ export default function useContextMenu(
   const trigger = useCallback(
     async (e: MouseEvent | TouchEvent | PointerEvent, opts?: TriggerOpts) => {
       triggeringEvent.current = e;
+      triggeringOpts.current = opts;
       const items = await resolveMaybeGeneratedPromise(menu, {
         hide,
         setPosition,
@@ -371,14 +346,14 @@ export default function useContextMenu(
       setItems(items);
       setIsShowing(true);
     },
-    [ref, setIsShowing, menu]
+    [ref, setIsShowing, menu],
   );
 
   const refresh = useCallback(() => {
     if (!triggeringEvent.current) return;
     if (!isShowing) return;
 
-    trigger(triggeringEvent.current);
+    trigger(triggeringEvent.current, triggeringOpts.current);
   }, [trigger]);
 
   useEffect(() => {
