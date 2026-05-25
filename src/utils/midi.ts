@@ -229,10 +229,14 @@ export default class Midi {
         const midiOutput = WebMidi.getOutputByName(deviceName);
         if (!midiOutput) return;
 
-        midiOutput.channels[note.channel].sendNoteOn(note.note, {
-          rawAttack: note.velocity,
-          time: note.time,
-        });
+        try {
+          midiOutput.channels[note.channel].sendNoteOn(note.note, {
+            rawAttack: note.velocity,
+            time: note.time,
+          });
+        } catch (e) {
+          // bad note
+        }
       });
     });
   }

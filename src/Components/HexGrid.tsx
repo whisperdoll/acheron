@@ -317,7 +317,8 @@ export default function HexGrid(props: Props) {
     state.gridCols,
     state.gridRows,
     state.gridStartingNote,
-    // now,
+    state.modChains,
+    now,
   ]);
 
   const [contextMenuNode, showContextMenu] = useContextMenu(
@@ -845,8 +846,11 @@ export default function HexGrid(props: Props) {
     state.gridCols,
     state.gridRows,
     state.gridStartingNote,
-    state.keyMode,
-    state.keyTonic,
+    state.modChains[state.keyMode],
+    state.modChains[state.keyTonic],
+    state.modChains[state.layers[props.layerIndex].keyTonic],
+    state.modChains[state.layers[props.layerIndex].keyMode],
+    now,
   ]);
 
   const style = props.size ? { width: props.size + "px", height: "auto" } : undefined;
