@@ -41,7 +41,7 @@ const LifespanToken: TokenDefinition<Store> = {
       label: "Gate-On",
       type: "int",
       min: 0,
-      max: 10244,
+      max: 1024,
       defaultValue: 0,
     },
   },
