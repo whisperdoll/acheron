@@ -378,7 +378,7 @@ export default function HexGrid(props: Props) {
 
       const isTouch = e instanceof TouchEvent;
 
-      if (settings.values.touchMode === "perform") {
+      if (settings.values.touchMode === "perform" || e.altKey) {
         const toRemove: Set<PerformanceNote["identifier"]> = new Set();
 
         const identifiers = new Set(
@@ -432,7 +432,7 @@ export default function HexGrid(props: Props) {
 
       const isTouch = e instanceof TouchEvent;
 
-      if (settings.values.touchMode === "perform") {
+      if (settings.values.touchMode === "perform" || e.altKey) {
         e.preventDefault();
         const notes: PerformanceNote[] = [];
 
@@ -523,7 +523,7 @@ export default function HexGrid(props: Props) {
 
       e.preventDefault();
 
-      if (settings.values.touchMode === "perform") {
+      if (settings.values.touchMode === "perform" || e.altKey) {
         const newNotes = state.performingNotes.slice(0);
         let changed = false;
 
