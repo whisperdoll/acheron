@@ -15,7 +15,6 @@ import LayerSettings from "./Components/LayerSettings";
 import { Driver } from "./utils/driver";
 import Midi from "./utils/midi";
 import Settings from "./Components/Settings";
-import { buildMenu } from "./Menu";
 import settings, { AppSettings } from "./state/AppSettings";
 import useTimer from "./Hooks/useTimer";
 import StatusBar from "./Components/StatusBar";
@@ -203,32 +202,6 @@ export default function App() {
   function toggleLeftColumn() {
     setState((s) => ({ ...s, isShowingLeftColumn: !s.isShowingLeftColumn }));
   }
-
-  useEffect(() => {
-    buildMenu({
-      async open() {
-        const serialized = await openComposition();
-        if (!serialized) return;
-
-        const deserialized = deserializeComposition(state, serialized);
-        setState(deserialized);
-      },
-      saveAs() {},
-      addLayer() {
-        addLayer(setState, true, "add layer from menu");
-      },
-      async devtools() {
-        await toggleDevtools();
-      },
-      toggleInspector() {
-        setState((s) => ({ ...s, isShowingInspector: !s.isShowingInspector }));
-      },
-      toggleLeftColumn,
-      toggleMultilayer() {
-        setState((s) => ({ ...s, isMultiLayerMode: !s.isMultiLayerMode }));
-      },
-    });
-  }, []);
 
   useEffect(() => {
     (async () => {

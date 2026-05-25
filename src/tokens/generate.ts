@@ -48,7 +48,7 @@ const GenerateToken: TokenDefinition<Store> = {
       label: "Offset",
       type: "int",
       min: 0,
-      max: 64,
+      max: 1024,
       defaultValue: 0,
     },
   },
