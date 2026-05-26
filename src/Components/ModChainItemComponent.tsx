@@ -184,7 +184,7 @@ export default React.memo(function ModChainItemComponent(
       case "math":
         return "Math";
       case "lerp":
-        return "Lerp";
+        return "Mix";
       case "midiCc":
         return "MIDI CC";
       case "sequence":
