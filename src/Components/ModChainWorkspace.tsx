@@ -384,7 +384,7 @@ export default function ModChainWorkspace(props: Props) {
               });
             }}
           >
-            Add Lerp
+            Add Mix
           </GoogleIconButton>
           <GoogleIconButton
             icon="clock_loader_10"
