@@ -8,9 +8,11 @@
     "dev": "tsx bin/dev.ts",
     "build": "tsc && vite build",
     "preview": "vite preview",
+    "check": "tsc --incremental",
     "tauri": "tauri",
     "electron-dev": "electron-install && cross-env NODE_ENV=development electron src/main-electron.js",
-    "electron-install": "node node_modules/electron/install.js"
+    "electron-install": "node node_modules/electron/install.js",
+    "prepare": "husky"
   },
   "lint-staged": {},
   "build": {
@@ -133,6 +135,7 @@
     "@vitejs/plugin-react": "^4.3.4",
     "cross-env": "^7.0.3",
     "electron": "^35.0.2",
+    "husky": "^9.1.7",
     "sass-embedded": "^1.85.1",
     "tsx": "^4.19.3",
     "typescript": "^6.0.2",
