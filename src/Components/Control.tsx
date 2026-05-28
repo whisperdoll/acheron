@@ -309,24 +309,19 @@ export const Value = React.memo(function ControlValue() {
     return getControlValue(state, context.controlId);
   }, [modChain, !isFixed && now]);
 
-  const handleUpdate = useCallback((value: number) => {
-    setState((s) => ({
-      ...s,
-      modChains: {
-        ...s.modChains,
-        [context.controlId]: {
-          ...s.modChains[context.controlId],
-          mods: {
-            ...s.modChains[context.controlId].mods,
-            [modChain.output.from]: {
-              ...s.modChains[context.controlId].mods[modChain.output.from],
-              value,
-            },
-          },
-        },
-      },
-    }));
-  }, []);
+  const handleUpdate = useCallback(
+    (value: number) => {
+      setState(
+        produce((s) => {
+          const mod = s.modChains[context.controlId].mods[modChain.output.from];
+          if ("value" in mod) {
+            mod.value = value;
+          }
+        }),
+      );
+    },
+    [context.controlId, modChain.output.from],
+  );
 
   return (
     <div className="controlRow">
