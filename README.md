@@ -3,9 +3,12 @@
 
 ## About
 
-[Acheron](https://www.whisperdoll.love/acheron/) is a loose web-based recreation of **[Elysium](https://github.com/mmower/elysium)**, part of a a small, unique family of MIDI sequencers based on a hexagonal grid of notes called the [**harmonic table**](https://en.wikipedia.org/wiki/Harmonic_table_note_layout).
+[Acheron](https://www.whisperdoll.love/acheron/) is a loose web-based recreation of **[Elysium](https://github.com/mmower/elysium)**, part of a small, unique family of MIDI sequencers based on a hexagonal grid of notes called the [**harmonic table**](https://en.wikipedia.org/wiki/Harmonic_table_note_layout).
 
-The cross-platform web version of Acheron can be found [Here](https://www.whisperdoll.love/acheron/). There is also a stand-alone Windows version [Here](https://github.com/whisperdoll/acheron/releases) for use without an internet connection.
+The cross-platform web version of Acheron can be found [Here](https://www.whisperdoll.love/acheron/).
+- Acheron was designed using and works best in Chromium based browsers. It may also work in Firefox based browsers, but little testing has been done in this area.
+- Acheron **doesn't** work in Webkit based browsers such as Safari
+- There is also a stand-alone Windows version [Here](https://github.com/whisperdoll/acheron/releases) for use without an internet connection.
 
 You can support the development of this software here: **https://www.patreon.com/whisperdoll**
 
