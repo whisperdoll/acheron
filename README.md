@@ -18,9 +18,7 @@ You'll need a [Digital Audio Workstation](https://en.wikipedia.org/wiki/Digital_
 
 To use Acheron without a physical MIDI device (e.g. with a DAW or other software):
 
-- Recent Windows 11 with built-in MIDI Settings app:
-    - (???)
-- Windows (pre MIDI Settings):
+- Windows:
     - First, download and install Tobias Erichsen's [loopMIDI](https://www.tobias-erichsen.de/software/loopmidi.html)
     - Use loopMIDI to create a virtual MIDI port (click the plus button at the bottom left of the window.)
 - Mac:
