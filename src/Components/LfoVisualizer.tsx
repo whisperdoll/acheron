@@ -128,7 +128,7 @@ export default React.memo(function LfoVisualizer({
     ctx.beginPath();
     ctx.arc(pc * resolutionX, y, 5, 0, 2 * Math.PI, false);
     ctx.fill();
-  }, []);
+  }, [lfo]);
 
   useEffect(() => {
     clearTime();
