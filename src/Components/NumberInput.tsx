@@ -22,36 +22,42 @@ export default function NumberInput(props: NumberInputProps) {
   const savedDecrement = useRef<Function>(() => 0);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  function emitChange(value: number, autoPerformTransformations = true) {
-    if (autoPerformTransformations) {
-      value = performTransformations(value);
-    }
+  const performTransformations = useCallback(
+    (value: number) => {
+      if (props.max !== undefined && value > props.max) {
+        value = props.max;
+      }
+      if (props.min !== undefined && value < props.min) {
+        value = props.min;
+      }
 
-    if (value !== props.value) {
-      props.onChange(value);
-    }
-  }
+      if (props.roundPlaces !== undefined && props.roundPlaces >= 0) {
+        value = parseFloat(value.toFixed(props.roundPlaces));
+        // const pow = Math.pow(10, Math.floor(props.roundPlaces));
+        // return Math.round((value + Number.EPSILON) * pow) / pow;
+      }
 
-  function performTransformations(value: number) {
-    if (props.max !== undefined && value > props.max) {
-      value = props.max;
-    }
-    if (props.min !== undefined && value < props.min) {
-      value = props.min;
-    }
+      if (props.coerce) {
+        value = props.coerce(value);
+      }
 
-    if (props.roundPlaces !== undefined && props.roundPlaces >= 0) {
-      value = parseFloat(value.toFixed(props.roundPlaces));
-      // const pow = Math.pow(10, Math.floor(props.roundPlaces));
-      // return Math.round((value + Number.EPSILON) * pow) / pow;
-    }
+      return value;
+    },
+    [props.max, props.min, props.roundPlaces, props.coerce],
+  );
 
-    if (props.coerce) {
-      value = props.coerce(value);
-    }
+  const emitChange = useCallback(
+    (value: number, autoPerformTransformations = true) => {
+      if (autoPerformTransformations) {
+        value = performTransformations(value);
+      }
 
-    return value;
-  }
+      if (value !== props.value) {
+        props.onChange(value);
+      }
+    },
+    [performTransformations, props.onChange],
+  );
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     let value = parseFloat(e.currentTarget.value);
@@ -63,6 +69,7 @@ export default function NumberInput(props: NumberInputProps) {
       setSavedValue(e.currentTarget.value);
     }
   }
+
   useEffect(() => {
     setSavedValue(props.value);
   }, [props.value]);
@@ -142,23 +149,26 @@ export default function NumberInput(props: NumberInputProps) {
   }
 
   const dragLatch = useRef(false);
-  const onDrag = useCallback((position: Point, _: Point, og: Point, offset: Point) => {
-    const notch = 8;
-    const latch = 8;
+  const onDrag = useCallback(
+    (position: Point, _: Point, og: Point, offset: Point) => {
+      const notch = 8;
+      const latch = 8;
 
-    if (Math.abs(offset.y) > latch) {
-      dragLatch.current = true;
-    }
+      if (Math.abs(offset.y) > latch) {
+        dragLatch.current = true;
+      }
 
-    if (!dragLatch.current) return;
+      if (!dragLatch.current) return;
 
-    const initialValue = og.y;
-    const delta = offset.y / notch;
+      const initialValue = og.y;
+      const delta = offset.y / notch;
 
-    const newValue = performTransformations(initialValue - delta);
-    emitChange(newValue, false);
-    setSavedValue(newValue);
-  }, []);
+      const newValue = performTransformations(initialValue - delta);
+      emitChange(newValue, false);
+      setSavedValue(newValue);
+    },
+    [performTransformations, emitChange, setSavedValue],
+  );
 
   const { dragging, startDragging } = useDrag(onDrag);
 
