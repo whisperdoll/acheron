@@ -7,16 +7,14 @@ import { keyboardShortcutString } from "../lib/keyboard";
 import Dict from "../lib/dict";
 import useKeyboardShortcutStrings from "../Hooks/useKeyboardShortcutStrings";
 import env from "../lib/env";
-import { sliceObject } from "../utils/utils";
+import { sliceObject } from "../lib/utils";
 import { cx } from "../lib/utils";
 import GridSizeMenu from "./GridSizeMenu";
 import TouchModeMenu from "./TouchModeMenu";
 import { deserializeComposition, serializeComposition } from "../Serialization";
 import { AppContext, togglePlaying } from "../state/AppState";
 
-interface Props {}
-
-export default React.memo(function StatusBar(props: Props) {
+export default React.memo(function StatusBar() {
   const { state, setState } = useContext(AppContext)!;
   const reactiveState = {
     isPlaying: state.isPlaying,

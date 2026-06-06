@@ -31,17 +31,14 @@ export default function HexGridContextMenu({ onHide: hide }: Props) {
   const tokenIds = useMemo(
     () =>
       state.selectedHex.hexIndex !== -1
-        ? state.layers[state.selectedHex.layerIndex].tokenIds[
-            state.selectedHex.hexIndex
-          ]
+        ? state.layers[state.selectedHex.layerIndex].tokenIds[state.selectedHex.hexIndex]
         : [],
-    [state.selectedHex, state.layers[layerIndex]],
+    [state.layers, state.selectedHex.hexIndex, state.selectedHex.layerIndex],
   );
   const stateTokens = state.tokens;
   const stateControls = state.controls;
   const [selectedTokenId, setSelectedTokenId] = useState<string | null>(null);
-  const selectedToken =
-    selectedTokenId === null ? null : stateTokens[selectedTokenId];
+  const selectedToken = selectedTokenId === null ? null : stateTokens[selectedTokenId];
 
   async function handleRemove(tokenId: string) {
     if (
@@ -60,7 +57,7 @@ export default function HexGridContextMenu({ onHide: hide }: Props) {
     if (selectedTokenId && tokenIds.includes(selectedTokenId)) return;
 
     setSelectedTokenId(null);
-  }, [tokenIds]);
+  }, [selectedTokenId, tokenIds]);
 
   function description(token: Token) {
     const controls = token.controlIds.map((id) => stateControls[id]);
@@ -114,32 +111,26 @@ export default function HexGridContextMenu({ onHide: hide }: Props) {
     if (state.selectedHex.hexIndex === -1) return;
 
     const numTokens =
-      state.layers[state.selectedHex.layerIndex].tokenIds[
-        state.selectedHex.hexIndex
-      ].length;
+      state.layers[state.selectedHex.layerIndex].tokenIds[state.selectedHex.hexIndex].length;
     const destinationIndex = mod(index + offset, numTokens);
     setState((s) => ({
       ...s,
-      layers: List.withIndexReplaced(
-        s.layers,
-        s.selectedHex.layerIndex,
-        (layer) => ({
-          ...layer,
-          tokenIds: List.withIndexReplaced(
-            layer.tokenIds,
-            s.selectedHex.hexIndex,
-            (oldTokenIds) => {
-              const newTokenIds = List.copy(oldTokenIds);
-              const [toBeMoved] = newTokenIds.splice(index, 1);
-              // console.log(List.copy(newLayer.tokenIds));
-              // console.log(`${toBeMoved} -> ${destinationIndex}`);
-              newTokenIds.splice(destinationIndex, 0, toBeMoved);
-              // console.log(List.copy(newLayer.tokenIds));
-              return newTokenIds;
-            },
-          ),
-        }),
-      ),
+      layers: List.withIndexReplaced(s.layers, s.selectedHex.layerIndex, (layer) => ({
+        ...layer,
+        tokenIds: List.withIndexReplaced(
+          layer.tokenIds,
+          s.selectedHex.hexIndex,
+          (oldTokenIds) => {
+            const newTokenIds = List.copy(oldTokenIds);
+            const [toBeMoved] = newTokenIds.splice(index, 1);
+            // console.log(List.copy(newLayer.tokenIds));
+            // console.log(`${toBeMoved} -> ${destinationIndex}`);
+            newTokenIds.splice(destinationIndex, 0, toBeMoved);
+            // console.log(List.copy(newLayer.tokenIds));
+            return newTokenIds;
+          },
+        ),
+      })),
     }));
   }
 
@@ -157,11 +148,7 @@ export default function HexGridContextMenu({ onHide: hide }: Props) {
                     className="mono addToken"
                     title={tokenDef.label}
                     onClick={() => {
-                      addTokenToSelected(
-                        setState,
-                        uid,
-                        "add token via context menu",
-                      );
+                      addTokenToSelected(setState, uid, "add token via context menu");
                     }}
                   >
                     {tokenDef.symbol}

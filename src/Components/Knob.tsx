@@ -67,7 +67,18 @@ export default function Knob({
       document.removeEventListener("pointermove", handleMouseMove);
       document.removeEventListener("pointerup", handleMouseUp);
     };
-  }, [mouseDown, onChange, step, value]);
+  }, [
+    keyboard,
+    knobSpeed,
+    max,
+    min,
+    mouseDown,
+    onChange,
+    slowStep,
+    step,
+    stepsPerSecond,
+    value,
+  ]);
 
   return (
     <div className="knobContainer">

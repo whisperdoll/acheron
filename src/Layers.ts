@@ -1,12 +1,8 @@
 import Dict from "./lib/dict";
 import { AppState, LayerState } from "./state/AppState";
 import { ControlState, ModChain } from "./Types";
-import {
-  buildFromDefs,
-  layerControlDefs,
-  LayerControlKey,
-} from "./utils/DefaultDefinitions";
-import { createEmpty2dArray, msToS } from "./utils/utils";
+import { buildFromDefs, layerControlDefs, LayerControlKey } from "./utils/DefaultDefinitions";
+import { createEmpty2dArray, msToS } from "./lib/utils";
 import settings from "./state/AppSettings";
 
 export function buildLayer(appState: AppState): {
@@ -19,10 +15,7 @@ export function buildLayer(appState: AppState): {
   return {
     layerState: {
       ...Dict.fromArray(
-        Object.entries(controls).map(([id, value]) => [
-          value.key as LayerControlKey,
-          id,
-        ]),
+        Object.entries(controls).map(([id, value]) => [value.key as LayerControlKey, id]),
       ),
       tokenIds: createEmpty2dArray(appState.gridCols * appState.gridRows),
       playheads: createEmpty2dArray(appState.gridCols * appState.gridRows),

@@ -1,8 +1,8 @@
 import { v4 as uuidv4 } from "uuid";
 import { AppState, LayerState } from "./state/AppState";
-import { sliceObject } from "./utils/utils";
+import { isNullish, sliceObject } from "./lib/utils";
 import { PlayerControlKey } from "./utils/DefaultDefinitions";
-import { isNil, mod, randomFloat } from "./lib/utils";
+import { mod, randomFloat } from "./lib/utils";
 import * as WebMidi from "webmidi";
 import Midi from "./utils/midi";
 import { MidiCcMode } from "./utils/ccClassifier";
@@ -30,6 +30,7 @@ export interface WebMidiPortEvent extends WebMidi.Event {
   port: WebMidiInput | WebMidiOutput;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type TokenStore = Record<string, any>;
 
 export type ControlValueType =
@@ -48,16 +49,22 @@ export type Direction = 0 | 1 | 2 | 3 | 4 | 5;
 
 export type StartCallback<StoreType extends TokenStore = TokenStore> = (
   store: StoreType,
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
   helpers: Record<string, Function>,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ) => any;
 export type StopCallback<StoreType extends TokenStore = TokenStore> = (
   store: StoreType,
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
   helpers: Record<string, Function>,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ) => any;
 export type TickCallback<StoreType extends TokenStore = TokenStore> = (
   store: StoreType,
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
   helpers: Record<string, Function>,
   playheads: Omit<Playhead, "store">[],
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ) => any;
 export const ControlDataTypes = [
   "int",
@@ -89,7 +96,7 @@ export interface Playhead {
   age: number;
   lifespan: number;
   direction: Direction;
-  store: Record<TokenUID, Record<string, any>>;
+  store: Record<TokenUID, Record<string, unknown>>;
 }
 
 export interface ControlDefinition<T extends ControlDataType = ControlDataType> {
@@ -101,7 +108,7 @@ export interface ControlDefinition<T extends ControlDataType = ControlDataType> 
   options?: SelectOption[];
   inherit?: string;
   showIf?: string;
-  defaultValue?: any;
+  defaultValue?: string | number | boolean;
   control?: number;
 }
 
@@ -136,12 +143,12 @@ export function coerceControlValueFromNumber<T extends ControlDataType = Control
       case "decimal":
       case "int": {
         const { min, max } = control.definition;
-        const hasMax = !isNil(max);
-        const hasMin = !isNil(min);
+        const hasMax = !isNullish(max);
+        const hasMin = !isNullish(min);
         let ret = value;
 
         if (hasMax && hasMin) {
-          mod(value - min, max - min + 1) + min;
+          ret = mod(value - min, max - min + 1) + min;
         } else if (hasMax) {
           ret = Math.min(value, max);
         } else if (hasMin) {

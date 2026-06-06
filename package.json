@@ -12,7 +12,8 @@
     "tauri": "tauri",
     "electron-dev": "electron-install && cross-env NODE_ENV=development electron src/main-electron.js",
     "electron-install": "node node_modules/electron/install.js",
-    "prepare": "husky"
+    "prepare": "husky",
+    "lint": "eslint ."
   },
   "lint-staged": {},
   "build": {

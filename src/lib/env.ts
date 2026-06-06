@@ -21,20 +21,15 @@ interface TypeMap {
   string: string;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const typeMappers: { [K in keyof TypeMap]: (value: any) => TypeMap[K] } = {
   bool: (value) => ["true", "TRUE", "1", 1, true].includes(value),
   decimal: (value) => tryParseFloat(value, 0),
   int: (value) => tryParseInt(value, 0),
   string: (value) =>
-    typeof value?.toString === "function"
-      ? value.toString()
-      : JSON.stringify(value),
+    typeof value?.toString === "function" ? value.toString() : JSON.stringify(value),
 };
 
-export default function env<K extends keyof Env>(
-  key: K
-): TypeMap[(typeof envSpec)[K]] {
-  return typeMappers[envSpec[key]](
-    import.meta.env[`VITE_${ANGRY_SNAKE_CASEIFY(key)}`]
-  );
+export default function env<K extends keyof Env>(key: K): TypeMap[(typeof envSpec)[K]] {
+  return typeMappers[envSpec[key]](import.meta.env[`VITE_${ANGRY_SNAKE_CASEIFY(key)}`]);
 }

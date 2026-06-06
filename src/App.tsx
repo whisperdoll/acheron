@@ -25,7 +25,6 @@ import { confirmPrompt, openComposition, toggleDevtools } from "./utils/desktop"
 import ModalController from "./Components/ModalController";
 import { addKeyboardShortcutEventListeners, keyboardShortcutString } from "./lib/keyboard";
 import Dict from "./lib/dict";
-import useLazyRef from "./useLazyRef";
 import ModChainWorkspace from "./Components/ModChainWorkspace";
 import {
   addLayer,
@@ -37,6 +36,9 @@ import {
 import { deserializeComposition } from "./Serialization";
 import { Point, preventDefault } from "./lib/utils";
 import useDrag from "./Hooks/useDrag";
+import useEventListener from "./Hooks/useEventListener";
+import useOnce from "./Hooks/useOnce";
+import useInitialEffect from "./Hooks/useInitialEffect";
 
 export default function App() {
   const [state, setState] = useState(initialState);
@@ -57,22 +59,10 @@ export default function App() {
   const modChainWorkspaceResizeHandleRef = useRef<HTMLDivElement>(null);
   const statusBarResizeHandleRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    leftResizeHandleRef.current?.addEventListener("touchstart", preventDefault);
-    inspectorResizeHandleRef.current?.addEventListener("touchstart", preventDefault);
-    modChainWorkspaceResizeHandleRef.current?.addEventListener("touchstart", preventDefault);
-    statusBarResizeHandleRef.current?.addEventListener("touchstart", preventDefault);
-
-    return () => {
-      leftResizeHandleRef.current?.removeEventListener("touchstart", preventDefault);
-      inspectorResizeHandleRef.current?.removeEventListener("touchstart", preventDefault);
-      modChainWorkspaceResizeHandleRef.current?.removeEventListener(
-        "touchstart",
-        preventDefault,
-      );
-      statusBarResizeHandleRef.current?.removeEventListener("touchstart", preventDefault);
-    };
-  }, []);
+  useEventListener(leftResizeHandleRef, "touchstart", preventDefault);
+  useEventListener(inspectorResizeHandleRef, "touchstart", preventDefault);
+  useEventListener(modChainWorkspaceResizeHandleRef, "touchstart", preventDefault);
+  useEventListener(statusBarResizeHandleRef, "touchstart", preventDefault);
 
   useEffect(() => {
     const triggers: Record<keyof AppSettings["keyboardShortcuts"], { onTrigger: () => void }> =
@@ -109,9 +99,7 @@ export default function App() {
     return addKeyboardShortcutEventListeners(Object.values(zipped));
   }, [keyboardShortcuts]);
 
-  const driver = useMemo(() => {
-    return new Driver(state);
-  }, []);
+  const [driver] = useState(() => new Driver(state));
 
   const [startTimer, stopTimer] = useTimer({
     onTick: (deltaMs: number) => {
@@ -192,25 +180,23 @@ export default function App() {
     };
   }, []);
 
-  useEffect(() => {
+  useInitialEffect(() => {
     lastTick.current = performance.now();
     startTimer();
 
     return () => stopTimer();
-  }, []);
+  });
 
   function toggleLeftColumn() {
     setState((s) => ({ ...s, isShowingLeftColumn: !s.isShowingLeftColumn }));
   }
 
   useEffect(() => {
-    (async () => {
-      if (settings.values.isFirstRun) {
-        settings.set({ isFirstRun: false }, "first run check");
-      }
+    if (settings.values.isFirstRun) {
+      settings.set({ isFirstRun: false }, "first run check");
+    }
 
-      Midi.init();
-    })();
+    Midi.init();
   }, []);
 
   useEffect(() => {
@@ -254,7 +240,7 @@ export default function App() {
       Midi.onNotesChanged = null;
       document.body.removeEventListener("keydown", keyDown);
     };
-  }, []);
+  }, [state.layers.length]);
 
   settings.useSubscription(
     (_, settings) => {

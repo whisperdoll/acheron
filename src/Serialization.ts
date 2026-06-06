@@ -18,7 +18,7 @@ import {
   PlayerControlKey,
   PlayerControlKeys,
 } from "./utils/DefaultDefinitions";
-import { sliceObject } from "./utils/utils";
+import { sliceObject } from "./lib/utils";
 
 export type SerializedCompositionControl = ControlState;
 
@@ -60,9 +60,7 @@ export interface SerializedComposition {
   gridCols: number;
 }
 
-function buildTokenFromSerialized(
-  serialized: SerializedCompositionToken,
-): Token | null {
+function buildTokenFromSerialized(serialized: SerializedCompositionToken): Token | null {
   const def = tokenDefinitionsMap[serialized.uid];
 
   if (!def) return null;
@@ -76,15 +74,11 @@ function buildTokenFromSerialized(
   return token;
 }
 
-function buildControlFromSerialized(
-  serialized: SerializedCompositionControl,
-): ControlState {
+function buildControlFromSerialized(serialized: SerializedCompositionControl): ControlState {
   return serialized;
 }
 
-function buildLayerFromSerialized(
-  serialized: SerializedCompositionLayer,
-): LayerState {
+function buildLayerFromSerialized(serialized: SerializedCompositionLayer): LayerState {
   return {
     ...serialized,
     currentBeat: 0,
@@ -95,12 +89,8 @@ function buildLayerFromSerialized(
   };
 }
 
-export function serializeComposition(
-  appState: AppState,
-): SerializedComposition {
-  const tokenMap: SerializedCompositionToken[] = Object.entries(
-    appState.tokens,
-  ).map((e) => {
+export function serializeComposition(appState: AppState): SerializedComposition {
+  const tokenMap: SerializedCompositionToken[] = Object.entries(appState.tokens).map((e) => {
     const [tokenId, token] = e;
 
     return {

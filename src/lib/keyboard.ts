@@ -16,7 +16,9 @@ function capitalize<S extends string>(s: S): Capitalize<S> {
 function isMac() {
   if (typeof navigator === "undefined") return false;
 
-  let userAgent = (navigator as any)?.userAgentData?.platform;
+  let userAgent = (
+    navigator as unknown as { userAgentData?: { platform: string } } | undefined
+  )?.userAgentData?.platform;
 
   if (typeof userAgent !== "string") {
     userAgent = navigator.platform;
@@ -31,22 +33,15 @@ export type KeyboardShortcut = { [key in Mod]?: boolean } & {
 };
 
 export function shortcutsEqual(k1: KeyboardShortcut, k2: KeyboardShortcut) {
-  return (
-    k1.key.toLowerCase() === k2.key.toLowerCase() &&
-    mods.every((m) => k1[m] == k2[m])
-  );
+  return k1.key.toLowerCase() === k2.key.toLowerCase() && mods.every((m) => k1[m] == k2[m]);
 }
 
 export function keyboardShortcutString(shortcut: KeyboardShortcut) {
   const usedMods = mods.filter((m) => shortcut[m]);
-  const mappedToPlatform = isMac()
-    ? usedMods.map((m) => macModMap[m])
-    : usedMods;
+  const mappedToPlatform = isMac() ? usedMods.map((m) => macModMap[m]) : usedMods;
   const modString = mappedToPlatform.map(capitalize).join("+");
 
-  return `${modString && modString + "+"}${
-    shortcut.key === " " ? "Space" : shortcut.key
-  }`;
+  return `${modString && modString + "+"}${shortcut.key === " " ? "Space" : shortcut.key}`;
 }
 
 export function keyboardShortcutTriggered<T extends KeyboardShortcut>(
@@ -66,12 +61,12 @@ export function keyboardShortcutTriggered<T extends KeyboardShortcut>(
   return shortcuts.find(
     (s) =>
       e.key.toLowerCase() === s.key.toLowerCase() &&
-      mods.every((m) => !!s[m] === !!e[`${m}Key`])
+      mods.every((m) => !!s[m] === !!e[`${m}Key`]),
   );
 }
 
 export function addKeyboardShortcutEventListeners(
-  shortcuts: (KeyboardShortcut & { onTrigger: () => void })[]
+  shortcuts: (KeyboardShortcut & { onTrigger: () => void })[],
 ) {
   const listener = (e: KeyboardEvent) => {
     const triggered = keyboardShortcutTriggered(e, ...shortcuts);

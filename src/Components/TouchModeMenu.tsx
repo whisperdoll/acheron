@@ -67,8 +67,7 @@ export default function TouchModeMenu() {
 
       if (
         e.target instanceof HTMLElement &&
-        (ref.current.contains(e.target) ||
-          tree.some((el) => el.dataset.touchModeMenu))
+        (ref.current.contains(e.target) || tree.some((el) => el.dataset.touchModeMenu))
       ) {
         e.stopPropagation();
         return;
@@ -83,52 +82,40 @@ export default function TouchModeMenu() {
     document.addEventListener("pointerdown", pointerDown);
 
     return () => document.removeEventListener("pointerdown", pointerDown);
-  }, []);
+  }, [setState]);
 
   return (
     <div className="touchModeMenu" ref={ref}>
-      {Object.entries(touchModeDescriptions).map(
-        ([mode, { title, description, icon }]) => {
-          return (
-            <div
-              key={mode}
-              className={cx("touchModeMenuItem", {
-                selected: currentMode === mode,
-              })}
-              onClick={(e) => {
-                settings.set({ touchMode: mode }, "change touch mode");
-                setState((s) => ({
-                  ...s,
-                  isShowingTouchModeMenu: false,
-                  selectedHex: {
-                    hexIndex: -1,
-                    layerIndex: s.selectedHex.layerIndex,
-                  },
-                }));
-              }}
-            >
-              <GoogleIcon
-                className="itemIcon"
-                icon={icon}
-                buttonStyle="rounded"
-                fill
-              />
-              <div className="titleAndDescription">
-                <div className="title">{title}</div>
-                <div className="description">{description}</div>
-              </div>
-              {currentMode === mode && (
-                <GoogleIcon
-                  className="check"
-                  icon="check"
-                  buttonStyle="rounded"
-                  fill
-                />
-              )}
+      {Object.entries(touchModeDescriptions).map(([mode, { title, description, icon }]) => {
+        return (
+          <div
+            key={mode}
+            className={cx("touchModeMenuItem", {
+              selected: currentMode === mode,
+            })}
+            onClick={(e) => {
+              settings.set({ touchMode: mode }, "change touch mode");
+              setState((s) => ({
+                ...s,
+                isShowingTouchModeMenu: false,
+                selectedHex: {
+                  hexIndex: -1,
+                  layerIndex: s.selectedHex.layerIndex,
+                },
+              }));
+            }}
+          >
+            <GoogleIcon className="itemIcon" icon={icon} buttonStyle="rounded" fill />
+            <div className="titleAndDescription">
+              <div className="title">{title}</div>
+              <div className="description">{description}</div>
             </div>
-          );
-        },
-      )}
+            {currentMode === mode && (
+              <GoogleIcon className="check" icon="check" buttonStyle="rounded" fill />
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }

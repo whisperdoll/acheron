@@ -24,7 +24,10 @@ import LfoControls from "./LfoControls";
 import * as Control from "./Control";
 import {
   coerceControlValueToNumber,
+  FixedValueMod,
+  InheritedControlValueMod,
   LerpMod,
+  LFOMod,
   MathMod,
   MathModOperation,
   MidiCcMod,
@@ -42,9 +45,10 @@ import GoogleIconButton from "./GoogleIconButton";
 import Midi from "../utils/midi";
 import useNow from "../Hooks/useNow";
 import { produce } from "immer";
-import { sliceObject } from "../utils/utils";
+import { sliceObject } from "../lib/utils";
 import { LayerControlTypes } from "../utils/DefaultDefinitions";
 import NonShrinking from "./NonShrinking";
+import useEventListener from "../Hooks/useEventListener";
 
 interface Props {
   id: string;
@@ -65,25 +69,29 @@ export default React.memo(function ModChainItemComponent(
   const currentTimeMs = state.layers[0].currentTimeMs;
   const inheritedControl = useMemo(() => {
     return getInheritedControl(state, sourceControl);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modChainItem, sourceControl]);
 
   const [midiCcTrigger, _setMidiCcTrigger] = useState(0);
 
-  const setMidiCcTrigger = useCallback((value: number) => {
-    _setMidiCcTrigger(value);
+  const setMidiCcTrigger = useCallback(
+    (value: number) => {
+      _setMidiCcTrigger(value);
 
-    setState(
-      produce<AppState>((s) => {
-        s.modChains[modChainId] = {
-          ...s.modChains[modChainId],
-          mods: {
-            ...s.modChains[modChainId].mods,
-            [modChainItemId]: { ...s.modChains[modChainId].mods[modChainItemId] },
-          },
-        };
-      }),
-    );
-  }, []);
+      setState(
+        produce<AppState>((s) => {
+          s.modChains[modChainId] = {
+            ...s.modChains[modChainId],
+            mods: {
+              ...s.modChains[modChainId].mods,
+              [modChainItemId]: { ...s.modChains[modChainId].mods[modChainItemId] },
+            },
+          };
+        }),
+      );
+    },
+    [modChainId, modChainItemId, setState],
+  );
 
   useEffect(() => {
     if (modChainItem.__type !== "midiCc") return;
@@ -109,44 +117,50 @@ export default React.memo(function ModChainItemComponent(
     return () => {
       Midi.onCC.splice(Midi.onCC.indexOf(onChange), 1);
     };
-  }, [modChainItem.__type === "midiCc" && now]);
+  }, [modChainId, modChainItem.__type, modChainItemId, setMidiCcTrigger, state]);
 
-  const updateMod = useCallback(<T extends ModChainItem>(fn: SetStateAction<T>) => {
-    setState((s) => ({
-      ...s,
-      modChains: {
-        ...s.modChains,
-        [modChainId]: {
-          ...s.modChains[modChainId],
-          mods: {
-            ...s.modChains[modChainId].mods,
-            [modChainItemId]: isFunction(fn)
-              ? fn(s.modChains[modChainId].mods[modChainItemId] as T)
-              : fn,
-          },
-        },
-      },
-    }));
-  }, []);
-
-  const updateFixedControlValue = useCallback((value: number) => {
-    setState((s) => ({
-      ...s,
-      modChains: {
-        ...s.modChains,
-        [modChainId]: {
-          ...s.modChains[modChainId],
-          mods: {
-            ...s.modChains[modChainId].mods,
-            [modChainItemId]: {
-              ...s.modChains[modChainId].mods[modChainItemId],
-              value,
+  const updateMod = useCallback(
+    <T extends ModChainItem>(fn: SetStateAction<T>) => {
+      setState((s) => ({
+        ...s,
+        modChains: {
+          ...s.modChains,
+          [modChainId]: {
+            ...s.modChains[modChainId],
+            mods: {
+              ...s.modChains[modChainId].mods,
+              [modChainItemId]: isFunction(fn)
+                ? fn(s.modChains[modChainId].mods[modChainItemId] as T)
+                : fn,
             },
           },
         },
-      },
-    }));
-  }, []);
+      }));
+    },
+    [modChainId, modChainItemId, setState],
+  );
+
+  const updateFixedControlValue = useCallback(
+    (value: number) => {
+      setState((s) => ({
+        ...s,
+        modChains: {
+          ...s.modChains,
+          [modChainId]: {
+            ...s.modChains[modChainId],
+            mods: {
+              ...s.modChains[modChainId].mods,
+              [modChainItemId]: {
+                ...s.modChains[modChainId].mods[modChainItemId],
+                value,
+              },
+            },
+          },
+        },
+      }));
+    },
+    [modChainId, modChainItemId, setState],
+  );
 
   const label = useMemo<string>(() => {
     switch (modChainItem.__type) {
@@ -190,7 +204,8 @@ export default React.memo(function ModChainItemComponent(
       case "sequence":
         return "Sequence";
     }
-  }, [modChainItem.__type]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [modChainItem.__type, (modChainItem as ModChainItem & { controlId: unknown }).controlId]);
 
   const dragging = useRef<boolean>(false);
   const headerRef = useRef<HTMLDivElement>(null);
@@ -199,31 +214,21 @@ export default React.memo(function ModChainItemComponent(
   const modPosStart = useRef<{ x: number; y: number }>(modChainItem.ui);
   const zoom = workspaceContext.zoom;
 
-  useEffect(() => {
-    const onDown = (e: PointerEvent) => {
-      e.preventDefault();
+  useEventListener(headerRef, "pointerdown", (e) => {
+    e.preventDefault();
 
-      if (e.target !== headerRef.current) return;
+    if (e.target !== headerRef.current) return;
 
-      dragging.current = true;
-      modPosStart.current = modChainItem.ui;
-      draggingStart.current = { x: e.clientX, y: e.clientY };
-    };
+    dragging.current = true;
+    modPosStart.current = modChainItem.ui;
+    draggingStart.current = { x: e.clientX, y: e.clientY };
+  });
 
-    const onTouch = (e: TouchEvent) => {
-      if (e.target !== headerRef.current) return;
+  useEventListener(headerRef, "touchstart", (e) => {
+    if (e.target !== headerRef.current) return;
 
-      e.preventDefault();
-    };
-
-    headerRef.current?.addEventListener("pointerdown", onDown);
-    headerRef.current?.addEventListener("touchstart", onTouch);
-
-    return () => {
-      headerRef.current?.removeEventListener("pointerdown", onDown);
-      headerRef.current?.removeEventListener("touchstart", onTouch);
-    };
-  }, [modChainItem.ui]);
+    e.preventDefault();
+  });
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -231,44 +236,6 @@ export default React.memo(function ModChainItemComponent(
     if (modChainItem.ui.width) containerRef.current.style.width = `${modChainItem.ui.width}px`;
     if (modChainItem.ui.height)
       containerRef.current.style.height = `${modChainItem.ui.height}px`;
-
-    const onMove = (e: PointerEvent) => {
-      if (!dragging.current) return;
-
-      e.preventDefault();
-      e.stopPropagation();
-
-      const draggingCurrent = { x: e.clientX, y: e.clientY };
-      const draggingOffset = {
-        x: draggingCurrent.x - draggingStart.current.x,
-        y: draggingCurrent.y - draggingStart.current.y,
-      };
-
-      updateMod((m) => ({
-        ...m,
-        ui: {
-          ...m.ui,
-          x: modPosStart.current.x + draggingOffset.x / zoom,
-          y: modPosStart.current.y + draggingOffset.y / zoom,
-        },
-      }));
-    };
-
-    const onUp = (e: PointerEvent) => {
-      if (!dragging.current) return;
-
-      e.preventDefault();
-      e.stopPropagation();
-      dragging.current = false;
-    };
-
-    const onCancel = (e: PointerEvent) => {
-      if (!dragging.current) return;
-
-      e.preventDefault();
-      e.stopPropagation();
-      dragging.current = false;
-    };
 
     const resizeObserver = new ResizeObserver((entries) => {
       for (const entry of entries) {
@@ -282,24 +249,52 @@ export default React.memo(function ModChainItemComponent(
       }
     });
 
-    const onWheel = (e: WheelEvent) => {
-      e.stopPropagation();
-    };
-
-    containerRef.current.addEventListener("wheel", onWheel);
     resizeObserver.observe(containerRef.current);
-    document.body.addEventListener("pointermove", onMove);
-    document.body.addEventListener("pointerup", onUp);
-    document.body.addEventListener("pointercancel", onCancel);
 
     return () => {
-      containerRef.current?.removeEventListener("wheel", onWheel);
       resizeObserver.disconnect();
-      document.body.removeEventListener("pointermove", onMove);
-      document.body.removeEventListener("pointerup", onUp);
-      document.body.removeEventListener("pointercancel", onCancel);
     };
-  }, [zoom]);
+  }, [modChainItem.ui.height, modChainItem.ui.width, updateMod, zoom]);
+
+  useEventListener(containerRef, "wheel", (e) => {
+    e.stopPropagation();
+  });
+
+  useEventListener(document.body, "pointermove", (e: PointerEvent) => {
+    if (!dragging.current) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    const draggingCurrent = { x: e.clientX, y: e.clientY };
+    const draggingOffset = {
+      x: draggingCurrent.x - draggingStart.current.x,
+      y: draggingCurrent.y - draggingStart.current.y,
+    };
+
+    updateMod((m) => ({
+      ...m,
+      ui: {
+        ...m.ui,
+        x: modPosStart.current.x + draggingOffset.x / zoom,
+        y: modPosStart.current.y + draggingOffset.y / zoom,
+      },
+    }));
+  });
+  useEventListener(document.body, "pointerup", (e) => {
+    if (!dragging.current) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+    dragging.current = false;
+  });
+  useEventListener(document.body, "pointercancel", (e: PointerEvent) => {
+    if (!dragging.current) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+    dragging.current = false;
+  });
 
   return (
     <div ref={containerRef} className={`modChainItem ${modChainItem.__type}`} {...rest}>

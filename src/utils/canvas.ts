@@ -18,9 +18,7 @@ interface DrawHexagonGridOpts {
   outlineWidth: number;
   textColor: string;
   tokenTextColor: string;
-  backgroundColor:
-    | string
-    | ((note: { name: string; octave: number }) => string);
+  backgroundColor: string | ((note: { name: string; octave: number }) => string);
   labels?: string[];
   directions?: number[][];
   notes: { name: string; octave: number }[];
@@ -63,15 +61,11 @@ type MouseMoveFn = (
   isDown: boolean,
   lastPos: Point,
   originalPos: Point,
-  e: MouseEvent | TouchEvent
-) => any;
-type MouseDownFn = (pos: Point, e: MouseEvent | TouchEvent) => any;
-type MouseUpFn = (
-  pos: Point,
-  originalPos: Point,
-  e: MouseEvent | TouchEvent
-) => any;
-type MouseLeaveFn = (pos: Point, e: MouseEvent | TouchEvent) => any;
+  e: MouseEvent | TouchEvent,
+) => unknown;
+type MouseDownFn = (pos: Point, e: MouseEvent | TouchEvent) => unknown;
+type MouseUpFn = (pos: Point, originalPos: Point, e: MouseEvent | TouchEvent) => unknown;
+type MouseLeaveFn = (pos: Point, e: MouseEvent | TouchEvent) => unknown;
 
 type Drawable = HTMLImageElement | Canvas | HTMLCanvasElement;
 
@@ -103,8 +97,7 @@ export class Canvas {
     if (!options.canvasElement) {
       options.canvasElement = document.createElement("canvas");
     } else if (typeof options.canvasElement === "string") {
-      options.canvasElement =
-        document.querySelector(options.canvasElement) || undefined;
+      options.canvasElement = document.querySelector(options.canvasElement) || undefined;
     }
 
     this.canvas = options.canvasElement as HTMLCanvasElement;
@@ -198,10 +191,10 @@ export class Canvas {
   public addEventListener(eventName: "mousedown", fn: MouseDownFn): void;
   public addEventListener(eventName: "mousemove", fn: MouseMoveFn): void;
   public addEventListener(eventName: "mouseleave", fn: MouseLeaveFn): void;
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
   public addEventListener(eventName: string, fn: Function): void {
-    if (
-      ["mouseup", "mousedown", "mousemove", "mouseleave"].includes(eventName)
-    ) {
+    if (["mouseup", "mousedown", "mousemove", "mouseleave"].includes(eventName)) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (this.mouse.events as any)[eventName.substr(5)].push(fn);
     }
   }
@@ -210,10 +203,10 @@ export class Canvas {
   public removeEventListener(eventName: "mousedown", fn: MouseDownFn): void;
   public removeEventListener(eventName: "mousemove", fn: MouseMoveFn): void;
   public removeEventListener(eventName: "mouseleave", fn: MouseLeaveFn): void;
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
   public removeEventListener(eventName: string, fn: Function): void {
-    if (
-      ["mouseup", "mousedown", "mousemove", "mouseleave"].includes(eventName)
-    ) {
+    if (["mouseup", "mousedown", "mousemove", "mouseleave"].includes(eventName)) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const arr = (this.mouse.events as any)[eventName.substr(5)];
       if (arr.indexOf(fn) !== -1) {
         arr.splice(arr.indexOf(fn), 1);
@@ -238,11 +231,7 @@ export class Canvas {
     }
   }
 
-  public zoom(
-    amount: number | Point,
-    transformPrefix: string,
-    transformPostfix: string
-  ) {
+  public zoom(amount: number | Point, transformPrefix: string, transformPostfix: string) {
     let x: number;
     let y: number;
 
@@ -264,13 +253,9 @@ export class Canvas {
       transformPostfix;
   }
 
-  public zoomToFit(
-    size: Point,
-    transformPrefix: string,
-    transformPostfix: string
-  ) {
-    let wRatio = size.x / this.width;
-    let hRatio = size.y / this.height;
+  public zoomToFit(size: Point, transformPrefix: string, transformPostfix: string) {
+    const wRatio = size.x / this.width;
+    const hRatio = size.y / this.height;
 
     if (wRatio < hRatio) {
       this.zoom(wRatio, transformPrefix, transformPostfix);
@@ -279,11 +264,7 @@ export class Canvas {
     }
   }
 
-  public scale(
-    amount: number | Point,
-    transformPrefix: string,
-    transformPostfix: string
-  ) {
+  public scale(amount: number | Point, transformPrefix: string, transformPostfix: string) {
     return this.zoom(amount, transformPrefix, transformPostfix);
   }
 
@@ -292,7 +273,7 @@ export class Canvas {
       -this.translation.x,
       -this.translation.y,
       this.canvas.width,
-      this.canvas.height
+      this.canvas.height,
     );
   }
 
@@ -337,11 +318,9 @@ export class Canvas {
       this.deepCalcPosition();
     }
 
-    let bounds = this.canvas.getBoundingClientRect();
+    const bounds = this.canvas.getBoundingClientRect();
 
-    let o = this.usingDeepCalc
-      ? this.offset.copy()
-      : new Point(bounds.left, bounds.top);
+    const o = this.usingDeepCalc ? this.offset.copy() : new Point(bounds.left, bounds.top);
 
     if (this.align.horizontal && o.x > 0) {
       o.x = (2 * o.x - bounds.width) / 2;
@@ -364,11 +343,9 @@ export class Canvas {
       this.deepCalcPosition();
     }
 
-    let bounds = this.canvas.getBoundingClientRect();
+    const bounds = this.canvas.getBoundingClientRect();
 
-    let o = this.usingDeepCalc
-      ? this.offset.copy()
-      : new Point(bounds.left, bounds.top);
+    const o = this.usingDeepCalc ? this.offset.copy() : new Point(bounds.left, bounds.top);
 
     if (this.align.horizontal && o.x > 0) {
       o.x = (2 * o.x - bounds.width) / 2;
@@ -389,18 +366,18 @@ export class Canvas {
   }
 
   private mouseMove(e: MouseEvent | TouchEvent): void {
-    let pos = this.posFromEvent(e);
+    const pos = this.posFromEvent(e);
     if (!this.mouse.lastPos) this.mouse.lastPos = pos;
     if (!this.mouse.isDown) this.mouse.originalPos = pos;
 
     this.mouse.events.move.forEach((fn) => {
-      let event = fn.call(
+      const event = fn.call(
         this,
         pos,
         this.mouse.isDown,
         this.mouse.lastPos as Point,
         this.mouse.originalPos,
-        e
+        e,
       );
 
       if (event !== false) {
@@ -410,7 +387,7 @@ export class Canvas {
   }
 
   private mouseDown(e: MouseEvent | TouchEvent): void {
-    let pos = this.posFromEvent(e);
+    const pos = this.posFromEvent(e);
     this.mouse.isDown = true;
     this.mouse.lastPos = pos;
     this.mouse.originalPos = pos;
@@ -421,7 +398,7 @@ export class Canvas {
   }
 
   private mouseUp(e: MouseEvent | TouchEvent): void {
-    let pos = this.posFromEvent(e);
+    const pos = this.posFromEvent(e);
     this.mouse.isDown = false;
 
     this.mouse.events.up.forEach((fn) => {
@@ -432,7 +409,7 @@ export class Canvas {
   }
 
   private mouseLeave(e: MouseEvent | TouchEvent): void {
-    let pos = this.posFromEvent(e);
+    const pos = this.posFromEvent(e);
 
     this.mouse.events.leave.forEach((fn) => {
       fn.call(this, pos, e);
@@ -442,14 +419,15 @@ export class Canvas {
   public set pixelated(bool: boolean) {
     bool = !bool;
 
-    let ctx = this.context;
-    (ctx as any).mozImageSmoothingEnabled = bool;
-    (ctx as any).webkitImageSmoothingEnabled = bool;
-    //(ctx as any).msImageSmoothingEnabled = bool;
-    (ctx as any).imageSmoothingEnabled = bool;
+    const ctx = this.context;
+    (ctx as unknown as { mozImageSmoothingEnabled: boolean }).mozImageSmoothingEnabled = bool;
+    (ctx as unknown as { webkitImageSmoothingEnabled: boolean }).webkitImageSmoothingEnabled =
+      bool;
+    //(ctx as unknown as { msImageSmoothingEnabled: boolean }).msImageSmoothingEnabled = bool;
+    (ctx as unknown as { imageSmoothingEnabled: boolean }).imageSmoothingEnabled = bool;
 
     if (!bool) {
-      let types = [
+      const types = [
         "optimizeSpeed",
         "crisp-edges",
         "-moz-crisp-edges",
@@ -521,20 +499,20 @@ export class Canvas {
     this.context.setLineDash(dash);
   }
 
-  public createBlob(callback: (blob: Blob) => any, mimeType?: string): void {
+  public createBlob(callback: (blob: Blob) => unknown, mimeType?: string): void {
     this.canvas.toBlob(function (blob) {
       callback(blob as Blob);
     }, mimeType);
   }
 
   public createImage(
-    callback: (image: HTMLImageElement) => any,
+    callback: (image: HTMLImageElement) => unknown,
     mimeType?: string,
-    autoRevoke: boolean = true
+    autoRevoke: boolean = true,
   ) {
     this.canvas.toBlob(function (blob) {
       if (!blob) throw "couldnt blob canvas";
-      let ret = new Image();
+      const ret = new Image();
 
       ret.onload = () => {
         callback(ret);
@@ -542,7 +520,7 @@ export class Canvas {
         autoRevoke && URL.revokeObjectURL(ret.src);
       };
 
-      let url = URL.createObjectURL(blob);
+      const url = URL.createObjectURL(blob);
       ret.src = url;
     }, mimeType);
   }
@@ -559,20 +537,14 @@ export class Canvas {
     if (position instanceof Point) {
       this.context.drawImage(image, position.x, position.y);
     } else {
-      this.context.drawImage(
-        image,
-        position.x,
-        position.y,
-        position.width,
-        position.height
-      );
+      this.context.drawImage(image, position.x, position.y, position.width, position.height);
     }
   }
 
   public drawCroppedImage(
     image: Drawable,
     position: Point | Rectangle,
-    cropRegion: Rectangle
+    cropRegion: Rectangle,
   ): void {
     if (image instanceof Canvas) {
       image = image.canvas;
@@ -588,7 +560,7 @@ export class Canvas {
         position.x,
         position.y,
         cropRegion.width,
-        cropRegion.height
+        cropRegion.height,
       );
     } else {
       this.context.drawImage(
@@ -600,7 +572,7 @@ export class Canvas {
         position.x,
         position.y,
         position.width,
-        position.height
+        position.height,
       );
     }
   }
@@ -610,13 +582,13 @@ export class Canvas {
     rotate: number,
     anchor: Point,
     position: Point | Rectangle,
-    cropRegion: Rectangle
+    cropRegion: Rectangle,
   ): void {
     if (image instanceof Canvas) {
       image = image.canvas;
     }
 
-    var ctx = this.context;
+    const ctx = this.context;
 
     ctx.save();
     ctx.translate(position.x + anchor.x, position.y + anchor.y);
@@ -632,7 +604,7 @@ export class Canvas {
         -anchor.x,
         -anchor.y,
         image.width,
-        image.height
+        image.height,
       );
     } else {
       ctx.drawImage(
@@ -644,7 +616,7 @@ export class Canvas {
         -anchor.x,
         -anchor.y,
         position.width,
-        position.height
+        position.height,
       );
     }
 
@@ -659,12 +631,7 @@ export class Canvas {
     this.drawImage(image, new Point(0));
   }
 
-  public drawLine(
-    start: Point,
-    end: Point,
-    color?: string,
-    lineWidth?: number
-  ): void {
+  public drawLine(start: Point, end: Point, color?: string, lineWidth?: number): void {
     if (color) this.color = color;
     if (lineWidth) this.lineWidth = lineWidth;
 
@@ -678,7 +645,7 @@ export class Canvas {
     rect: Rectangle,
     color: string,
     lineWidth: number,
-    sharp: boolean = true
+    sharp: boolean = true,
   ): void {
     this.color = color;
     this.lineWidth = lineWidth;
@@ -702,7 +669,7 @@ export class Canvas {
     radius: number,
     color: string,
     lineWidth: number,
-    sharp: boolean = true
+    sharp: boolean = true,
   ): void {
     this.color = color;
     this.lineWidth = lineWidth;
@@ -728,7 +695,7 @@ export class Canvas {
     rect: Rectangle,
     radius: number,
     color: string,
-    sharp: boolean = true
+    sharp: boolean = true,
   ): void {
     this.color = color;
 
@@ -759,7 +726,7 @@ export class Canvas {
     color: string,
     baseline?: CanvasTextBaseline,
     align?: CanvasTextAlign,
-    font?: string
+    font?: string,
   ): void {
     this.color = color;
 
@@ -784,12 +751,7 @@ export class Canvas {
     this.context.fill();
   }
 
-  public drawCircle(
-    position: Point,
-    radius: number,
-    color: string,
-    lineWidth: number
-  ): void {
+  public drawCircle(position: Point, radius: number, color: string, lineWidth: number): void {
     this.color = color;
     this.lineWidth = lineWidth;
 
@@ -809,21 +771,13 @@ export class Canvas {
     const a = (2 * Math.PI) / 6;
 
     const shouldStartHigh = gridStartsHigh ? x % 2 === 0 : x % 2 === 1;
-    const startY = shouldStartHigh
-      ? gridLocation.y
-      : gridLocation.y + hexRadius * Math.sin(a);
+    const startY = shouldStartHigh ? gridLocation.y : gridLocation.y + hexRadius * Math.sin(a);
 
     this.context.beginPath();
     for (let i = 0; i < 6; i++) {
       this.context.lineTo(
-        gridLocation.x +
-          hexRadius * (1 + Math.cos(a)) * x +
-          hexRadius * Math.cos(a * i) +
-          0.5,
-        startY +
-          hexRadius * 2 * Math.sin(a) * y +
-          hexRadius * Math.sin(a * i) +
-          0.5
+        gridLocation.x + hexRadius * (1 + Math.cos(a)) * x + hexRadius * Math.cos(a * i) + 0.5,
+        startY + hexRadius * 2 * Math.sin(a) * y + hexRadius * Math.sin(a * i) + 0.5,
       );
     }
     this.context.closePath();
@@ -845,7 +799,7 @@ export class Canvas {
     triangleCanvas.width = 12;
     triangleCanvas.height = 12;
 
-    var ctx = triangleCanvas.getContext("2d")!;
+    const ctx = triangleCanvas.getContext("2d")!;
     ctx.fillStyle = color;
 
     ctx.beginPath();
@@ -885,14 +839,12 @@ export class Canvas {
     for (let y = 0; y < size.y; y++) {
       for (let x = 0; x < size.x; x++) {
         const shouldStartHigh = startHigh ? x % 2 === 0 : x % 2 === 1;
-        const startY = shouldStartHigh
-          ? location.y
-          : location.y + hexRadius * Math.sin(a);
+        const startY = shouldStartHigh ? location.y : location.y + hexRadius * Math.sin(a);
 
         const index = x * size.y + y;
         const centerPt = new Point(
           location.x + hexRadius * (1 + Math.cos(a)) * x,
-          startY + hexRadius * 2 * Math.sin(a) * y + 5
+          startY + hexRadius * 2 * Math.sin(a) * y + 5,
         );
 
         if (labels[index]) {
@@ -907,9 +859,7 @@ export class Canvas {
               i === 0 ? textColor : tokenTextColor,
               undefined,
               "center",
-              i === 0
-                ? fontSize * 1 + "px sans-serif"
-                : fontSize * 1 + "px monospace"
+              i === 0 ? fontSize * 1 + "px sans-serif" : fontSize * 1 + "px monospace",
             );
           });
         }
@@ -921,12 +871,8 @@ export class Canvas {
             angle + Math.PI / 2,
             centerPt
               .minus(new Point(0, 5))
-              .plus(
-                new Point(Math.cos(angle), Math.sin(angle)).times(
-                  hexRadius - 16
-                )
-              )
-              .minus(Point.fromSizeLike(triangle).dividedBy(2))
+              .plus(new Point(Math.cos(angle), Math.sin(angle)).times(hexRadius - 16))
+              .minus(Point.fromSizeLike(triangle).dividedBy(2)),
           );
         });
       }
@@ -958,21 +904,13 @@ export class Canvas {
       for (let x = 0; x < size.x; x++) {
         const index = x * size.y + y;
         const shouldStartHigh = startHigh ? x % 2 === 0 : x % 2 === 1;
-        const startY = shouldStartHigh
-          ? location.y
-          : location.y + hexRadius * Math.sin(a);
+        const startY = shouldStartHigh ? location.y : location.y + hexRadius * Math.sin(a);
 
         this.context.beginPath();
         for (let i = 0; i < 6; i++) {
           this.context.lineTo(
-            location.x +
-              hexRadius * (1 + Math.cos(a)) * x +
-              hexRadius * Math.cos(a * i) +
-              0.5,
-            startY +
-              hexRadius * 2 * Math.sin(a) * y +
-              hexRadius * Math.sin(a * i) +
-              0.5
+            location.x + hexRadius * (1 + Math.cos(a)) * x + hexRadius * Math.cos(a * i) + 0.5,
+            startY + hexRadius * 2 * Math.sin(a) * y + hexRadius * Math.sin(a * i) + 0.5,
           );
         }
 
@@ -991,12 +929,12 @@ export class Canvas {
 
         pts[index] = new Point(
           location.x + hexRadius * (1 + Math.cos(a)) * x,
-          startY + hexRadius * 2 * Math.sin(a) * y
+          startY + hexRadius * 2 * Math.sin(a) * y,
         );
 
         const centerPt = new Point(
           location.x + hexRadius * (1 + Math.cos(a)) * x,
-          startY + hexRadius * 2 * Math.sin(a) * y + 5
+          startY + hexRadius * 2 * Math.sin(a) * y + 5,
         );
 
         if (labels && labels[index]) {
@@ -1011,7 +949,7 @@ export class Canvas {
               i === 0 ? textColor : tokenTextColor,
               undefined,
               "center",
-              fontSize * 1.225 + "px sans-serif"
+              fontSize * 1.225 + "px sans-serif",
             );
           });
         }
@@ -1024,12 +962,8 @@ export class Canvas {
               angle + Math.PI / 2,
               centerPt
                 .minus(new Point(0, 5))
-                .plus(
-                  new Point(Math.cos(angle), Math.sin(angle)).times(
-                    hexRadius - 16
-                  )
-                )
-                .minus(Point.fromSizeLike(triangle).dividedBy(2))
+                .plus(new Point(Math.cos(angle), Math.sin(angle)).times(hexRadius - 16))
+                .minus(Point.fromSizeLike(triangle).dividedBy(2)),
             );
           });
         }
@@ -1049,7 +983,7 @@ export class Canvas {
       diameter / 2,
       0,
       2 * Math.PI,
-      false
+      false,
     );
     this.context.fill();
   }
@@ -1058,7 +992,7 @@ export class Canvas {
     position: Point,
     diameter: number,
     color: string,
-    lineWidth: number
+    lineWidth: number,
   ): void {
     this.color = color;
     this.lineWidth = lineWidth;
@@ -1070,7 +1004,7 @@ export class Canvas {
       diameter / 2,
       0,
       2 * Math.PI,
-      false
+      false,
     );
     this.context.stroke();
   }
@@ -1083,53 +1017,24 @@ export class Canvas {
     this.color = color;
 
     this.context.beginPath();
-    this.context.ellipse(
-      rect.x,
-      rect.y,
-      rect.width / 2,
-      rect.height / 2,
-      0,
-      0,
-      Math.PI * 2
-    );
+    this.context.ellipse(rect.x, rect.y, rect.width / 2, rect.height / 2, 0, 0, Math.PI * 2);
     this.context.fill();
   }
 
-  public drawCircleInRect(
-    rect: Rectangle,
-    color: string,
-    lineWidth: number
-  ): void {
+  public drawCircleInRect(rect: Rectangle, color: string, lineWidth: number): void {
     if (rect.isSquare) {
-      return this.drawCircleInSquare(
-        rect.position,
-        rect.width,
-        color,
-        lineWidth
-      );
+      return this.drawCircleInSquare(rect.position, rect.width, color, lineWidth);
     }
 
     this.color = color;
     this.lineWidth = lineWidth;
 
     this.context.beginPath();
-    this.context.ellipse(
-      rect.x,
-      rect.y,
-      rect.width / 2,
-      rect.height / 2,
-      0,
-      0,
-      Math.PI * 2
-    );
+    this.context.ellipse(rect.x, rect.y, rect.width / 2, rect.height / 2, 0, 0, Math.PI * 2);
     this.context.stroke();
   }
 
-  public drawRotatedImage(
-    image: Drawable,
-    rotate: number,
-    position: Point | Rectangle
-  ): void {
+  public drawRotatedImage(image: Drawable, rotate: number, position: Point | Rectangle): void {
     if (image instanceof Canvas) {
       image = image.canvas;
     }
@@ -1152,12 +1057,12 @@ export class Canvas {
     this.context.restore();
   }
 
-  public static fileToImage(
+  public static ficonstoImage(
     file: File,
-    callback: (image: HTMLImageElement) => any,
-    autoRevoke: boolean = true
+    callback: (image: HTMLImageElement) => unknown,
+    autoRevoke: boolean = true,
   ) {
-    let img = new Image();
+    const img = new Image();
 
     img.onload = () => {
       callback(img);
@@ -1172,20 +1077,25 @@ export class Canvas {
 
 // from https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement/toBlob
 if (!HTMLCanvasElement.prototype.toBlob) {
+  const toBlob: HTMLCanvasElement["toBlob"] = function (
+    this: HTMLCanvasElement,
+    callback,
+    type,
+    quality,
+  ) {
+    setTimeout(() => {
+      const binStr = atob(this.toDataURL(type, quality).split(",")[1]),
+        len = binStr.length,
+        arr = new Uint8Array(len);
+
+      for (let i = 0; i < len; i++) {
+        arr[i] = binStr.charCodeAt(i);
+      }
+
+      callback(new Blob([arr], { type: type || "image/png" }));
+    });
+  };
   Object.defineProperty(HTMLCanvasElement.prototype, "toBlob", {
-    value: function (callback: any, type: any, quality: any) {
-      var canvas = this;
-      setTimeout(function () {
-        var binStr = atob(canvas.toDataURL(type, quality).split(",")[1]),
-          len = binStr.length,
-          arr = new Uint8Array(len);
-
-        for (var i = 0; i < len; i++) {
-          arr[i] = binStr.charCodeAt(i);
-        }
-
-        callback(new Blob([arr], { type: type || "image/png" }));
-      });
-    },
+    value: toBlob,
   });
 }

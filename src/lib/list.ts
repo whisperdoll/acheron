@@ -20,39 +20,27 @@ export default class List {
     return newList;
   }
 
-  static shuffle(
-    array: any[],
-    rngGenerator: () => number = splitmix32(Date.now())
-  ) {
+  static shuffle<T>(array: unknown[], rngGenerator: () => number = splitmix32(Date.now())) {
     let currentIndex = array.length;
 
     // While there remain elements to shuffle...
     while (currentIndex != 0) {
       // Pick a remaining element...
-      let randomIndex = Math.floor(rngGenerator() * currentIndex);
+      const randomIndex = Math.floor(rngGenerator() * currentIndex);
       currentIndex--;
 
       // And swap it with the current element.
-      [array[currentIndex], array[randomIndex]] = [
-        array[randomIndex],
-        array[currentIndex],
-      ];
+      [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
     }
   }
 
-  static shuffled<T>(
-    array: T[],
-    rngGenerator: () => number = splitmix32(Date.now())
-  ) {
+  static shuffled<T>(array: T[], rngGenerator: () => number = splitmix32(Date.now())) {
     const copy = array.slice(0);
     this.shuffle(copy, rngGenerator);
     return copy;
   }
 
-  static shuffledForever<T>(
-    source: T[],
-    rngGenerator: () => number = splitmix32(Date.now())
-  ) {
+  static shuffledForever<T>(source: T[], rngGenerator: () => number = splitmix32(Date.now())) {
     const mySource = this.shuffled(source, rngGenerator);
     let counter = 0;
 
@@ -80,21 +68,9 @@ export default class List {
   static range(opts: { toExclusive: number; stride?: number }): number[];
   static range(opts: { length: number; stride?: number }): number[];
   static range(opts: { from: number; to: number; stride?: number }): number[];
-  static range(opts: {
-    from: number;
-    toInclusive: number;
-    stride?: number;
-  }): number[];
-  static range(opts: {
-    from: number;
-    toExclusive: number;
-    stride?: number;
-  }): number[];
-  static range(opts: {
-    from: number;
-    length: number;
-    stride?: number;
-  }): number[];
+  static range(opts: { from: number; toInclusive: number; stride?: number }): number[];
+  static range(opts: { from: number; toExclusive: number; stride?: number }): number[];
+  static range(opts: { from: number; length: number; stride?: number }): number[];
   static range(opts: { from: number; stride?: number }): () => number;
   static range(
     opts:
@@ -106,7 +82,7 @@ export default class List {
           toInclusive?: number;
           length?: number;
           stride?: number;
-        }
+        },
   ) {
     if (typeof opts === "number") {
       return this.fromGenerator((i) => i, opts);
@@ -117,7 +93,7 @@ export default class List {
     // priority here is arbitrary
 
     if (!isNullOrUndefined(toExclusive)) {
-      let ret = [];
+      const ret = [];
       for (let i = from; i < toExclusive; i += stride) {
         ret.push(i);
       }
@@ -125,7 +101,7 @@ export default class List {
     }
 
     if (!isNullOrUndefined(toInclusive)) {
-      let ret = [];
+      const ret = [];
       for (let i = from; i <= toInclusive; i += stride) {
         ret.push(i);
       }
@@ -133,7 +109,7 @@ export default class List {
     }
 
     if (!isNullOrUndefined(to)) {
-      let ret = [];
+      const ret = [];
       for (let i = from; i < to; i += stride) {
         ret.push(i);
       }
@@ -141,7 +117,7 @@ export default class List {
     }
 
     if (!isNullOrUndefined(length)) {
-      let ret = [];
+      const ret = [];
       for (let i = from, j = 0; j < length; i += stride, j++) {
         ret.push(i);
       }
@@ -159,11 +135,7 @@ export default class List {
     return source.slice(0);
   }
 
-  static withIndexReplaced<T>(
-    source: T[],
-    i: number,
-    newValue: T | ((oldValue: T) => T)
-  ) {
+  static withIndexReplaced<T>(source: T[], i: number, newValue: T | ((oldValue: T) => T)) {
     const copy = this.copy(source);
     copy[i] = isFunction(newValue) ? newValue(copy[i]) : newValue;
     return copy;
@@ -171,43 +143,32 @@ export default class List {
 
   static withIndexesReplaced<T>(
     source: T[],
-    replacements: Record<
-      number,
-      MaybeWrapped<T | ((oldValue: T, i: number) => T)>
-    >
+    replacements: Record<number, MaybeWrapped<T | ((oldValue: T, i: number) => T)>>,
   ): T[];
   static withIndexesReplaced<T>(
     source: T[],
     indexes: number[],
-    newValue: MaybeWrapped<T | ((oldValue: T, i: number) => T)>
+    newValue: MaybeWrapped<T | ((oldValue: T, i: number) => T)>,
   ): T[];
   static withIndexesReplaced<T>(
     source: T[],
     indexesOrReplacements:
       | number[]
       | Record<number, MaybeWrapped<T | ((oldValue: T, i: number) => T)>>,
-    newValue?: MaybeWrapped<T | ((oldValue: T, i: number) => T)>
+    newValue?: MaybeWrapped<T | ((oldValue: T, i: number) => T)>,
   ): T[] {
     if (Array.isArray(indexesOrReplacements)) {
       const copy = this.copy(source);
       indexesOrReplacements.forEach((i) => {
-        const newValueForI = (
-          Array.isArray(newValue) ? newValue[i] : newValue
-        )!;
-        copy[i] = isFunction(newValueForI)
-          ? newValueForI(copy[i], i)
-          : newValueForI;
+        const newValueForI = (Array.isArray(newValue) ? newValue[i] : newValue)!;
+        copy[i] = isFunction(newValueForI) ? newValueForI(copy[i], i) : newValueForI;
       });
       return copy;
     } else {
       const copy = this.copy(source);
       Object.entries(indexesOrReplacements).forEach(([i, newValue]) => {
-        const newValueForI = (
-          Array.isArray(newValue) ? newValue[i] : newValue
-        )!;
-        copy[i] = isFunction(newValueForI)
-          ? newValueForI(copy[i], i)
-          : newValueForI;
+        const newValueForI = (Array.isArray(newValue) ? newValue[i] : newValue)!;
+        copy[i] = isFunction(newValueForI) ? newValueForI(copy[i], i) : newValueForI;
       });
       return copy;
     }
@@ -217,11 +178,7 @@ export default class List {
     return Array.isArray(value) ? value : [value];
   }
 
-  static withInserted<T>(
-    source: T[],
-    newValues: T | T[],
-    insertIndex: number
-  ): T[] {
+  static withInserted<T>(source: T[], newValues: T | T[], insertIndex: number): T[] {
     const copy = this.copy(source);
     copy.splice(insertIndex, 0, ...this.wrap(newValues));
     return copy;
@@ -229,7 +186,7 @@ export default class List {
 
   static indexBy<KeyType extends string | number | symbol, ValueType>(
     source: ValueType[],
-    keyGenerator: (value: ValueType) => KeyType
+    keyGenerator: (value: ValueType) => KeyType,
   ): Record<KeyType, ValueType> {
     const ret: Record<KeyType, ValueType> = {} as Record<KeyType, ValueType>;
     source.forEach((value) => {
@@ -246,7 +203,7 @@ export default class List {
 
   static partition<T, U extends T>(
     source: T[],
-    fn: (el: T) => el is U
+    fn: (el: T) => el is U,
   ): [U[], Exclude<T, U>[]] {
     const left: U[] = [];
     const right: Exclude<T, U>[] = [];
@@ -279,7 +236,7 @@ export default class List {
 
   static partitionBy<ValueType, KeyType extends string | symbol | number>(
     source: ValueType[],
-    keyGenerator: (value: ValueType) => KeyType
+    keyGenerator: (value: ValueType) => KeyType,
   ): Record<KeyType, ValueType[] | undefined> {
     const ret = {} as Record<KeyType, ValueType[]>;
 

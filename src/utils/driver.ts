@@ -7,7 +7,7 @@ import {
   noteArray,
   transposeNote,
 } from "./elysiumutils";
-import { array_copy, createEmpty2dArray, mod, objectWithoutKeys } from "./utils";
+import { array_copy, createEmpty2dArray, mod, objectWithoutKeys } from "../lib/utils";
 import Midi, { MidiScheduler } from "./midi";
 import { LayerControlKey } from "./DefaultDefinitions";
 import { AppState, getControlValue, LayerState } from "../state/AppState";
@@ -712,7 +712,6 @@ export class Driver {
 
             // console.log(token.store);
 
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const debug = token.callbacks.onTick.bind(null)(
               token.store,
               helpers,

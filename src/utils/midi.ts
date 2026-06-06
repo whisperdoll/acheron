@@ -111,6 +111,7 @@ export default class Midi {
       case "unknown": // if it's still unknown
         return;
       case "absolute":
+        // eslint-disable-next-line no-self-assign
         value = value; // nuf said
         break;
       case "binaryOffset":

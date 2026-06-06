@@ -34,10 +34,7 @@ export default class Point {
     }
   }
 
-  public static fromSizeLike(sizeLike: {
-    width: number;
-    height: number;
-  }): Point {
+  public static fromSizeLike(sizeLike: { width: number; height: number }): Point {
     return new Point(sizeLike.width, sizeLike.height);
   }
 
@@ -96,7 +93,7 @@ export default class Point {
    * @returns A copy of the point, inverted and scaled so that the magnitude of its x-coordinate is the passed value.
    */
   public reverseByX(x: number): void {
-    let offset = this.unitX.inverted.times(x);
+    const offset = this.unitX.inverted.times(x);
     this.x = offset.x;
     this.y = offset.y;
   }
@@ -106,7 +103,7 @@ export default class Point {
    * @returns A copy of the point, inverted and scaled so that the magnitude of its y-coordinate is the passed value.
    */
   public reverseByY(y: number): void {
-    let offset = this.unitY.inverted.times(y);
+    const offset = this.unitY.inverted.times(y);
     this.x = offset.x;
     this.y = offset.y;
   }
@@ -171,7 +168,7 @@ export default class Point {
    * @returns A copy of the point multiplied by the given value.
    */
   public times(n: number | Point): Point {
-    let ret = this.copy();
+    const ret = this.copy();
     ret.multiply(n);
     return ret;
   }
@@ -195,7 +192,7 @@ export default class Point {
    * @returns A copy of the point divided by the given value.
    */
   public dividedBy(n: number | Point): Point {
-    let ret = this.copy();
+    const ret = this.copy();
     ret.divideBy(n);
     return ret;
   }
@@ -219,7 +216,7 @@ export default class Point {
    * @returns A copy of the point summed with the given value.
    */
   public plus(n: number | Point | PointLike): Point {
-    let ret = this.copy();
+    const ret = this.copy();
     ret.add(n);
     return ret;
   }
@@ -243,7 +240,7 @@ export default class Point {
    * @returns A copy of the difference between this point and the given point.
    */
   public minus(n: number | Point): Point {
-    let ret = this.copy();
+    const ret = this.copy();
     ret.subtract(n);
     return ret;
   }

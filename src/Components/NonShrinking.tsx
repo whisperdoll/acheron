@@ -1,22 +1,26 @@
-import { PropsWithChildren, useEffect, useRef } from "react";
-
-interface Props {}
+import { PropsWithChildren, useEffect, useMemo, useRef } from "react";
 
 export default function NonShrinking(
-  props: PropsWithChildren<Props> & React.JSX.IntrinsicElements["div"],
+  props: PropsWithChildren & React.JSX.IntrinsicElements["div"],
 ) {
   const ref = useRef<HTMLDivElement>(null);
   const minWidth = useRef<number>(0);
   const minHeight = useRef<number>(0);
 
   const { ...rest } = props;
-  const myAssumedStyle: Partial<CSSStyleDeclaration> = {
-    display: "flex",
-    justifyContent: "flex-end",
-  };
-  const myMandatoryStyle: Partial<CSSStyleDeclaration> = {
-    boxSizing: "border-box",
-  };
+  const myAssumedStyle: Partial<CSSStyleDeclaration> = useMemo(
+    () => ({
+      display: "flex",
+      justifyContent: "flex-end",
+    }),
+    [],
+  );
+  const myMandatoryStyle: Partial<CSSStyleDeclaration> = useMemo(
+    () => ({
+      boxSizing: "border-box",
+    }),
+    [],
+  );
 
   useEffect(() => {
     if (!ref.current) return;
@@ -26,21 +30,30 @@ export default function NonShrinking(
       ...rest.style,
       ...myMandatoryStyle,
     });
+  }, [myAssumedStyle, myMandatoryStyle, rest.style]);
+
+  useEffect(() => {
+    if (!ref.current) return;
+
+    const currentRef = ref.current;
 
     const observer = new ResizeObserver((entries) => {
-      if (!ref.current) return;
       const entry = entries.find((e) => e.borderBoxSize);
       if (!entry) return;
 
       if (entry.borderBoxSize[0].inlineSize > minWidth.current) {
-        ref.current.style.minWidth = `${(minWidth.current = entry.borderBoxSize[0].inlineSize)}px`;
+        currentRef.style.minWidth = `${(minWidth.current = entry.borderBoxSize[0].inlineSize)}px`;
       }
       if (entry.borderBoxSize[0].blockSize > minHeight.current) {
-        ref.current.style.minHeight = `${(minHeight.current = entry.borderBoxSize[0].blockSize)}px`;
+        currentRef.style.minHeight = `${(minHeight.current = entry.borderBoxSize[0].blockSize)}px`;
       }
     });
 
-    observer.observe(ref.current);
+    observer.observe(currentRef);
+
+    return () => {
+      observer.unobserve(currentRef);
+    };
   }, []);
 
   return <div ref={ref} {...rest} />;

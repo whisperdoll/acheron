@@ -2,7 +2,7 @@ import StateStore from "./state.ts";
 import App from "../App.tsx";
 import React, { useReducer, FunctionComponent, useState } from "react";
 import { getProperty } from "dot-prop";
-import { objectWithoutKeys, sliceObject } from "../utils/utils.ts";
+import { objectWithoutKeys, sliceObject } from "../lib/utils.ts";
 import { buildLayer } from "../Layers.ts";
 import {
   ControlState,
@@ -225,9 +225,7 @@ export const AppContext = React.createContext<{
   setState: SetState;
 } | null>(null);
 
-interface Props {}
-
-export const AppContextProvider: FunctionComponent<Props> = (props) => {
+export const AppContextProvider: FunctionComponent = () => {
   const [state, setState] = useState(initialState);
 
   return (
@@ -718,7 +716,7 @@ export function resolveModItem(
         getControlValue(state, state.controls[modItem.controlId]),
         state.controls[modItem.controlId],
       );
-    case "inheritedControlValue":
+    case "inheritedControlValue": {
       const inherit = modItem.inherit;
       const inheritParts = getInheritParts(inherit);
       if (!inheritParts) {
@@ -735,11 +733,12 @@ export function resolveModItem(
         inheritParts,
       );
       return coerceControlValueToNumber(getControlValue(state, control), control);
+    }
     case "fixedControlValue":
       return modItem.value;
     case "fixedValue":
       return modItem.value;
-    case "lfo":
+    case "lfo": {
       const props = { ...modItem } as Lfo;
       const r = (attr: keyof Lfo) =>
         resolveInputtableValue<LFOMod>(
@@ -766,6 +765,7 @@ export function resolveModItem(
         },
         "ms",
       );
+    }
     case "math": {
       const value1 = resolveInputtableValue<MathMod>(
         state,

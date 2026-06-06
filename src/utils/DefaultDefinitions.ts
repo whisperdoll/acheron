@@ -270,7 +270,7 @@ export function buildFromDefs<K extends string>(
     }
 
     (modChains[id].mods[modId] as FixedControlValueMod).value = coerceControlValueToNumber(
-      parentDef.defaultValue,
+      parentDef.defaultValue!,
       {
         key,
         definition: parentDef,

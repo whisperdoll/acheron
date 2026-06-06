@@ -1,12 +1,9 @@
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { keyboardStateStore } from "../state/KeyboardState";
 
 export default function useKeyboard() {
   const isDown = useCallback(
-    (
-      key: string,
-      modifiers: { ctrl?: boolean; shift?: boolean; alt?: boolean } = {}
-    ) => {
+    (key: string, modifiers: { ctrl?: boolean; shift?: boolean; alt?: boolean } = {}) => {
       return !!(
         keyboardStateStore.values[key] &&
         (!modifiers.ctrl || keyboardStateStore.values.Control) &&
@@ -14,8 +11,8 @@ export default function useKeyboard() {
         (!modifiers.alt || keyboardStateStore.values.Alt)
       );
     },
-    []
+    [],
   );
 
-  return { keyboardStateStore, isDown };
+  return useMemo(() => ({ keyboardStateStore, isDown }), [isDown]);
 }

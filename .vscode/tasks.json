@@ -12,6 +12,13 @@
         "kind": "build",
         "isDefault": true
       }
+    },
+    {
+      "label": "eslint: open error files",
+      "type": "shell",
+      "command": "node",
+      "args": ["bin/open-eslint-errors-vscode.mjs"],
+      "problemMatcher": []
     }
   ]
 }

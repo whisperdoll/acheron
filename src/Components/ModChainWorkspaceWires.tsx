@@ -1,12 +1,10 @@
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { ModChainWorkspaceContext } from "../state/ModChainWorkspaceContext";
 import ModChainWorkspaceWire from "./ModChainWorkspaceWire";
-import { sliceObject } from "../utils/utils";
+import { sliceObject } from "../lib/utils";
 import { AppContext } from "../state/AppState";
 
-interface Props {}
-
-export default function ModChainWorkspaceWires(props: Props) {
+export default function ModChainWorkspaceWires() {
   const { state, setState } = useContext(AppContext)!;
 
   const modChainWorkspaceContext = useContext(ModChainWorkspaceContext);
@@ -17,10 +15,11 @@ export default function ModChainWorkspaceWires(props: Props) {
   } | null>(null);
 
   const documentBounds = modChainWorkspaceContext.containerBounds;
+  const documentBoundsExists = !!documentBounds;
 
   useEffect(() => {
     const onMouseMove = (e: PointerEvent) => {
-      if (documentBounds) {
+      if (documentBoundsExists) {
         setMousePosition({
           x: e.clientX,
           y: e.clientY,
@@ -35,7 +34,7 @@ export default function ModChainWorkspaceWires(props: Props) {
     return () => {
       document.body.removeEventListener("pointermove", onMouseMove);
     };
-  }, [modChainWorkspaceContext.connectingOutput]);
+  }, [documentBoundsExists, modChainWorkspaceContext.connectingOutput]);
 
   return (
     <div className="modChainWorkspaceWires">

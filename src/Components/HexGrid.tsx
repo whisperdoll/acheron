@@ -1,4 +1,4 @@
-import { useContext, useEffect, useRef } from "react";
+import { useCallback, useContext, useEffect, useMemo, useRef } from "react";
 import { ControlState, PerformanceNote } from "../Types";
 import { Canvas } from "../utils/canvas";
 import {
@@ -31,7 +31,7 @@ import HexGridContextMenu from "./HexGridContextMenu";
 import Color from "colorjs.io";
 import { modes, notesForKey } from "../utils/scales";
 import useNow from "../Hooks/useNow";
-import { objectWithoutKeys } from "../utils/utils";
+import { objectWithoutKeys } from "../lib/utils";
 
 interface Props {
   layerIndex: number;
@@ -39,6 +39,9 @@ interface Props {
 }
 
 type DragType = "copy" | "move" | "none";
+const hexRadius = 38;
+const lineWidth = 2;
+const hexOuterRadius = hexRadius;
 
 export default function HexGrid(props: Props) {
   const { state, setState } = useContext(AppContext)!;
@@ -52,37 +55,42 @@ export default function HexGrid(props: Props) {
   const hexPoints = useRef<Point[]>([]);
   const mouseLocation = useRef<Point | null>(null);
 
-  const hexRadius = 38;
-  const lineWidth = 2;
-  const startPosition = new Point(hexRadius + lineWidth / 2, hexRadius + lineWidth / 2);
+  const startPosition = useMemo(
+    () => new Point(hexRadius + lineWidth / 2, hexRadius + lineWidth / 2),
+    [],
+  );
   const animationFrameHandle = useRef<number | null>(null);
-  const animationCallback = useRef<() => any>(() => 0);
+  const animationCallback = useRef<() => unknown>(() => 0);
 
-  const layerIsSelected = (s: AppState) => s.selectedHex.layerIndex === props.layerIndex;
-  const hexIsSelected = (s: AppState) => s.selectedHex.hexIndex !== -1 && layerIsSelected(s);
+  const hexIsSelected =
+    state.selectedHex.hexIndex !== -1 && state.selectedHex.layerIndex === props.layerIndex;
   const tokenIds = state.layers[props.layerIndex].tokenIds;
 
-  const rootStyle = getComputedStyle(document.documentElement);
-  const colors = Dict.fromArray(
-    [
-      "--hex-text-color",
-      "--hex-text-color-selected",
-      "--hex-token-text-color",
-      "--hex-token-text-color-selected",
-      "--hex-background-color",
-      "--hex-background-color-selected",
-      "--hex-playhead-background-color",
-      "--hex-playhead-background-color-dying",
-      "--hex-playhead-text-color",
-      "--hex-outline-color",
-      "--hex-key-background-color",
-      "--hex-background-color-drop",
-    ].map((variable) => {
-      return [
-        variable.substr(2).replace(/-([a-z])/g, (m) => m[1].toUpperCase()),
-        rootStyle.getPropertyValue(variable),
-      ];
-    }),
+  const rootStyle = useMemo(() => getComputedStyle(document.documentElement), []);
+  const colors = useMemo(
+    () =>
+      Dict.fromArray(
+        [
+          "--hex-text-color",
+          "--hex-text-color-selected",
+          "--hex-token-text-color",
+          "--hex-token-text-color-selected",
+          "--hex-background-color",
+          "--hex-background-color-selected",
+          "--hex-playhead-background-color",
+          "--hex-playhead-background-color-dying",
+          "--hex-playhead-text-color",
+          "--hex-outline-color",
+          "--hex-key-background-color",
+          "--hex-background-color-drop",
+        ].map((variable) => {
+          return [
+            variable.substr(2).replace(/-([a-z])/g, (m) => m[1].toUpperCase()),
+            rootStyle.getPropertyValue(variable),
+          ];
+        }),
+      ),
+    [rootStyle],
   );
 
   function closestHexIndex(point: Point) {
@@ -100,7 +108,7 @@ export default function HexGrid(props: Props) {
     return hexIndex;
   }
 
-  function resizeCanvases() {
+  const resizeCanvases = useCallback(() => {
     const size = new Point(
       state.gridCols * ((3 / 2) * hexOuterRadius) + (1 / 2) * hexOuterRadius + lineWidth,
       (state.gridRows + 0.5) * (2 * hexOuterRadius * Math.sin((2 * Math.PI) / 6)) +
@@ -132,14 +140,14 @@ export default function HexGrid(props: Props) {
     if (pts) {
       hexPoints.current = pts;
     }
-  }
+  }, [colors, startPosition, state.gridCols, state.gridRows, state.gridStartingNote]);
 
-  useEffect(resizeCanvases, [props.layerIndex, state.gridRows, state.gridCols]);
+  useEffect(resizeCanvases, [resizeCanvases, props.layerIndex]);
 
   // keyboard controls
   useEffect(() => {
     const keyDown = async (e: KeyboardEvent) => {
-      if (!hexIsSelected(state)) {
+      if (!hexIsSelected) {
         // console.log("hex not selected");
         return;
       }
@@ -211,14 +219,13 @@ export default function HexGrid(props: Props) {
     return () => {
       document.removeEventListener("keydown", keyDown);
     };
-  }, [props.layerIndex, state]);
+  }, [hexIsSelected, props.layerIndex, setState, state]);
 
   /*
     (hexRadius * 2 * cols)) / 1.3076923076923077 + lineWidth * 2 + 1
     (hexRadius * 2 * rows) / 1.0971428571428572 + lineWidth * 2 + 1
   */
   // setup
-  const hexOuterRadius = hexRadius;
   useEffect(() => {
     canvas.current = new Canvas({
       canvasElement: canvasEl.current!,
@@ -257,7 +264,7 @@ export default function HexGrid(props: Props) {
         cancelAnimationFrame(animationFrameHandle.current);
       animationFrameHandle.current = null;
     };
-  }, [props.layerIndex]);
+  }, [props.layerIndex, resizeCanvases]);
 
   ////////////////////////////////////////////////////////////////////////////////
   ///////////////////////////////// FRONT CANVAS /////////////////////////////////
@@ -308,11 +315,15 @@ export default function HexGrid(props: Props) {
         return ret;
       }),
     });
+    // dont wanna include `state` - need to refactor getControlValue to be explicit about what it needs
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     props.layerIndex,
     state.selectedHex.layerIndex,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     Math.floor(state.layers[props.layerIndex]?.currentBeat),
     state.controls,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     state.layers[props.layerIndex]?.tokenIds,
     state.gridCols,
     state.gridRows,
@@ -321,7 +332,7 @@ export default function HexGrid(props: Props) {
     now,
   ]);
 
-  const [contextMenuNode, showContextMenu] = useContextMenu(
+  const [contextMenuNode, showContextMenu, refreshContextMenu] = useContextMenu(
     ({ hide, setPosition, isShowing }) => {
       return [
         {
@@ -330,10 +341,13 @@ export default function HexGrid(props: Props) {
       ];
     },
     {
-      offset: (bounds) => ({ x: 16, y: -bounds.height / 2 }),
+      offset: useCallback((bounds) => ({ x: 16, y: -bounds.height / 2 }), []),
     },
-    [props.layerIndex, tokenIds],
   );
+
+  useEffect(() => {
+    refreshContextMenu();
+  }, [refreshContextMenu, props.layerIndex, tokenIds]);
 
   ////////////////////////////////////////////////////////////////////////////////
   //////////////////////////////////// EVENTS ////////////////////////////////////
@@ -640,7 +654,7 @@ export default function HexGrid(props: Props) {
 
     async function contextMenu(e: MouseEvent) {
       e.preventDefault();
-      if (!hexIsSelected(state)) return;
+      if (!hexIsSelected) return;
       if (e instanceof TouchEvent) return;
       if (!canvasEl.current) return;
       if (!canvas.current) return;
@@ -672,6 +686,7 @@ export default function HexGrid(props: Props) {
       document.body.removeEventListener("touchend", documentMouseUp);
       canvas.current?.canvas.removeEventListener("contextmenu", contextMenu);
     };
+    /* eslint-disable react-hooks/exhaustive-deps */
   }, [
     props.layerIndex,
     state.layers[props.layerIndex].tokenIds,
@@ -682,7 +697,11 @@ export default function HexGrid(props: Props) {
     state.performingNotes,
     state.selectedHex,
     Object.keys(state.tokens).length,
+    hexIsSelected,
+    showContextMenu,
+    setState,
   ]);
+  /* eslint-enable react-hooks/exhaustive-deps */
 
   /////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////// BACK CANVAS //////////////////////////////////
@@ -728,7 +747,7 @@ export default function HexGrid(props: Props) {
     }
 
     // draw selected //
-    if (hexIsSelected(state)) {
+    if (hexIsSelected) {
       const note = getNoteParts(hexNotes[state.selectedHex.hexIndex]);
       const color = new Color(noteColors[note.name]);
       color.alpha = 0.4;
@@ -834,9 +853,10 @@ export default function HexGrid(props: Props) {
         hexRadius,
       });
     });
+    /* eslint-disable react-hooks/exhaustive-deps */
   }, [
     props.layerIndex,
-    hexIsSelected(state),
+    hexIsSelected,
     state.selectedHex,
     state.layers,
     state.draggingDestHex,
@@ -851,7 +871,10 @@ export default function HexGrid(props: Props) {
     state.modChains[state.layers[props.layerIndex].keyTonic],
     state.modChains[state.layers[props.layerIndex].keyMode],
     now,
+    colors,
+    startPosition,
   ]);
+  /* eslint-enable react-hooks/exhaustive-deps */
 
   const style = props.size ? { width: props.size + "px", height: "auto" } : undefined;
 

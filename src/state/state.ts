@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable react-hooks/rules-of-hooks */
 import { useEffect, useState } from "react";
 import {
   isFunction,
@@ -15,10 +17,7 @@ import env from "../lib/env";
 
 const DEBUG = env("debug");
 
-export type StateStoreSubscription<T> = (
-  prevState: T | null,
-  newState: T
-) => void;
+export type StateStoreSubscription<T> = (prevState: T | null, newState: T) => void;
 
 type StateStoreSubscriptionFilter<T> = (prevState: T, newState: T) => boolean;
 
@@ -39,7 +38,7 @@ export default class StateStore<StateType extends Record<string, any>> {
 
   public filters = {
     deepEqual: (
-      selector: (state: StateType) => any
+      selector: (state: StateType) => unknown,
     ): StateStoreSubscriptionFilter<StateType> => {
       return (prevState, newState) => {
         if (!prevState) return true;
@@ -101,7 +100,7 @@ export default class StateStore<StateType extends Record<string, any>> {
 
   set(
     newState: MaybeGeneratedPromise<Partial<StateType>, [StateType]>,
-    why: string
+    why: string,
   ): Promise<StateType> {
     return new Promise((resolve, reject) => {
       this.queue.push({ newState, why, resolve, reject });
@@ -118,10 +117,7 @@ export default class StateStore<StateType extends Record<string, any>> {
       this._prevValues = initialState;
       const { newState, why, resolve, reject } = this.queue.shift()!;
 
-      const resolvedNewState = await resolveMaybeGeneratedPromise(
-        newState,
-        this.values
-      );
+      const resolvedNewState = await resolveMaybeGeneratedPromise(newState, this.values);
 
       Object.assign(this.values, resolvedNewState);
 
@@ -132,10 +128,7 @@ export default class StateStore<StateType extends Record<string, any>> {
 
       DEBUG &&
         why !== "tick" &&
-        console.log(
-          `setting state bc ${why}`,
-          detailedDiff(this._prevValues, this.values)
-        );
+        console.log(`setting state bc ${why}`, detailedDiff(this._prevValues, this.values));
 
       resolve(this.values);
       this.notifySubscribers(initialState, this.values);
@@ -146,7 +139,7 @@ export default class StateStore<StateType extends Record<string, any>> {
 
   subscribe(
     onUpdate: StateStoreSubscription<StateType>,
-    filter?: StateStoreSubscriptionFilter<StateType>
+    filter?: StateStoreSubscriptionFilter<StateType>,
   ): () => void {
     onUpdate(this._prevValues, this.values);
 
@@ -165,39 +158,34 @@ export default class StateStore<StateType extends Record<string, any>> {
         };
 
     this.subscriptions.push(subscriptionFn);
-    return () =>
-      this.subscriptions.splice(this.subscriptions.indexOf(subscriptionFn), 1);
+    return () => this.subscriptions.splice(this.subscriptions.indexOf(subscriptionFn), 1);
   }
 
   useSubscription(
     onUpdate: StateStoreSubscription<StateType>,
     dependencyArray: any[] = [],
-    filter?: StateStoreSubscriptionFilter<StateType>
+    filter?: StateStoreSubscriptionFilter<StateType>,
   ) {
     useEffect(() => {
       // console.log({ onUpdate, dependencyArray, filter });
       return this.subscribe(onUpdate, filter);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, dependencyArray);
   }
 
   useState<T>(selector: (state: StateType) => T, dependencyArray?: any[]): T;
   useState(dependencyArray?: any[]): StateType;
-  useState<T>(
-    selector?: ((state: StateType) => T) | any[],
-    dependencyArray?: any[]
-  ) {
+  useState<T>(selector?: ((state: StateType) => T) | any[], dependencyArray?: any[]) {
     const [stateValue, setStateValue] = useState(() =>
-      isFunction(selector) ? selector(this.values) : { ...this.values }
+      isFunction(selector) ? selector(this.values) : { ...this.values },
     );
 
     this.useSubscription(
       (_, newState) => {
-        setStateValue(
-          isFunction(selector) ? selector(newState) : { ...newState }
-        );
+        setStateValue(isFunction(selector) ? selector(newState) : { ...newState });
       },
       [setStateValue].concat(dependencyArray || []),
-      isFunction(selector) ? this.filters.deepEqual(selector) : undefined
+      isFunction(selector) ? this.filters.deepEqual(selector) : undefined,
     );
 
     return stateValue;

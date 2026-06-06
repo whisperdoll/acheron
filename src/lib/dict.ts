@@ -2,7 +2,7 @@ type Key = string | number | symbol;
 
 export default class Dict {
   static fromArray<KeyType extends Key, ValueType>(
-    arr: [KeyType, ValueType][]
+    arr: [KeyType, ValueType][],
   ): Record<KeyType, ValueType> {
     const ret: Record<KeyType, ValueType> = {} as Record<KeyType, ValueType>;
     arr.forEach(([key, value]) => {
@@ -14,28 +14,24 @@ export default class Dict {
 
   static zip<
     K extends string,
-    T1 extends Record<string, any>,
-    T2 extends Record<string, any>
+    T1 extends Record<string, unknown>,
+    T2 extends Record<string, unknown>,
   >(o1: Record<K, T1>, o2: Record<K, T2>): Record<K, T1 & T2> {
-    const allKeys = Array.from(
-      new Set<K>([...Object.keys(o1), ...Object.keys(o2)])
-    );
+    const allKeys = Array.from(new Set<K>([...Object.keys(o1), ...Object.keys(o2)]));
 
     return Dict.fromArray(allKeys.map((k) => [k, { ...o1[k], ...o2[k] }]));
   }
 
   static map<K extends Key, V, K2 extends Key, V2>(
     o: Record<K, V>,
-    fn: (key: K, value: V) => [K2, V2]
+    fn: (key: K, value: V) => [K2, V2],
   ): Record<K2, V2> {
-    return Dict.fromArray(
-      Object.entries(o).map(([key, value]) => fn(key, value))
-    );
+    return Dict.fromArray(Object.entries(o).map(([key, value]) => fn(key, value)));
   }
 
   static transformedValues<K extends Key, OriginalValue, TransformedValue>(
     o: Record<K, OriginalValue>,
-    fn: (value: OriginalValue, key: K) => TransformedValue
+    fn: (value: OriginalValue, key: K) => TransformedValue,
   ): Record<K, TransformedValue> {
     const ret = {} as Record<K, TransformedValue>;
 
@@ -46,9 +42,7 @@ export default class Dict {
     return ret;
   }
 
-  static merge<T extends Record<string | symbol | number, unknown>>(
-    os: T[]
-  ): T {
+  static merge<T extends Record<string | symbol | number, unknown>>(os: T[]): T {
     const ret = {};
     os.forEach((o) => Object.assign(ret, o));
     return ret as T;

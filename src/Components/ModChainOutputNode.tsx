@@ -5,6 +5,7 @@ import { cx, formatNumberSmall, preventDefault } from "../lib/utils";
 import { AppContext, connectModItems, resolveModItem } from "../state/AppState";
 import useNow from "../Hooks/useNow";
 import NonShrinking from "./NonShrinking";
+import useEventListener from "../Hooks/useEventListener";
 
 interface Props {
   modItemId: string;
@@ -30,30 +31,26 @@ export default function ModChainOutputNode(props: Props) {
       props.outputKey,
     );
     return formatNumberSmall(resolved);
-  }, [props.modItemId, state.modChains, now, props.value]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [props.modItemId, state.modChains, now, props.value, props.outputKey]);
   const ref = useRef<HTMLDivElement>(null);
 
+  const setModChainWorkspaceContext = modChainWorkspaceContext.set;
   const handleMouseDown: React.PointerEventHandler<HTMLDivElement> = useCallback(
     (e) => {
       e.preventDefault();
-      modChainWorkspaceContext.set({
+      setModChainWorkspaceContext({
         connectingOutput: { modItemId: props.modItemId, outputKey: props.outputKey },
       });
     },
-    [modChainWorkspaceContext.set, props.modItemId, props.outputKey],
+    [setModChainWorkspaceContext, props.modItemId, props.outputKey],
   );
 
   // if (props.outputKey !== "output") {
   //   console.log(props.modItemId, state.modChains[state.modChainControl!].connections);
   // }
 
-  useEffect(() => {
-    ref.current?.addEventListener("touchstart", preventDefault);
-
-    return () => {
-      ref.current?.removeEventListener("touchstart", preventDefault);
-    };
-  }, []);
+  useEventListener(ref, "touchstart", preventDefault);
 
   return (
     <div className="row">

@@ -4,17 +4,14 @@ import settings from "../state/AppSettings";
 import { AppContext } from "../state/AppState";
 
 interface Props {
-  onHide: () => any;
+  onHide: () => unknown;
 }
 
 export default function TokenManager(props: Props) {
   const { state, setState } = useContext(AppContext)!;
   const reactiveSettings = settings.useState();
 
-  function handleShortcutKey(
-    e: React.KeyboardEvent<HTMLInputElement>,
-    uid: TokenUID,
-  ) {
+  function handleShortcutKey(e: React.KeyboardEvent<HTMLInputElement>, uid: TokenUID) {
     if ([...e.key].length === 1) {
       settings.set(
         {
@@ -48,9 +45,7 @@ export default function TokenManager(props: Props) {
       <div className="tokenSettings">
         {Object.entries(reactiveSettings.tokens).map(([uid, settings]) => (
           <div className="tokenSetting" key={uid}>
-            <div className="tokenLabel">
-              {state.tokenDefinitions[uid].label}
-            </div>
+            <div className="tokenLabel">{state.tokenDefinitions[uid].label}</div>
             <div className="row">
               <span>Shortcut:</span>
               <input

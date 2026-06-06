@@ -2,7 +2,7 @@ import { SerializedComposition } from "../Serialization";
 import { modalStateStore } from "../state/ModalState";
 
 export function isOnDesktop() {
-  return !!(window as any).__TAURI_INTERNALS__;
+  return !!(window as unknown as { __TAURI_INTERNALS__: unknown }).__TAURI_INTERNALS__;
 }
 
 export function isOnWeb() {
@@ -112,6 +112,7 @@ export async function openUrl(url: string) {
 }
 
 export async function confirmPrompt(prompt: string, title: string): Promise<boolean> {
+  // eslint-disable-next-line no-constant-condition
   if (false) {
     const { ask } = await import("@tauri-apps/plugin-dialog");
     return await ask(prompt, {

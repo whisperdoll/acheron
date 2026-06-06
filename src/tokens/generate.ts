@@ -54,14 +54,8 @@ const GenerateToken: TokenDefinition<Store> = {
   },
   callbacks: {
     onTick(store, helpers, playheads) {
-      const {
-        offset,
-        triggerMode,
-        pulseEvery,
-        timeToLive,
-        direction,
-        probability,
-      } = helpers.getControlValues();
+      const { offset, triggerMode, pulseEvery, timeToLive, direction, probability } =
+        helpers.getControlValues();
 
       const currentBeat = helpers.getCurrentBeat(false);
 

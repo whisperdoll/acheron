@@ -7,7 +7,7 @@ import {
   PlayerControlKey,
   PlayerControlKeys,
 } from "./DefaultDefinitions";
-import { mod } from "./utils";
+import { mod } from "../lib/utils";
 
 export const noteArray: string[] = [
   "C", // 0

@@ -1,10 +1,10 @@
 import React, { useContext, useMemo } from "react";
 import { ControlState, Lfo, LfoConnectableProperty, LfoType, LfoTypes } from "../Types";
-import { capitalize } from "../utils/utils";
+import { capitalize } from "../lib/utils";
 import NumberInput from "./NumberInput";
 import ModChainInputNode from "./ModChainInputNode";
 import { ModChainWorkspaceContext } from "../state/ModChainWorkspaceContext";
-import { isNil } from "../lib/utils";
+import { isNullish } from "../lib/utils";
 import { AppContext, resolveModItem } from "../state/AppState";
 
 interface Props {
@@ -44,6 +44,7 @@ export default React.memo(function LfoControls({ control, lfo, onUpdate, modItem
     });
 
     return ret;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lfo, modItemId, modChain, now]);
 
   function modifyLfo(partial: Partial<Lfo>) {
@@ -73,7 +74,7 @@ export default React.memo(function LfoControls({ control, lfo, onUpdate, modItem
           <div className="minPart">
             {modItemId && <ModChainInputNode modItemId={modItemId} property="min" />}
             <span className="label">Min:</span>
-            {!isNil(inputValues.min) ? (
+            {!isNullish(inputValues.min) ? (
               <div className="inputValue">{inputValues.min}</div>
             ) : (
               <NumberInput
@@ -89,7 +90,7 @@ export default React.memo(function LfoControls({ control, lfo, onUpdate, modItem
           <div className="maxPart">
             {modItemId && <ModChainInputNode modItemId={modItemId} property="max" />}
             <span className="label">Max:</span>
-            {!isNil(inputValues.max) ? (
+            {!isNullish(inputValues.max) ? (
               <div className="inputValue">{inputValues.max}</div>
             ) : (
               <NumberInput
@@ -106,7 +107,7 @@ export default React.memo(function LfoControls({ control, lfo, onUpdate, modItem
           <div className="periodPart">
             {modItemId && <ModChainInputNode modItemId={modItemId} property="period" />}
             <span className="label">Period:</span>
-            {!isNil(inputValues.period) ? (
+            {!isNullish(inputValues.period) ? (
               <div className="inputValue">{inputValues.period}</div>
             ) : (
               <NumberInput
@@ -124,7 +125,7 @@ export default React.memo(function LfoControls({ control, lfo, onUpdate, modItem
             <div className="loPeriodPart">
               {modItemId && <ModChainInputNode modItemId={modItemId} property="lowPeriod" />}
               <span className="label">Lo Period:</span>
-              {!isNil(inputValues.lowPeriod) ? (
+              {!isNullish(inputValues.lowPeriod) ? (
                 <div className="inputValue">{inputValues.lowPeriod}</div>
               ) : (
                 <NumberInput
@@ -139,7 +140,7 @@ export default React.memo(function LfoControls({ control, lfo, onUpdate, modItem
             <div className="hiPeriodPart">
               {modItemId && <ModChainInputNode modItemId={modItemId} property="hiPeriod" />}
               <span className="label">Hi Period:</span>
-              {!isNil(inputValues.hiPeriod) ? (
+              {!isNullish(inputValues.hiPeriod) ? (
                 <div className="inputValue">{inputValues.hiPeriod}</div>
               ) : (
                 <NumberInput

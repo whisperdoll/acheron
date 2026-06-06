@@ -41,6 +41,7 @@ export default React.memo(function LfoVisualizer({
     });
 
     return ret;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [baseLfo, modItemId, modChain, now]);
 
   const lfo: Lfo = useMemo(() => ({ ...baseLfo, ...inputValues }), [baseLfo, inputValues]);
@@ -90,14 +91,14 @@ export default React.memo(function LfoVisualizer({
     }
 
     ctx.stroke();
-  }, [lfo, resolutionX, resolutionY]);
+  }, [lfo, periodMs, resolutionX, resolutionY]);
 
   const clearTime = useCallback(() => {
     const ctx = progressCanvasRef.current?.getContext("2d");
     if (!ctx) return;
 
     ctx.clearRect(0, 0, resolutionX, resolutionY);
-  }, []);
+  }, [resolutionX, resolutionY]);
 
   const drawTime = useCallback(() => {
     const ctx = progressCanvasRef.current?.getContext("2d");
@@ -128,7 +129,7 @@ export default React.memo(function LfoVisualizer({
     ctx.beginPath();
     ctx.arc(pc * resolutionX, y, 5, 0, 2 * Math.PI, false);
     ctx.fill();
-  }, [lfo]);
+  }, [lfo, periodMs, resolutionX, resolutionY, state.startTime]);
 
   useEffect(() => {
     clearTime();
@@ -138,7 +139,7 @@ export default React.memo(function LfoVisualizer({
     }
 
     drawTime();
-  }, [state.isPlaying, resolutionX, resolutionY, lfo, now]);
+  }, [state.isPlaying, resolutionX, resolutionY, lfo, now, clearTime, drawTime]);
 
   return (
     <div className="lfoVisualizer">

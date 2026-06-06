@@ -3719,7 +3719,7 @@ export const CodePoints = {
 export type CodePoint = keyof typeof CodePoints;
 const sizes = ["small", "medium", "large"] as const satisfies string[];
 type Size = (typeof sizes)[number];
-const isValidSize = (size: any): size is Size => (sizes as string[]).includes(size);
+const isValidSize = (size: unknown): size is Size => (sizes as unknown[]).includes(size);
 
 export type Style = "rounded" | "outlined" | "sharp";
 

@@ -3,20 +3,11 @@ import { clamp, midpoint, mod, randomFloat } from "../lib/utils";
 import "./Synth.scss";
 import Knob from "./Knob";
 
-const waveShapes = [
-  "sin",
-  "triangle",
-  "pulse",
-  "sawtooth",
-  "noise",
-  "custom",
-] as const;
+const waveShapes = ["sin", "triangle", "pulse", "sawtooth", "noise", "custom"] as const;
 type WaveShape = (typeof waveShapes)[number];
 const CANVAS_RESOLUTION = { width: 300, height: 150 };
 
-interface Props {}
-
-export default function Synth(props: Props) {
+export default function Synth() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [waveShape, setWaveShape] = useState<WaveShape>("pulse");
   const [resolution, setResolution] = useState<number>(CANVAS_RESOLUTION.width);
@@ -46,16 +37,12 @@ export default function Synth(props: Props) {
         const value = waveValue(
           waveShape,
           pc,
-          waveShape === "pulse"
-            ? pulseOpts
-            : waveShape === "custom"
-            ? customOpts
-            : undefined
+          waveShape === "pulse" ? pulseOpts : waveShape === "custom" ? customOpts : undefined,
         );
 
         ctx[i === 0 ? "lineTo" : "lineTo"](
           pc * CANVAS_RESOLUTION.width,
-          midPoint - value * halfHeight
+          midPoint - value * halfHeight,
         );
       }
 
@@ -130,7 +117,7 @@ type CustomOptions = { formula: string };
 function waveValue(
   waveShape: WaveShape,
   pc: number,
-  opts: undefined | PulseOptions | CustomOptions
+  opts: undefined | PulseOptions | CustomOptions,
 ): number {
   switch (waveShape) {
     case "noise": {

@@ -8,9 +8,9 @@ import { AppContext, getControlValue } from "../state/AppState";
 
 interface Props {
   tokenId: string;
-  onRemove: () => any;
+  onRemove: () => unknown;
   isCollapsed: boolean;
-  onToggleCollapse: () => any;
+  onToggleCollapse: () => unknown;
   layerIndex: number;
   showHeader?: boolean;
   collapsible?: boolean;
@@ -31,32 +31,26 @@ export default function (props: Props) {
     if (state.selectedHex.hexIndex === -1) return;
 
     const numTokens =
-      state.layers[state.selectedHex.layerIndex].tokenIds[
-        state.selectedHex.hexIndex
-      ].length;
+      state.layers[state.selectedHex.layerIndex].tokenIds[state.selectedHex.hexIndex].length;
     const destinationIndex = mod(index + offset, numTokens);
     setState((s) => ({
       ...s,
-      layers: List.withIndexReplaced(
-        s.layers,
-        s.selectedHex.layerIndex,
-        (layer) => ({
-          ...layer,
-          tokenIds: List.withIndexReplaced(
-            layer.tokenIds,
-            s.selectedHex.hexIndex,
-            (oldTokenIds) => {
-              const newTokenIds = List.copy(oldTokenIds);
-              const [toBeMoved] = newTokenIds.splice(index, 1);
-              // console.log(List.copy(newLayer.tokenIds));
-              // console.log(`${toBeMoved} -> ${destinationIndex}`);
-              newTokenIds.splice(destinationIndex, 0, toBeMoved);
-              // console.log(List.copy(newLayer.tokenIds));
-              return newTokenIds;
-            },
-          ),
-        }),
-      ),
+      layers: List.withIndexReplaced(s.layers, s.selectedHex.layerIndex, (layer) => ({
+        ...layer,
+        tokenIds: List.withIndexReplaced(
+          layer.tokenIds,
+          s.selectedHex.hexIndex,
+          (oldTokenIds) => {
+            const newTokenIds = List.copy(oldTokenIds);
+            const [toBeMoved] = newTokenIds.splice(index, 1);
+            // console.log(List.copy(newLayer.tokenIds));
+            // console.log(`${toBeMoved} -> ${destinationIndex}`);
+            newTokenIds.splice(destinationIndex, 0, toBeMoved);
+            // console.log(List.copy(newLayer.tokenIds));
+            return newTokenIds;
+          },
+        ),
+      })),
     }));
   }
 
@@ -123,14 +117,10 @@ export default function (props: Props) {
               ? control.definition.showIf.substr(1)
               : control.definition.showIf;
             const shouldNegate = control.definition.showIf.startsWith("!");
-            const index = token.controlIds.findIndex(
-              (cid) => controls[cid].key === key,
-            );
+            const index = token.controlIds.findIndex((cid) => controls[cid].key === key);
 
             if (index !== -1) {
-              const bool = Boolean(
-                getControlValue(state, token.controlIds[index]),
-              );
+              const bool = Boolean(getControlValue(state, token.controlIds[index]));
               return bool !== shouldNegate ? ret : undefined;
             } else {
               return undefined;

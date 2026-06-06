@@ -159,8 +159,7 @@ export default function GridModeMenu() {
 
       if (
         e.target instanceof HTMLElement &&
-        (ref.current.contains(e.target) ||
-          tree.some((el) => el.dataset.gridSizeMenu))
+        (ref.current.contains(e.target) || tree.some((el) => el.dataset.gridSizeMenu))
       ) {
         e.stopPropagation();
         return;
@@ -175,7 +174,7 @@ export default function GridModeMenu() {
     document.addEventListener("pointerdown", pointerDown);
 
     return () => document.removeEventListener("pointerdown", pointerDown);
-  }, []);
+  }, [setState]);
 
   return (
     <div className="gridSizeMenu" ref={ref}>

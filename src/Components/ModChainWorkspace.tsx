@@ -26,12 +26,11 @@ import ModChainWorkspaceWires from "./ModChainWorkspaceWires";
 import { cx, preventDefault, resolveMaybeGenerated } from "../lib/utils";
 import { AppContext, connectModItems, playerControls } from "../state/AppState";
 import { getDefaultModChainItemUI } from "../utils/elysiumutils";
-import { sliceObject } from "../utils/utils";
+import { sliceObject } from "../lib/utils";
 import { LayerControlTypes } from "../utils/DefaultDefinitions";
+import useEventListener from "../Hooks/useEventListener";
 
-interface Props {}
-
-export default function ModChainWorkspace(props: Props) {
+export default function ModChainWorkspace() {
   const { state, setState } = useContext(AppContext)!;
   const containerRef = useRef<HTMLDivElement>(null);
   const mainRowRef = useRef<HTMLDivElement>(null);
@@ -103,145 +102,125 @@ export default function ModChainWorkspace(props: Props) {
     };
   }, [modChainContext, setModChainContext]);
 
-  function addModChainItem<T extends ModChainItem>(
-    item: Omit<T, keyof SharedModChainItemAttributes>,
-  ) {
-    const id = uuidv4();
-    setState((s) => ({
-      ...s,
-      modChains: {
-        ...s.modChains,
-        [s.modChainControl!]: {
-          ...s.modChains[s.modChainControl!],
-          mods: {
-            ...s.modChains[s.modChainControl!].mods,
-            [id]: {
-              ...item,
-              ui: {
-                x: -modChainContext.offset.x + 8,
-                y: -modChainContext.offset.y + 8,
-              },
-              isDefault: false,
-              removeable: true,
-            } as T,
+  const addModChainItem = useCallback(
+    <T extends ModChainItem>(item: Omit<T, keyof SharedModChainItemAttributes>) => {
+      const id = uuidv4();
+      setState((s) => ({
+        ...s,
+        modChains: {
+          ...s.modChains,
+          [s.modChainControl!]: {
+            ...s.modChains[s.modChainControl!],
+            mods: {
+              ...s.modChains[s.modChainControl!].mods,
+              [id]: {
+                ...item,
+                ui: {
+                  x: -modChainContext.offset.x + 8,
+                  y: -modChainContext.offset.y + 8,
+                },
+                isDefault: false,
+                removeable: true,
+              } as T,
+            },
           },
         },
-      },
-    }));
-  }
+      }));
+    },
+    [modChainContext.offset.x, modChainContext.offset.y, setState],
+  );
 
   const draggingMainRow = useRef<boolean>(false);
   const draggingModChainItem = useRef<string | null>(null);
   const zoom = modChainContext.zoom;
 
-  useEffect(() => {
-    if (!mainRowRef.current) return;
+  useEventListener(mainRowRef, "wheel", (e) => {
+    e.preventDefault();
 
-    const onDown = (e: PointerEvent) => {
-      if (e.target !== mainRowRef.current) return;
+    if (e.deltaY < 0) {
+      setModChainContext((c) => ({ ...c, zoom: c.zoom * 1.1 }));
+    } else if (e.deltaY > 0) {
+      setModChainContext((c) => ({ ...c, zoom: c.zoom / 1.1 }));
+    }
+  });
 
+  useEventListener(mainRowRef, "pointerdown", (e) => {
+    if (e.target !== mainRowRef.current) return;
+
+    e.preventDefault();
+    draggingMainRow.current = true;
+  });
+
+  useEventListener(mainRowRef, "touchstart", (e) => {
+    if (e.target === mainRowRef.current) {
       e.preventDefault();
-      draggingMainRow.current = true;
-    };
+    }
+  });
 
-    const onMove = (e: PointerEvent) => {
-      if (!draggingMainRow.current) return;
+  useEventListener(document.body, "pointermove", (e) => {
+    if (!draggingMainRow.current) return;
 
-      e.preventDefault();
-      setModChainContext((c) => ({
-        ...c,
-        offset: { x: c.offset.x + e.movementX / zoom, y: c.offset.y + e.movementY / zoom },
-      }));
-    };
+    e.preventDefault();
+    setModChainContext((c) => ({
+      ...c,
+      offset: { x: c.offset.x + e.movementX / zoom, y: c.offset.y + e.movementY / zoom },
+    }));
+  });
 
-    const onUp = (e: PointerEvent) => {
-      if (!draggingMainRow.current) return;
+  useEventListener(document.body, "pointerup", (e) => {
+    if (!draggingMainRow.current) return;
 
-      e.preventDefault();
-      draggingMainRow.current = false;
-    };
+    e.preventDefault();
+    draggingMainRow.current = false;
+  });
 
-    const onCancel = (e: PointerEvent) => {
-      if (!draggingMainRow.current) return;
+  useEventListener(document.body, "pointercancel", (e) => {
+    if (!draggingMainRow.current) return;
 
-      e.preventDefault();
-      draggingMainRow.current = false;
-    };
+    e.preventDefault();
+    draggingMainRow.current = false;
+  });
 
-    const onWheel = (e: WheelEvent) => {
-      e.preventDefault();
+  useEventListener(
+    document.body,
+    "pointerup",
+    useCallback(
+      (e: PointerEvent) => {
+        if (!modChainContext.connectingOutput) return;
 
-      if (e.deltaY < 0) {
-        setModChainContext((c) => ({ ...c, zoom: c.zoom * 1.1 }));
-      } else if (e.deltaY > 0) {
-        setModChainContext((c) => ({ ...c, zoom: c.zoom / 1.1 }));
-      }
-    };
-
-    const onTouch = (e: TouchEvent) => {
-      if (e.target === mainRowRef.current) {
         e.preventDefault();
-      }
-    };
+        setModChainContext({ connectingOutput: undefined });
 
-    mainRowRef.current.addEventListener("wheel", onWheel);
-    mainRowRef.current.addEventListener("pointerdown", onDown);
-    mainRowRef.current.addEventListener("touchstart", onTouch);
-    document.body.addEventListener("pointermove", onMove);
-    document.body.addEventListener("pointerup", onUp);
-    document.body.addEventListener("pointercancel", onCancel);
+        const target = document.elementFromPoint(e.clientX, e.clientY);
+        if (!(target instanceof HTMLElement)) return;
 
-    return () => {
-      mainRowRef.current?.removeEventListener("wheel", onWheel);
-      mainRowRef.current?.removeEventListener("pointerdown", onDown);
-      mainRowRef.current?.removeEventListener("touchstart", onTouch);
-      document.body.removeEventListener("pointermove", onMove);
-      document.body.removeEventListener("pointerup", onUp);
-      document.body.removeEventListener("pointercancel", onCancel);
-    };
-  }, [zoom]);
+        // if direct to output
+        if (target.parentElement?.dataset.modChainOutput) {
+          connectModItems(setState, state.modChainControl!, {
+            from: modChainContext.connectingOutput.modItemId,
+            fromOutput: modChainContext.connectingOutput.outputKey,
+            to: ModOutput,
+          });
 
-  useEffect(() => {
-    const onUp = (e: PointerEvent) => {
-      if (!modChainContext.connectingOutput) return;
+          return;
+        }
 
-      e.preventDefault();
-      setModChainContext({ connectingOutput: undefined });
+        // elseif to a node
+        const modChainInputNodeId = target.dataset.modChainInputNodeId;
+        const modChainInputNodeProperty = target.dataset.modChainInputNodeProperty;
 
-      const target = document.elementFromPoint(e.clientX, e.clientY);
-      if (!(target instanceof HTMLElement)) return;
+        if (!modChainInputNodeId || !modChainInputNodeProperty) return;
 
-      // if direct to output
-      if (target.parentElement?.dataset.modChainOutput) {
         connectModItems(setState, state.modChainControl!, {
           from: modChainContext.connectingOutput.modItemId,
           fromOutput: modChainContext.connectingOutput.outputKey,
-          to: ModOutput,
+          to: modChainInputNodeId,
+          toProperty: modChainInputNodeProperty,
         });
-
-        return;
-      }
-
-      // elseif to a node
-      const modChainInputNodeId = target.dataset.modChainInputNodeId;
-      const modChainInputNodeProperty = target.dataset.modChainInputNodeProperty;
-
-      if (!modChainInputNodeId || !modChainInputNodeProperty) return;
-
-      connectModItems(setState, state.modChainControl!, {
-        from: modChainContext.connectingOutput.modItemId,
-        fromOutput: modChainContext.connectingOutput.outputKey,
-        to: modChainInputNodeId,
-        toProperty: modChainInputNodeProperty,
-      });
-    };
-
-    document.body.addEventListener("pointerup", onUp);
-
-    return () => {
-      document.body.removeEventListener("pointerup", onUp);
-    };
-  }, [modChainContext.connectingOutput]);
+      },
+      [modChainContext.connectingOutput, setModChainContext, setState, state.modChainControl],
+    ),
+  );
 
   useEffect(() => {
     if (state.listeningForControlValueSelection === null) return;
@@ -253,7 +232,7 @@ export default function ModChainWorkspace(props: Props) {
     });
 
     setState((s) => ({ ...s, listeningForControlValueSelection: null }));
-  }, [state.listeningForControlValueSelection]);
+  }, [addModChainItem, setState, state.listeningForControlValueSelection]);
 
   const label = useMemo<string>(() => {
     const base = control.definition.label!;
@@ -274,6 +253,7 @@ export default function ModChainWorkspace(props: Props) {
     }
 
     return base;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [control]);
 
   if (!modChain) return null;

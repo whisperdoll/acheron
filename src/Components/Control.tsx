@@ -36,7 +36,7 @@ import direction4 from "../../assets/directions/4.png";
 import direction5 from "../../assets/directions/5.png";
 import NumberInput from "./NumberInput";
 import settings from "../state/AppSettings";
-import { pluck, sliceObject } from "../utils/utils";
+import { pluck, sliceObject } from "../lib/utils";
 import { PlayerControlKeys } from "../utils/DefaultDefinitions";
 import LfoVisualizer from "./LfoVisualizer";
 import LfoControls from "./LfoControls";
@@ -307,6 +307,7 @@ export const Value = React.memo(function ControlValue() {
     outputMod.__type === "fixedValue" || outputMod.__type === "fixedControlValue";
   const value = useMemo(() => {
     return getControlValue(state, context.controlId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modChain, !isFixed && now]);
 
   const handleUpdate = useCallback(
@@ -320,7 +321,7 @@ export const Value = React.memo(function ControlValue() {
         }),
       );
     },
-    [context.controlId, modChain.output.from],
+    [context.controlId, modChain.output.from, setState],
   );
 
   return (

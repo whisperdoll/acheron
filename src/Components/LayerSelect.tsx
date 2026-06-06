@@ -5,9 +5,7 @@ import { confirmPrompt } from "../utils/desktop";
 import useKeyboardShortcutStrings from "../Hooks/useKeyboardShortcutStrings";
 import { addLayer, AppContext, removeLayer, setLayer } from "../state/AppState";
 
-interface Props {}
-
-const LayerSelect: React.FC<Props> = React.memo(() => {
+const LayerSelect: React.FC = React.memo(() => {
   const { state, setState } = useContext(AppContext)!;
   const reactiveState = {
     isEditingLayerName: state.isEditingLayerName,
@@ -84,9 +82,7 @@ const LayerSelect: React.FC<Props> = React.memo(() => {
       </label>
       {reactiveState.isEditingLayerName ? (
         <GoogleIconButton
-          onClick={(e) =>
-            setState((s) => ({ ...s, isEditingLayerName: false }))
-          }
+          onClick={(e) => setState((s) => ({ ...s, isEditingLayerName: false }))}
           icon="check"
           buttonStyle="rounded"
           fill

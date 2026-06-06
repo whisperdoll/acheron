@@ -1,8 +1,8 @@
-import { array_remove } from "./utils";
+import { array_remove } from "../lib/utils";
 
 export default class Timer {
-  public onTick: (() => any)[];
-  public onStop: (() => any)[];
+  public onTick: (() => unknown)[];
+  public onStop: (() => unknown)[];
   private intervalMs: number = 0;
   private startingTime: number = 0;
   private isStopQueued: boolean = false;
@@ -13,22 +13,22 @@ export default class Timer {
     this.onStop = [];
   }
 
-  public addEventListener(event: "tick" | "stop", fn: () => any) {
+  public addEventListener(event: "tick" | "stop", fn: () => unknown) {
     (
       ({
         stop: this.onStop,
         tick: this.onTick,
-      }) as Record<typeof event, (() => any)[]>
+      }) as Record<typeof event, (() => unknown)[]>
     )[event].push(fn);
   }
 
-  public removeEventListener(event: "tick" | "stop", fn: () => any) {
+  public removeEventListener(event: "tick" | "stop", fn: () => unknown) {
     array_remove(
       (
         {
           stop: this.onStop,
           tick: this.onTick,
-        } as Record<typeof event, (() => any)[]>
+        } as Record<typeof event, (() => unknown)[]>
       )[event],
       fn,
     );

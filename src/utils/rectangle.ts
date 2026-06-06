@@ -12,17 +12,14 @@ export default class Rectangle {
   }
 
   public static fromClientRect(rect: ClientRect | DOMRect): Rectangle {
-    return new Rectangle(
-      new Point(rect.left, rect.top),
-      Point.fromSizeLike(rect)
-    );
+    return new Rectangle(new Point(rect.left, rect.top), Point.fromSizeLike(rect));
   }
 
   public expand(multiplier: number): Rectangle {
-    let r = this.deepCopy();
-    let newSize = r.size.times(multiplier);
-    let center = r.center;
-    let diff = newSize.minus(r.size);
+    const r = this.deepCopy();
+    const newSize = r.size.times(multiplier);
+    const center = r.center;
+    const diff = newSize.minus(r.size);
     r.position.subtract(diff.dividedBy(2));
     r.size.add(diff);
     r.center = center;
@@ -34,22 +31,16 @@ export default class Rectangle {
   }
 
   public plus(operand: Rectangle): Rectangle {
-    return new Rectangle(
-      this.position.plus(operand.position),
-      this.size.plus(operand.size)
-    );
+    return new Rectangle(this.position.plus(operand.position), this.size.plus(operand.size));
   }
 
   public times(operand: Rectangle | number): Rectangle {
     if (typeof operand === "number") {
-      return new Rectangle(
-        this.position.times(operand),
-        this.size.times(operand)
-      );
+      return new Rectangle(this.position.times(operand), this.size.times(operand));
     } else {
       return new Rectangle(
         this.position.times(operand.position),
-        this.size.times(operand.size)
+        this.size.times(operand.size),
       );
     }
   }
@@ -59,22 +50,12 @@ export default class Rectangle {
   }
 
   public toString(): string {
-    return (
-      "(" +
-      this.x +
-      ", " +
-      this.y +
-      ", " +
-      this.width +
-      ", " +
-      this.height +
-      ")"
-    );
+    return "(" + this.x + ", " + this.y + ", " + this.width + ", " + this.height + ")";
   }
 
   public fitInside(rect: Rectangle, anchor: RectAnchor): void {
-    let ar = rect.aspectRatio;
-    let startPoint = this.getPointFromAnchor(anchor).copy();
+    const ar = rect.aspectRatio;
+    const startPoint = this.getPointFromAnchor(anchor).copy();
 
     if (ar > this.aspectRatio) {
       // wider //
@@ -90,46 +71,50 @@ export default class Rectangle {
   }
 
   public setWidthKeepAR(width: number): void {
-    let ar = this.width / width;
+    const ar = this.width / width;
     this.width = width;
     this.height = this.height / ar;
   }
 
   public setHeightKeepAR(height: number): void {
-    let ar = this.height / height;
+    const ar = this.height / height;
     this.height = height;
     this.width = this.width / ar;
   }
 
   public expandToward(anchor: RectAnchor, factor: number): void {
     switch (anchor) {
-      case "ne":
-        let bl = this.bottomLeft;
+      case "ne": {
+        const bl = this.bottomLeft;
         this.size.multiply(factor);
         this.bottomLeft = bl;
         break;
-      case "nw":
-        let br = this.bottomRight;
+      }
+      case "nw": {
+        const br = this.bottomRight;
         this.size.multiply(factor);
         this.bottomRight = br;
         break;
-      case "se":
-        let tl = this.topLeft;
+      }
+      case "se": {
+        const tl = this.topLeft;
         this.size.multiply(factor);
         this.topLeft = tl;
         break;
-      case "sw":
-        let tr = this.topRight;
+      }
+      case "sw": {
+        const tr = this.topRight;
         this.size.multiply(factor);
         this.topRight = tr;
         break;
+      }
     }
   }
 
   public fitInsideGreedyCenter(rect: Rectangle, boundingRect: Rectangle) {
-    let ar = rect.aspectRatio;
-    let center = this.center.copy(); // just being careful
-    let size = this.size.copy();
+    const ar = rect.aspectRatio;
+    const center = this.center.copy(); // just being careful
+    const size = this.size.copy();
 
     if (ar > 1) {
       // wider //
@@ -163,13 +148,9 @@ export default class Rectangle {
     }
   }
 
-  public fitInsideGreedy(
-    rect: Rectangle,
-    anchor: RectAnchor,
-    boundingRect: Rectangle
-  ): void {
-    let ar = rect.aspectRatio;
-    let startPoint = this.getPointFromAnchor(anchor).copy();
+  public fitInsideGreedy(rect: Rectangle, anchor: RectAnchor, boundingRect: Rectangle): void {
+    const ar = rect.aspectRatio;
+    const startPoint = this.getPointFromAnchor(anchor).copy();
 
     if (ar > 1) {
       // wider //
@@ -265,7 +246,7 @@ export default class Rectangle {
 
   public round(aboutCenter: boolean = false): void {
     if (aboutCenter) {
-      let c = this.center;
+      const c = this.center;
       this.size.round();
       this.center = c.rounded;
     } else {
@@ -403,9 +384,7 @@ export default class Rectangle {
   }
 
   public containsPoint(p: Point): boolean {
-    return (
-      p.x >= this.x && p.x <= this.right && p.y >= this.y && p.y <= this.bottom
-    );
+    return p.x >= this.x && p.x <= this.right && p.y >= this.y && p.y <= this.bottom;
   }
 
   public containsRect(r: Rectangle): boolean {
@@ -426,8 +405,8 @@ export default class Rectangle {
   }
 
   public static between(p1: Point, p2: Point): Rectangle {
-    let pos = new Point(Math.min(p1.x, p2.x), Math.min(p1.y, p2.y));
-    let size = new Point(Math.abs(p1.x - p2.x), Math.abs(p1.y - p2.y));
+    const pos = new Point(Math.min(p1.x, p2.x), Math.min(p1.y, p2.y));
+    const size = new Point(Math.abs(p1.x - p2.x), Math.abs(p1.y - p2.y));
     return new Rectangle(pos, size);
   }
 }

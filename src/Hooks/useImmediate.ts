@@ -1,10 +1,7 @@
 import { useEffect, useRef } from "react";
 
-export default function useImmediate(
-  callback: (delta: number) => any,
-  isOn: boolean,
-) {
-  const savedCallback = useRef<(delta: number) => any>(() => 0);
+export default function useImmediate(callback: (delta: number) => unknown, isOn: boolean) {
+  const savedCallback = useRef<(delta: number) => unknown>(() => 0);
   const savedId = useRef<ReturnType<typeof setImmediate> | null>(null);
   const lastTime = useRef<number>(performance.now());
   const savedIsOn = useRef<boolean>(false);

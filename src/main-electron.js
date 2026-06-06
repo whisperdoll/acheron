@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 import { app, BrowserWindow } from "electron";
 import { join } from "path";
 

@@ -35,17 +35,14 @@ export default function ModChainWorkspaceWire(props: Props) {
   const currentModChain = state.modChains[state.modChainControl!];
   const fromOutput = props.fromOutput;
 
-  function calcSourcePosition() {
+  const calcSourcePosition = useCallback(() => {
     const el = document.querySelector(
       `[data-mod-chain-output-node="${props.from}-${fromOutput}"]`,
     );
-
     if (!el) {
       return;
     }
-
     const bounds = el.getBoundingClientRect();
-
     return {
       x:
         bounds.left +
@@ -53,7 +50,7 @@ export default function ModChainWorkspaceWire(props: Props) {
         (modChainWorkspaceContext.containerBounds?.scrollLeft ?? 0),
       y: bounds.top + bounds.height / 2,
     };
-  }
+  }, [fromOutput, modChainWorkspaceContext.containerBounds?.scrollLeft, props.from]);
 
   const [sourcePosition, setSourcePosition] = useState(calcSourcePosition);
 
@@ -66,6 +63,7 @@ export default function ModChainWorkspaceWire(props: Props) {
     modChainWorkspaceContext.containerBounds,
     modChainWorkspaceContext.offset,
     modChainWorkspaceContext.zoom,
+    calcSourcePosition,
   ]);
 
   const calcTargetPosition = useCallback(() => {
@@ -92,6 +90,7 @@ export default function ModChainWorkspaceWire(props: Props) {
         y: bounds.top + bounds.height / 2,
       };
     }
+    /* eslint-disable react-hooks/exhaustive-deps */
   }, [
     "to" in props && props.to,
     "toId" in props && props.toId,
@@ -102,6 +101,7 @@ export default function ModChainWorkspaceWire(props: Props) {
     modChainWorkspaceContext.offset,
     modChainWorkspaceContext.zoom,
   ]);
+  /* eslint-enable react-hooks/exhaustive-deps */
 
   const [targetPosition, setTargetPosition] = useState(calcTargetPosition);
 

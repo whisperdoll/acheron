@@ -2,8 +2,8 @@ import prand from "pure-rand";
 import { type MutableRefObject, type RefCallback } from "react";
 
 export type Nullish = null | undefined;
-export function isNullish(value: any): value is Nullish {
-  return value === null || value === undefined;
+export function isNullish(value: unknown): value is Nullish {
+  return value == null;
 }
 
 export function preventDefault(e: { preventDefault: () => unknown }) {
@@ -82,15 +82,15 @@ export const tryParseFloat = (value: number | string, fallback: number) => {
   return isNaN(parsed) ? fallback : parsed;
 };
 
-export const normalizeIndex = (i: number, array: any[]) => (i >= 0 ? i : array.length + i);
+export const normalizeIndex = (i: number, array: unknown[]) => (i >= 0 ? i : array.length + i);
 
-export type MaybeGenerated<ReturnType, GeneratorArgsType extends Array<any> = []> =
+export type MaybeGenerated<ReturnType, GeneratorArgsType extends Array<unknown> = []> =
   | ReturnType
   | ((...prev: GeneratorArgsType) => ReturnType);
 
 export const resolveMaybeGenerated = <
   ReturnType,
-  GeneratorArgsType extends Array<any> = [ReturnType],
+  GeneratorArgsType extends Array<unknown> = [ReturnType],
 >(
   action: MaybeGenerated<ReturnType, GeneratorArgsType>,
   ...generatorArgs: GeneratorArgsType
@@ -104,12 +104,12 @@ export async function resolveMaybePromise<T>(value: T | Promise<T>): Promise<T> 
 
 export type MaybeGeneratedPromise<
   ReturnType,
-  GeneratorArgsType extends Array<any> = [ReturnType],
+  GeneratorArgsType extends Array<unknown> = [ReturnType],
 > = MaybeGenerated<MaybePromise<ReturnType>, GeneratorArgsType>;
 
 export async function resolveMaybeGeneratedPromise<
   ReturnType,
-  GeneratorArgsType extends Array<any> = [ReturnType],
+  GeneratorArgsType extends Array<unknown> = [ReturnType],
 >(
   value: MaybeGeneratedPromise<ReturnType, GeneratorArgsType>,
   ...generatorArgs: GeneratorArgsType
@@ -117,7 +117,7 @@ export async function resolveMaybeGeneratedPromise<
   return await resolveMaybePromise(await resolveMaybeGenerated(value, ...generatorArgs));
 }
 
-let randomFloatRng = prand.xoroshiro128plus(performance.now());
+const randomFloatRng = prand.xoroshiro128plus(performance.now());
 export function randomFloat(): number {
   const resolution = 1 << 24;
 
@@ -195,10 +195,6 @@ export function round(n: number, places: number): number {
   return Math.round(n * pow) / pow;
 }
 
-export function isNil(x: any): x is null | undefined {
-  return x == null;
-}
-
 export function rectContainsPoint(rect: Rect, point: Point) {
   const right = rect.x + rect.w;
   const bottom = rect.y + rect.h;
@@ -264,8 +260,18 @@ export function multiplyPt(pt: Point, factor: Point | number): Point {
   return { x: pt.x * factor.x, y: pt.y * factor.y };
 }
 
-function isRect(r: any): r is Rect {
-  return r.x !== undefined && r.y !== undefined && r.h !== undefined && r.w !== undefined;
+function isObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function isRect(r: unknown): r is Rect {
+  return !!(
+    isObject(r) &&
+    typeof r.x === "number" &&
+    typeof r.y === "number" &&
+    typeof r.h === "number" &&
+    typeof r.w === "number"
+  );
 }
 
 export function viewportToDocument(
@@ -333,10 +339,13 @@ export function normalize(n: number) {
 export const enum PointerEventButton {
   None = 0,
   MouseLeft = 1,
+  // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values
   Touch = 1,
+  // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values
   Pen = 1,
   MouseMiddle = 4,
   MouseRight = 2,
+  // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values
   PenBarrel = 2,
   MouseExtra1 = 8,
   MouseExtra2 = 16,
@@ -488,4 +497,78 @@ export function formatNumberSmall(n: number): string {
 
 export function roundMod(n: number, roundTo: number, modulo: number): number {
   return mod(round(n, roundTo), modulo);
+}
+
+export function msToS(ms: number): number {
+  return ms / 1000;
+}
+
+export type SortFunction<T> = (a: T, b: T) => boolean;
+
+export function isFileNotFoundError(err: { code: string }): boolean {
+  return err.code === "ENOENT";
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function objectWithoutKeys<R extends Record<string, any>, K extends Partial<keyof R>>(
+  o: R,
+  keys: K[],
+): Omit<typeof o, K> {
+  const ret = { ...o };
+  keys.forEach((key) => delete ret[key]);
+  return ret;
+}
+
+export function sliceObject<T, K extends keyof T>(
+  o: T,
+  keys: K[],
+): Pick<T, (typeof keys)[number]> {
+  const ret = {} as Pick<T, (typeof keys)[number]>;
+  keys.forEach((key) => (ret[key] = o[key]));
+  return ret;
+}
+
+export function pluck<T, K extends (keyof T)[]>(
+  obj: T,
+  keys: [...K],
+): { [I in keyof K]: T[K[I]] } {
+  return keys.map((key) => obj[key]) as { [I in keyof K]: T[K[I]] };
+}
+
+export function emptyFn() {}
+
+export function array_remove<T>(
+  array: T[],
+  item: T,
+): { item: T; index: number; existed: boolean } {
+  const index = array.indexOf(item);
+  if (index !== -1) {
+    array.splice(index, 1);
+    return { item, index, existed: true };
+  }
+
+  return { item, index: -1, existed: false };
+}
+
+export function array_copy<T>(array: T[]): T[] {
+  return array.slice();
+}
+
+export function createEmpty2dArray(len: number) {
+  const ret = [];
+
+  for (let i = 0; i < len; i++) {
+    ret.push([]);
+  }
+
+  return ret;
+}
+
+export function sign(n: number): number {
+  return n > 0 ? 1 : n < 0 ? -1 : 0;
+}
+
+export function p(arg: unknown, label?: string) {
+  console.log(...(label ? [label, arg] : [arg]));
+  return arg;
 }

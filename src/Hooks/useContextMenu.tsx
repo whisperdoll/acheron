@@ -21,10 +21,11 @@ import {
   resolveMaybeGeneratedPromise,
 } from "../lib/utils";
 import Point from "../utils/point";
+import useEventListener from "./useEventListener";
 
 export interface ContextMenuOption {
   contents: ReactNode;
-  handler?: (e: PointerEvent) => any;
+  handler?: (e: PointerEvent) => unknown;
 }
 
 export interface ContextMenu {
@@ -201,7 +202,7 @@ const ContextMenuElement = React.memo(
         size.current.width === undefined ? "" : `${size.current.width}px`;
       ref.current.style.height =
         size.current.height === undefined ? "" : `${size.current.height}px`;
-    }, [position.x, position.y, isShowing]);
+    }, [ref, unresolvedDisplayOffset, isShowing, position]);
 
     useLayoutEffect(() => {
       if (!ref || !("current" in ref) || !ref.current) return;
@@ -215,7 +216,7 @@ const ContextMenuElement = React.memo(
       updatePosition();
 
       return () => observer.disconnect();
-    }, [updatePosition]);
+    }, [updatePosition, ref]);
 
     return (
       <div ref={ref} className="context-menu">
@@ -268,16 +269,11 @@ type MenuType = MaybeGeneratedPromise<
 
 type Opts = { offset?: MaybeGenerated<{ x: number; y: number }, [DOMRect]> };
 
+export default function useContextMenu(menu: MenuType, opts: Opts): ReturnType;
+export default function useContextMenu(menu: MenuType): ReturnType;
 export default function useContextMenu(
   menu: MenuType,
-  opts: Opts,
-  dependencyArray?: any[],
-): ReturnType;
-export default function useContextMenu(menu: MenuType, dependencyArray?: any[]): ReturnType;
-export default function useContextMenu(
-  menu: MenuType,
-  optsOrDependencyArray?: Opts | any[],
-  dependencyArray?: any[],
+  optsOrDependencyArray?: Opts | unknown[],
 ): ReturnType {
   const passedOpts = optsOrDependencyArray && !Array.isArray(optsOrDependencyArray);
   const opts: Required<Opts> = useMemo(
@@ -290,11 +286,8 @@ export default function useContextMenu(
         : {
             offset: { x: 0, y: 0 },
           },
-    [optsOrDependencyArray],
+    [passedOpts, optsOrDependencyArray],
   );
-  const dependencyArrayResolved: any[] | undefined = passedOpts
-    ? dependencyArray
-    : optsOrDependencyArray;
   const [isShowing, setIsShowing] = useState(false);
   const hide = useCallback(() => setIsShowing(false), [setIsShowing]);
   const ref = useRef<HTMLDivElement>(null);
@@ -306,27 +299,24 @@ export default function useContextMenu(
   const triggeringEvent = useRef<MouseEvent | TouchEvent | PointerEvent | null>(null);
   const triggeringOpts = useRef<TriggerOpts | undefined>(undefined);
 
-  useEffect(() => {
-    function onDocumentClick(e: MouseEvent | TouchEvent | PointerEvent) {
-      if (!(e.target instanceof Element)) return;
-      if (!ref.current) return;
+  useEventListener(
+    document,
+    ["mousedown", "touchstart"],
+    useCallback(
+      (e) => {
+        if (!(e.target instanceof Element)) return;
+        if (!ref.current) return;
 
-      if (e.target instanceof Element && ref.current.contains(e.target)) {
-        e.stopPropagation();
-        return;
-      }
+        if (e.target instanceof Element && ref.current.contains(e.target)) {
+          e.stopPropagation();
+          return;
+        }
 
-      hide();
-    }
-
-    document.addEventListener("mousedown", onDocumentClick);
-    document.addEventListener("touchstart", onDocumentClick);
-
-    return () => {
-      document.removeEventListener("mousedown", onDocumentClick);
-      document.removeEventListener("touchstart", onDocumentClick);
-    };
-  }, [setIsShowing]);
+        hide();
+      },
+      [hide],
+    ),
+  );
 
   const trigger = useCallback(
     async (e: MouseEvent | TouchEvent | PointerEvent, opts?: TriggerOpts) => {
@@ -346,7 +336,7 @@ export default function useContextMenu(
       setItems(items);
       setIsShowing(true);
     },
-    [ref, setIsShowing, menu],
+    [setIsShowing, menu, hide, isShowing],
   );
 
   const refresh = useCallback(() => {
@@ -354,11 +344,7 @@ export default function useContextMenu(
     if (!isShowing) return;
 
     trigger(triggeringEvent.current, triggeringOpts.current);
-  }, [trigger]);
-
-  useEffect(() => {
-    refresh();
-  }, dependencyArrayResolved);
+  }, [isShowing, trigger]);
 
   const menuNode = (
     <ContextMenuElement

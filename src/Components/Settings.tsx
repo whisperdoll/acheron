@@ -6,9 +6,10 @@ import { keyboardShortcutString } from "../lib/keyboard";
 import { camelCaseToSentence } from "../lib/utils";
 import KeyboardShortcutInput from "./KeyboardShortcutInput";
 import { AppContext } from "../state/AppState";
+import useEventListener from "../Hooks/useEventListener";
 
 interface Props {
-  onHide: () => any;
+  onHide: () => unknown;
 }
 
 export default function Settings(props: Props) {
@@ -57,17 +58,11 @@ export default function Settings(props: Props) {
     }
   }
 
-  useEffect(() => {
-    function onKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape") {
-        props.onHide();
-      }
+  useEventListener(document, "keydown", (e) => {
+    if (e.key === "Escape") {
+      props.onHide();
     }
-
-    document.addEventListener("keydown", onKeyDown);
-
-    return () => document.removeEventListener("keydown", onKeyDown);
-  }, []);
+  });
 
   return (
     <div className="settings-backdrop" onClick={() => props.onHide()}>

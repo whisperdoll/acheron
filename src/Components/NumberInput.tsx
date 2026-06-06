@@ -1,12 +1,14 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import useDrag from "../Hooks/useDrag";
-import { Point } from "../lib/utils";
+import { Point, preventDefault } from "../lib/utils";
+import usePropRef from "../Hooks/usePropRef";
+import useEventListener from "../Hooks/useEventListener";
 
 export interface NumberInputProps {
   max?: number;
   min?: number;
   step?: number;
-  onChange: (value: number) => any;
+  onChange: (value: number) => unknown;
   coerce?: (value: number) => number;
   roundPlaces?: number;
   value: number;
@@ -18,32 +20,35 @@ export default function NumberInput(props: NumberInputProps) {
   const mouseDownTime = useRef<number>(0);
   const initialHoldTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const holdInterval = useRef<ReturnType<typeof setInterval> | null>(null);
-  const savedIncrement = useRef<Function>(() => 0);
-  const savedDecrement = useRef<Function>(() => 0);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const { max, min, roundPlaces, coerce: passedCoerce, onChange: passedOnChange } = props;
+
+  const coerce = usePropRef(passedCoerce);
+  const onChange = usePropRef(passedOnChange);
 
   const performTransformations = useCallback(
     (value: number) => {
-      if (props.max !== undefined && value > props.max) {
-        value = props.max;
+      if (max !== undefined && value > max) {
+        value = max;
       }
-      if (props.min !== undefined && value < props.min) {
-        value = props.min;
+      if (min !== undefined && value < min) {
+        value = min;
       }
 
-      if (props.roundPlaces !== undefined && props.roundPlaces >= 0) {
-        value = parseFloat(value.toFixed(props.roundPlaces));
-        // const pow = Math.pow(10, Math.floor(props.roundPlaces));
+      if (roundPlaces !== undefined && roundPlaces >= 0) {
+        value = parseFloat(value.toFixed(roundPlaces));
+        // const pow = Math.pow(10, Math.floor(roundPlaces));
         // return Math.round((value + Number.EPSILON) * pow) / pow;
       }
 
-      if (props.coerce) {
-        value = props.coerce(value);
+      if (coerce?.current) {
+        value = coerce.current(value);
       }
 
       return value;
     },
-    [props.max, props.min, props.roundPlaces, props.coerce],
+    [coerce, max, min, roundPlaces],
   );
 
   const emitChange = useCallback(
@@ -52,79 +57,75 @@ export default function NumberInput(props: NumberInputProps) {
         value = performTransformations(value);
       }
 
-      if (value !== props.value) {
-        props.onChange(value);
+      if (value !== props.value && onChange.current) {
+        onChange.current(value);
       }
     },
-    [performTransformations, props.onChange],
+    [performTransformations, onChange, props.value],
   );
 
-  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
-    let value = parseFloat(e.currentTarget.value);
-    if (!isNaN(value)) {
-      value = performTransformations(value);
-      emitChange(value, false);
-      setSavedValue(value);
-    } else {
-      setSavedValue(e.currentTarget.value);
-    }
-  }
+  const handleChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      let value = parseFloat(e.currentTarget.value);
+      if (!isNaN(value)) {
+        value = performTransformations(value);
+        emitChange(value, false);
+        setSavedValue(value);
+      } else {
+        setSavedValue(e.currentTarget.value);
+      }
+    },
+    [emitChange, performTransformations],
+  );
 
   useEffect(() => {
     setSavedValue(props.value);
   }, [props.value]);
 
-  function increment() {
+  const increment = useCallback(() => {
     const step = props.step ?? 1;
     let value = props.value;
     const stepDecimals = step.toString().split(".")[1]?.length || 0;
     const valueDecimals = value.toString().split(".")[1]?.length || 0;
     const resultingDecimals = Math.max(stepDecimals, valueDecimals);
-
     value = parseFloat((props.value + step).toFixed(resultingDecimals));
-
     if (props.max !== undefined && value > props.max) {
       value = props.max;
     }
     emitChange(value);
-  }
+  }, [emitChange, props.max, props.step, props.value]);
 
-  function decrement() {
+  const decrement = useCallback(() => {
     const step = props.step ?? 1;
     let value = props.value;
     const stepDecimals = step.toString().split(".")[1]?.length || 0;
     const valueDecimals = value.toString().split(".")[1]?.length || 0;
     const resultingDecimals = Math.max(stepDecimals, valueDecimals);
-
     value = parseFloat((props.value - step).toFixed(resultingDecimals));
-
     if (props.min !== undefined && value < props.min) {
       value = props.min;
     }
     emitChange(value);
-  }
+  }, [emitChange, props.min, props.step, props.value]);
 
-  useEffect(() => {
-    savedIncrement.current = increment;
-    savedDecrement.current = decrement;
-  });
+  const handleMouseDown = useCallback(
+    (sign: 1 | -1) => {
+      const fn = sign === 1 ? increment : decrement;
+      mouseIsDown.current = true;
+      fn();
+      initialHoldTimeout.current = setTimeout(() => {
+        if (!mouseIsDown.current) return;
+        holdInterval.current = setInterval(() => {
+          if (mouseIsDown.current) {
+            fn();
+          }
+        }, 40);
+      }, 360);
+    },
+    [increment, decrement],
+  );
 
-  function handleMouseDown(sign: 1 | -1) {
-    const fn = sign === 1 ? savedIncrement : savedDecrement;
-    mouseIsDown.current = true;
-    fn.current();
-    initialHoldTimeout.current = setTimeout(() => {
-      if (!mouseIsDown.current) return;
-
-      holdInterval.current = setInterval(() => {
-        if (mouseIsDown.current) {
-          fn.current();
-        }
-      }, 40);
-    }, 360);
-  }
-
-  function handleMouseUp() {
+  const handleMouseUp = useCallback(() => {
     mouseIsDown.current = false;
     if (initialHoldTimeout.current !== null) {
       clearTimeout(initialHoldTimeout.current);
@@ -134,9 +135,9 @@ export default function NumberInput(props: NumberInputProps) {
       clearInterval(holdInterval.current);
       holdInterval.current = null;
     }
-  }
+  }, []);
 
-  function handleMouseLeave() {
+  const handleMouseLeave = useCallback(() => {
     mouseIsDown.current = false;
     if (initialHoldTimeout.current !== null) {
       clearTimeout(initialHoldTimeout.current);
@@ -146,7 +147,7 @@ export default function NumberInput(props: NumberInputProps) {
       clearInterval(holdInterval.current);
       holdInterval.current = null;
     }
-  }
+  }, []);
 
   const dragLatch = useRef(false);
   const onDrag = useCallback(
@@ -172,35 +173,26 @@ export default function NumberInput(props: NumberInputProps) {
 
   const { dragging, startDragging } = useDrag(onDrag);
 
-  useEffect(() => {
-    if (!inputRef.current) return;
+  useEventListener(
+    inputRef,
+    "pointerdown",
+    useCallback(
+      (e) => {
+        startDragging(e, { x: props.value, y: props.value });
+        dragLatch.current = false;
+      },
+      [props.value, startDragging],
+    ),
+  );
 
-    const onDown = (e: PointerEvent) => {
-      startDragging(e, { x: props.value, y: props.value });
-      dragLatch.current = false;
-    };
+  useEventListener(inputRef, "touchstart", preventDefault);
 
-    const onTouch = (e: TouchEvent) => {
-      e.preventDefault();
-    };
-
-    const onTouchEnd = (e: TouchEvent) => {
-      e.preventDefault();
-      if (!dragLatch.current) {
-        inputRef.current?.focus();
-      }
-    };
-
-    inputRef.current.addEventListener("pointerdown", onDown);
-    inputRef.current.addEventListener("touchstart", onTouch);
-    inputRef.current.addEventListener("touchend", onTouchEnd);
-
-    return () => {
-      inputRef.current?.removeEventListener("pointerdown", onDown);
-      inputRef.current?.removeEventListener("touchstart", onTouch);
-      inputRef.current?.removeEventListener("touchend", onTouchEnd);
-    };
-  }, [props.value]);
+  useEventListener(inputRef, "touchend", (e) => {
+    e.preventDefault();
+    if (!dragLatch.current) {
+      inputRef.current?.focus();
+    }
+  });
 
   return (
     <div className="numberInput-container">
