@@ -1,13 +1,14 @@
-import { TokenDefinition } from "../Types";
+import { TokenDefinition, TokenStore } from "../Types";
 
-interface Store {
+interface Store extends TokenStore {
   gateCounter: number;
 }
 
-const SkipToken: TokenDefinition<Store> = {
-  label: "Skip",
-  symbol: "K",
-  uid: "whisperdoll.skip",
+const AbsorbToken: TokenDefinition<Store> = {
+  label: "Destroy",
+  color: <span style={{ color: '#ff0000' }}>X</span>,
+  symbol: "ff0000X",
+  uid: "whisperdoll.absorb",
   controls: {
     probability: {
       label: "Probability",
@@ -15,13 +16,6 @@ const SkipToken: TokenDefinition<Store> = {
       min: 0,
       max: 100,
       defaultValue: 100,
-    },
-    skipAmount: {
-      label: "Skip Amount",
-      type: "int",
-      min: -32,
-      max: 32,
-      defaultValue: 2,
     },
     gateOffset: {
       label: "Gate Offset",
@@ -52,28 +46,26 @@ const SkipToken: TokenDefinition<Store> = {
       }
     },
     onTick(store, helpers, playheads) {
-      const { probability, skipAmount, gateOffset, gateOn, gateOff } =
+      const { probability, gateOffset, gateOn, gateOff } =
         helpers.getControlValues();
 
-      function tryPerformSkip(playheadIndex: number) {
+      function tryPerformAbsorb(playheadIndex: number) {
         if (probability / 100 > Math.random()) {
-          helpers.skipPlayhead(
-            playheadIndex,
-            playheads[playheadIndex].direction,
-            skipAmount
-          );
+          helpers.modifyPlayhead(playheadIndex, {
+            age: playheads[playheadIndex].lifespan,
+          });
         }
       }
 
       playheads.forEach((playhead, playheadIndex) => {
         if (gateOn + gateOff === 0) {
-          tryPerformSkip(playheadIndex);
+          tryPerformAbsorb(playheadIndex);
         } else {
           if (
             store.gateCounter >= gateOffset + gateOff ||
             store.gateCounter < gateOffset
           ) {
-            tryPerformSkip(playheadIndex);
+            tryPerformAbsorb(playheadIndex);
           }
           store.gateCounter++;
           if (store.gateCounter >= gateOffset + gateOff + gateOn) {
@@ -85,4 +77,4 @@ const SkipToken: TokenDefinition<Store> = {
   },
 };
 
-export default SkipToken;
+export default AbsorbToken;

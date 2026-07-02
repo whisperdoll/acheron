@@ -6,7 +6,8 @@ interface Store {
 
 const TwistToken: TokenDefinition<Store> = {
   label: "Twist",
-  symbol: "T",
+  color: <span style={{ color: '#00ffff' }}>↻</span>,
+  symbol: "00ffff↻",
   uid: "hvst.twist",
   controls: {
     probability: {

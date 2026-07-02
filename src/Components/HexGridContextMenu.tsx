@@ -151,7 +151,7 @@ export default function HexGridContextMenu({ onHide: hide }: Props) {
                       addTokenToSelected(setState, uid, "add token via context menu");
                     }}
                   >
-                    {tokenDef.symbol}
+                    {tokenDef.color}
                   </button>
                 );
               })}
@@ -183,7 +183,7 @@ export default function HexGridContextMenu({ onHide: hide }: Props) {
                       }}
                     >
                       <span className="title">
-                        <span className="mono">{token.symbol}</span>{" "}
+                        <span className="mono">{token.color}</span>{" "}
                         <span className="fill">{token.label}</span>
                         <GoogleIconButton
                           buttonStyle="rounded"

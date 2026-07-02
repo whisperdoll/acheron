@@ -9,32 +9,33 @@ import {
 import { buildFromDefs } from "./utils/DefaultDefinitions";
 import { v4 as uuidv4 } from "uuid";
 
-import AbsorbToken from "./tokens/absorb.ts";
-import GenerateToken from "./tokens/generate.ts";
-import LifespanToken from "./tokens/lifespan.ts";
-import NoteToken from "./tokens/note.ts";
-import RandomizeToken from "./tokens/randomize.ts";
-import ReboundToken from "./tokens/rebound.ts";
-import SkipToken from "./tokens/skip.ts";
-import SplitToken from "./tokens/split.ts";
-import TwistToken from "./tokens/twist.ts";
-import WormholeToken from "./tokens/wormhole.ts";
-import { AppState } from "./state/AppState.ts";
+import AbsorbToken from "./tokens/absorb.tsx";
+import GenerateToken from "./tokens/generate.tsx";
+import LifespanToken from "./tokens/lifespan.tsx";
+import NoteToken from "./tokens/note.tsx";
+import RandomizeToken from "./tokens/randomize.tsx";
+import ReboundToken from "./tokens/rebound.tsx";
+import SkipToken from "./tokens/skip.tsx";
+import SplitToken from "./tokens/split.tsx";
+import TwistToken from "./tokens/twist.tsx";
+import WormholeToken from "./tokens/wormhole.tsx";
+import ShiftToken from "./tokens/shift.tsx";
+import { AppState } from "./state/AppState.tsx";
 import List from "./lib/list.ts";
-import ShiftToken from "./tokens/shift.ts";
 
 export const tokenDefinitions: TokenDefinition[] = [
   GenerateToken,
   NoteToken,
-  RandomizeToken,
   ReboundToken,
-  SplitToken,
-  SkipToken,
   TwistToken,
-  WormholeToken,
+  SkipToken,
+  ShiftToken,
   AbsorbToken,
   LifespanToken,
-  ShiftToken,
+  SplitToken,
+  WormholeToken,
+  RandomizeToken,
+
 ] as TokenDefinition[];
 
 export const tokenDefinitionsMap = List.indexBy(tokenDefinitions, (d) => d.uid);

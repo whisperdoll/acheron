@@ -6,7 +6,8 @@ interface Store {
 
 const NoteToken: TokenDefinition<Store> = {
   label: "Note",
-  symbol: "♪",
+  color: <span style={{ color: '#ffff00' }}>♪</span>,
+  symbol: "ffff00♪",
   uid: "whisperdoll.note",
   controls: {
     probability: {

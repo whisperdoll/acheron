@@ -6,7 +6,8 @@ interface Store {
 
 const RandomizeToken: TokenDefinition<Store> = {
   label: "Randomize",
-  symbol: "*",
+  color: <span style={{ color: '#ff00ff' }}>✱</span>,
+  symbol: "ff00ff✱",
   uid: "hvst.randomize",
   controls: {
     probability: {

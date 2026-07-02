@@ -203,6 +203,7 @@ export interface Token<StoreType extends TokenStore = TokenStore> extends TokenD
 
 export interface TokenDefinition<StoreType extends TokenStore = TokenStore> {
   label: string;
+  color?: any;
   symbol: string;
   controls: Record<string, ControlDefinition>;
   callbacks: TokenCallbacks<StoreType>;

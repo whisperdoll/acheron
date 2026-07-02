@@ -4,10 +4,11 @@ interface Store {
   gateCounter: number;
 }
 
-const SplitToken: TokenDefinition<Store> = {
-  label: "Split",
-  symbol: "Y",
-  uid: "whisperdoll.split",
+const SkipToken: TokenDefinition<Store> = {
+  label: "Jump",
+  color: <span style={{ color: '#00ffff' }}>↷</span>,
+  symbol: "00ffff↷",
+  uid: "whisperdoll.skip",
   controls: {
     probability: {
       label: "Probability",
@@ -15,6 +16,13 @@ const SplitToken: TokenDefinition<Store> = {
       min: 0,
       max: 100,
       defaultValue: 100,
+    },
+    skipAmount: {
+      label: "Skip Amount",
+      type: "int",
+      min: -32,
+      max: 32,
+      defaultValue: 2,
     },
     gateOffset: {
       label: "Gate Offset",
@@ -37,11 +45,6 @@ const SplitToken: TokenDefinition<Store> = {
       max: 1024,
       defaultValue: 0,
     },
-    bounceback: {
-      label: "Bounceback",
-      type: "bool",
-      defaultValue: false,
-    },
   },
   callbacks: {
     onStart(store, helpers) {
@@ -50,37 +53,28 @@ const SplitToken: TokenDefinition<Store> = {
       }
     },
     onTick(store, helpers, playheads) {
-      const { probability, bounceback, gateOffset, gateOn, gateOff } =
+      const { probability, skipAmount, gateOffset, gateOn, gateOff } =
         helpers.getControlValues();
 
-      function tryPerformSplit(playheadIndex: number) {
+      function tryPerformSkip(playheadIndex: number) {
         if (probability / 100 > Math.random()) {
-          const ph = playheads[playheadIndex];
-          const oppositeDirection = helpers.oppositeDirection(ph.direction);
-          for (let i = 0; i < 6; i++) {
-            if (
-              i !== ph.direction &&
-              !(!bounceback && i === oppositeDirection)
-            ) {
-              helpers.spawnPlayhead(
-                helpers.getHexIndex(),
-                ph.lifespan - ph.age,
-                i
-              );
-            }
-          }
+          helpers.skipPlayhead(
+            playheadIndex,
+            playheads[playheadIndex].direction,
+            skipAmount
+          );
         }
       }
 
       playheads.forEach((playhead, playheadIndex) => {
         if (gateOn + gateOff === 0) {
-          tryPerformSplit(playheadIndex);
+          tryPerformSkip(playheadIndex);
         } else {
           if (
             store.gateCounter >= gateOffset + gateOff ||
             store.gateCounter < gateOffset
           ) {
-            tryPerformSplit(playheadIndex);
+            tryPerformSkip(playheadIndex);
           }
           store.gateCounter++;
           if (store.gateCounter >= gateOffset + gateOff + gateOn) {
@@ -92,4 +86,4 @@ const SplitToken: TokenDefinition<Store> = {
   },
 };
 
-export default SplitToken;
+export default SkipToken;

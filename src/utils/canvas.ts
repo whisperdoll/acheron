@@ -81,6 +81,142 @@ type CanvasMouse = {
   };
 };
 
+
+
+
+
+
+
+
+
+
+// Source - https://stackoverflow.com/a/43904751
+// Posted by Blindman67, modified by community. See post 'Timeline' for change history
+// Retrieved 2026-06-27, License - CC BY-SA 4.0
+
+//var ctx = this.canvas.getContext("2d");
+//ctx.font = "18px arial";
+//setTimeout(drawExamples,0);
+//function drawExamples(){
+//  simpleTextStyler.setFont(); // set the current font
+//  simpleTextStyler.drawText(ctx,
+//  "Testing simple Canvas2D text styler...\nnewline\n\tTab\n\t\tTab\n\t\t\tTab\nSub{sScript} Super{SScript} Size {+Big {+Bigger}} Normal {-Small {-Smaller}}\nAnd now colours \n{#FF0000Red} {#00FF00Green} {#0000FFBlue}",
+//      10,20,18)
+//}
+const isString =  (input: any) => typeof input?.replaceAll === 'function';
+// Examples of usage
+
+const simpleTextStyler = (function(){
+    const simpleTextStyler = {
+//        sizes: [],
+//        baseSize: undefined,
+        font: undefined,
+        controlChars: "{}\n\t",
+        spaceSize: 0,
+        tabSize: 8, // in spaceSize units
+        tabs: (function() {var t = []; for(var i=0; i < 100; i += 8){t.push(i);}; return t;})(),
+        getNextTab: function(x: any) {
+            var i = 0;
+            while (i < this.tabs.length) {
+                if (x < this.tabs[i] * this.tabSize * this.spaceSize) {
+                    return this.tabs[i] * this.tabSize * this.spaceSize;
+                }
+                i++;
+            }
+            return this.tabs[i-1] * this.tabSize * this.spaceSize;
+        },
+        setFont: function(ctx: any, fontSize: any, font = ctx.font) {
+            this.font = ctx.font = font;
+            this.spaceSize = fontSize;
+        },
+        drawText: function(context: any, text: any, x: any, y: any, size?: any) {
+            var i: any, len: any, subText: any;
+            var w: any, scale: any;
+            var xx: any, yy: any, ctx: any;
+            var state = [];
+            if(text === undefined){ return }
+            xx = x;
+            yy = y;
+            if (!context.setTransform) { // simple test if this is a 2D context
+                if (context.ctx) { ctx = context.ctx } // may be a image with attached ctx?
+                else{ return }
+            } else { ctx = context }
+
+            function renderText(text: any) {
+                ctx.save();
+                ctx.fillStyle = colour;
+                ctx.translate(x, y)
+                ctx.scale(scale, scale)
+                ctx.fillText(text, 0, 0);
+                ctx.restore();
+            }
+            var colour = ctx.fillStyle;
+            ctx.font = this.font;
+            len = text.length;
+            subText = "";
+            w = 0;
+            i = 0;
+            scale = size / 16;
+            while (i < len) {
+                const c = text[i];
+                const cc = text.charCodeAt(i);
+                if (cc < 256 || cc > 1000 ) { // only ascii
+                    if (this.controlChars.indexOf(c) > -1) {
+                        if (subText !== "") {
+                            scale = size / 16;
+                            renderText(subText);
+                            x += w;
+                            w = 0;
+                            subText = "";                        
+                        }
+                        if (c === "\n") {  // return move to new line
+                            x = xx;
+                            y += size;
+                        } else if (c === "\t") { // tab move to next tab
+                            x = this.getNextTab(x - xx) + xx;
+                        } else if (c === "{") {   // Text format delimiter                       
+                            state.push({size, colour, x, y})
+                            i += 1;
+                            const t = text[i];
+                            if (t === "+") {  // Increase size
+                                size *= 1/(3/4);
+                            } else if (t === "-") {  // decrease size
+                                size *= 3/4;
+                            } else if (t === "s") { // sub script
+                                y += size * (1/3);
+                                size  *= (2/3);
+                            } else if (t === "S") { // super script
+                                y -= size * (1/3);
+                                size  *= (2/3);
+                            } else if (t === "#") {
+                                colour = text.substr(i,7);
+                                i+= 6;
+                            }
+                        } else if (c  === "}"){
+                            const s: any = state.pop();
+                            y = s.y;
+                            size = s.size;
+                            colour = s.colour;
+                            scale = size / 16;
+                        }
+                    } else {
+                        subText += c;
+                        w += 16 * size;
+                    }
+                 }
+                 i += 1;
+            }
+            if (subText !== "") { renderText(subText) }
+        },
+    }
+    return simpleTextStyler;
+})();
+
+
+
+
+
+
 export class Canvas {
   canvas: HTMLCanvasElement;
   translation: Point;
@@ -835,7 +971,6 @@ export class Canvas {
     // });
     const a = (2 * Math.PI) / 6;
     const triangle = this.triangleCanvas(textColor);
-
     for (let y = 0; y < size.y; y++) {
       for (let x = 0; x < size.x; x++) {
         const shouldStartHigh = startHigh ? x % 2 === 0 : x % 2 === 1;
@@ -852,17 +987,62 @@ export class Canvas {
           const lines = labels[index].split("\n");
           const start = (-1 / 2) * fontSize * (lines.length - 1) + 2;
 
+
+//let stringy = "Hello";
+//for (let i = 0; i < stringy.length; i++) {
+//    console.log(stringy[i]);
+//}
+
+
           lines.forEach((line, i) => {
+		  var subst = "";
+		  if (i === 0) {
+
             this.fillText(
               line,
               centerPt.plus(new Point(0, start + fontSize * i)),
-              i === 0 ? textColor : tokenTextColor,
+              textColor,
               undefined,
               "center",
-              i === 0 ? fontSize * 1 + "px sans-serif" : fontSize * 1 + "px monospace",
+              fontSize * 1 + "px sans-serif"
             );
-          });
-        }
+          }
+
+		  
+		  else {
+//		  this.canvas.getContext("2d").font = "monospace";
+
+
+for (let ii = 0; ii < line.length; ii++) {
+
+//simpleTextStyler.ctx = this.canvas.getContext("2d");
+simpleTextStyler.setFont(this.canvas.getContext("2d"), fontSize + (1 + "px monospace"), "monospace");
+if (isString(line[ii])) {
+//let iii = ii * 7;
+
+var startx = ((fontSize * ((line.length  / 7) - 1)) / 2);
+var centerPoint = centerPt.plus(new Point(startx, start));
+if (ii % 7 === 0) 
+{
+//subst += "\{\#" + line.substring(ii, ii + 7) + "\}";
+simpleTextStyler.drawText(this.canvas.getContext("2d"), "\{\#" + line.substring(ii, ii + 7) + "\}", centerPoint.x - ((ii / 7) * fontSize) + (0.25 * ((subst.length) / 2)), centerPoint.y + (fontSize));
+//    console.log("\{\#" + line.substring(ii, ii + 7) + "\}");
+	};
+	}
+}}          
+
+		  
+}
+//            this.fillText(
+//              line,
+//              centerPt.plus(new Point(0, start + fontSize * i)),
+//              i === 0 ? textColor : colorss(line)[i],
+//              undefined,
+//              "center",
+//              i === 0 ? fontSize * 1 + "px sans-serif" : fontSize * 1 + "px monospace",
+//            );
+//          });
+        )};
 
         directions[index].forEach((direction) => {
           const angle = (direction / 6) * Math.PI * 2 - Math.PI / 2;
