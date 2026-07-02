@@ -6,7 +6,8 @@ interface Store {
 
 const LifespanToken: TokenDefinition<Store> = {
   label: "Lifespan",
-  symbol: "L",
+  color: <span style={{ color: '#00ff00' }}>+</span>,
+  symbol: "00ff00+",
   uid: "hvst.life",
   controls: {
     probability: {

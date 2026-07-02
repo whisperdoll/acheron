@@ -1,14 +1,14 @@
-import { mod } from "../lib/utils";
 import { TokenDefinition } from "../Types";
 
 interface Store {
   gateCounter: number;
 }
 
-const ShiftToken: TokenDefinition<Store> = {
-  label: "Shift",
-  symbol: "↔",
-  uid: "hvst.shift",
+const SplitToken: TokenDefinition<Store> = {
+  label: "Split",
+  color: <span style={{ color: '#ff00ff' }}>Y</span>,
+  symbol: "ff00ffY",
+  uid: "whisperdoll.split",
   controls: {
     probability: {
       label: "Probability",
@@ -16,13 +16,6 @@ const ShiftToken: TokenDefinition<Store> = {
       min: 0,
       max: 100,
       defaultValue: 100,
-    },
-    shift: {
-      label: "Shift",
-      type: "int",
-      min: -16,
-      max: 16,
-      defaultValue: 1,
     },
     gateOffset: {
       label: "Gate Offset",
@@ -45,6 +38,11 @@ const ShiftToken: TokenDefinition<Store> = {
       max: 1024,
       defaultValue: 0,
     },
+    bounceback: {
+      label: "Bounceback",
+      type: "bool",
+      defaultValue: false,
+    },
   },
   callbacks: {
     onStart(store, helpers) {
@@ -53,30 +51,37 @@ const ShiftToken: TokenDefinition<Store> = {
       }
     },
     onTick(store, helpers, playheads) {
-      const { probability, shift, gateOffset, gateOn, gateOff } =
+      const { probability, bounceback, gateOffset, gateOn, gateOff } =
         helpers.getControlValues();
 
-      function tryPerformShift(playheadIndex: number) {
+      function tryPerformSplit(playheadIndex: number) {
         if (probability / 100 > Math.random()) {
-          const newLocation = mod(
-            helpers.getHexIndex() + shift * 2 * helpers.getRows(),
-            helpers.getNumHexes(),
-          );
-          helpers.warpPlayhead(playheadIndex, newLocation, helpers.getLayer());
+          const ph = playheads[playheadIndex];
+          const oppositeDirection = helpers.oppositeDirection(ph.direction);
+          for (let i = 0; i < 6; i++) {
+            if (
+              i !== ph.direction &&
+              !(!bounceback && i === oppositeDirection)
+            ) {
+              helpers.spawnPlayhead(
+                helpers.getHexIndex(),
+                ph.lifespan - ph.age,
+                i
+              );
+            }
+          }
         }
       }
 
       playheads.forEach((playhead, playheadIndex) => {
-        if (playhead.age === 0) return;
-
         if (gateOn + gateOff === 0) {
-          tryPerformShift(playheadIndex);
+          tryPerformSplit(playheadIndex);
         } else {
           if (
             store.gateCounter >= gateOffset + gateOff ||
             store.gateCounter < gateOffset
           ) {
-            tryPerformShift(playheadIndex);
+            tryPerformSplit(playheadIndex);
           }
           store.gateCounter++;
           if (store.gateCounter >= gateOffset + gateOff + gateOn) {
@@ -88,4 +93,4 @@ const ShiftToken: TokenDefinition<Store> = {
   },
 };
 
-export default ShiftToken;
+export default SplitToken;

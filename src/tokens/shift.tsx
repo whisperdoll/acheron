@@ -1,13 +1,15 @@
-import { TokenDefinition, TokenStore } from "../Types";
+import { mod } from "../lib/utils";
+import { TokenDefinition } from "../Types";
 
-interface Store extends TokenStore {
+interface Store {
   gateCounter: number;
 }
 
-const AbsorbToken: TokenDefinition<Store> = {
-  label: "Absorb",
-  symbol: "x",
-  uid: "whisperdoll.absorb",
+const ShiftToken: TokenDefinition<Store> = {
+  label: "Shift",
+  color: <span style={{ color: '#00ffff' }}>↔</span>,
+  symbol: "00ffff↔",
+  uid: "hvst.shift",
   controls: {
     probability: {
       label: "Probability",
@@ -15,6 +17,13 @@ const AbsorbToken: TokenDefinition<Store> = {
       min: 0,
       max: 100,
       defaultValue: 100,
+    },
+    shift: {
+      label: "Shift",
+      type: "int",
+      min: -16,
+      max: 16,
+      defaultValue: 1,
     },
     gateOffset: {
       label: "Gate Offset",
@@ -45,26 +54,30 @@ const AbsorbToken: TokenDefinition<Store> = {
       }
     },
     onTick(store, helpers, playheads) {
-      const { probability, gateOffset, gateOn, gateOff } =
+      const { probability, shift, gateOffset, gateOn, gateOff } =
         helpers.getControlValues();
 
-      function tryPerformAbsorb(playheadIndex: number) {
+      function tryPerformShift(playheadIndex: number) {
         if (probability / 100 > Math.random()) {
-          helpers.modifyPlayhead(playheadIndex, {
-            age: playheads[playheadIndex].lifespan,
-          });
+          const newLocation = mod(
+            helpers.getHexIndex() + shift * 2 * helpers.getRows(),
+            helpers.getNumHexes(),
+          );
+          helpers.warpPlayhead(playheadIndex, newLocation, helpers.getLayer());
         }
       }
 
       playheads.forEach((playhead, playheadIndex) => {
+        if (playhead.age === 0) return;
+
         if (gateOn + gateOff === 0) {
-          tryPerformAbsorb(playheadIndex);
+          tryPerformShift(playheadIndex);
         } else {
           if (
             store.gateCounter >= gateOffset + gateOff ||
             store.gateCounter < gateOffset
           ) {
-            tryPerformAbsorb(playheadIndex);
+            tryPerformShift(playheadIndex);
           }
           store.gateCounter++;
           if (store.gateCounter >= gateOffset + gateOff + gateOn) {
@@ -76,4 +89,4 @@ const AbsorbToken: TokenDefinition<Store> = {
   },
 };
 
-export default AbsorbToken;
+export default ShiftToken;

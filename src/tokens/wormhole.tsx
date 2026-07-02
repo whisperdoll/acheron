@@ -7,7 +7,8 @@ interface Store {
 
 const WormholeToken: TokenDefinition<Store> = {
   label: "Wormhole",
-  symbol: "W",
+  color: <span style={{ color: '#ff00ff' }}>W</span>,
+  symbol: "ff00ffW",
   uid: "whisperdoll.wormhole",
   controls: {
     probability: {

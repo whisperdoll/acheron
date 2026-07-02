@@ -279,7 +279,7 @@ export default function HexGrid(props: Props) {
       hexRadius,
       startHigh: false,
       textColor: colors["hexTextColor"],
-      tokenTextColor: colors["hexTokenTextColor"],
+      tokenTextColor: colors["hexTextColor"],
       labels: generateGridNotes(state.gridStartingNote, state.gridRows, state.gridCols).map(
         (hexNote, i) => {
           const symbols = state.layers[props.layerIndex].tokenIds[i].map(
@@ -332,7 +332,7 @@ export default function HexGrid(props: Props) {
     now,
   ]);
 
-  const [contextMenuNode, showContextMenu, refreshContextMenu] = useContextMenu(
+  const [contextMenuNode, showContextMenu] = useContextMenu(
     ({ hide, setPosition, isShowing }) => {
       return [
         {
@@ -344,10 +344,6 @@ export default function HexGrid(props: Props) {
       offset: useCallback((bounds) => ({ x: 16, y: -bounds.height / 2 }), []),
     },
   );
-
-  useEffect(() => {
-    refreshContextMenu();
-  }, [refreshContextMenu, props.layerIndex, tokenIds]);
 
   ////////////////////////////////////////////////////////////////////////////////
   //////////////////////////////////// EVENTS ////////////////////////////////////

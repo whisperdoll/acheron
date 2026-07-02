@@ -5,8 +5,9 @@ interface Store {
 }
 
 const ReboundToken: TokenDefinition<Store> = {
-  label: "Rebound",
-  symbol: ">",
+  label: "Redirect",
+  color: <span style={{ color: '#00ffff' }}>＞</span>,
+  symbol: "00ffff＞",
   uid: "whisperdoll.rebound",
   controls: {
     probability: {

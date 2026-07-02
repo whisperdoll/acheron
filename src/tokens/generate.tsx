@@ -4,7 +4,8 @@ interface Store {}
 
 const GenerateToken: TokenDefinition<Store> = {
   label: "Generate",
-  symbol: "G",
+  color: <span style={{ color: '#a0ff00' }}>G</span>,
+  symbol: "a0ff00G",
   uid: "whisperdoll.generate",
   controls: {
     triggerMode: {
