@@ -27,7 +27,7 @@ To use Acheron without a physical MIDI device (e.g. with a DAW or other software
 - Select Settings (at the bottom of the window.)
 - Under MIDI Outputs select the virtual MIDI port you just created with loopMIDI or the IAC Driver
 - If using a MIDI controller for input, Under MIDI Inputs select the controller(s) you wish to use.
-- Make sure your newly created virtual MIDI port is enabled as an input in your DAW (or other MIDI recieving app or device).
+- Make sure your newly created virtual MIDI port is enabled as an input in your DAW (or other MIDI receiving app or device).
 
 To get the most out of Acheron, we highly recommend reading the documentation, located **[here](https://github.com/whisperdoll/acheron/wiki/Acheron-Documentation)**.
 
