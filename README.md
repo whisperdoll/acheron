@@ -39,7 +39,7 @@ and/or reading the documentation, located **[here](https://github.com/whisperdol
 * [CreamSodaFloat](https://github.com/CreamSodaFloat127) for helping with some math for the LFOs.
 * [hellvalleyskytrees](hellvalleyskytrees.bsky.social) for the app icon, testing, a few tokens, and documentation,.
     * She's released many, many albums using this sequencer! Check out the latest here:
-        * https://hellvalleyskytrees.bandcamp.com/album/voidscapes-vol-27
+        * https://hellvalleyskytrees.bandcamp.com/album/voidscapes-vol-30
 		
 ## License
 
