@@ -13,6 +13,7 @@
         "title": "Acheron",
         "width": 800,
         "height": 600,
+		"fullscreen": false,
         "zoomHotkeysEnabled": true,
         "devtools": true
       }
