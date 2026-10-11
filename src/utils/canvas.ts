@@ -110,25 +110,25 @@ const simpleTextStyler = (function(){
     const simpleTextStyler = {
 //        sizes: [],
 //        baseSize: undefined,
-        font: undefined,
-        controlChars: "{}\n\t",
-        spaceSize: 0,
-        tabSize: 8, // in spaceSize units
-        tabs: (function() {var t = []; for(var i=0; i < 100; i += 8){t.push(i);}; return t;})(),
-        getNextTab: function(x: any) {
-            var i = 0;
-            while (i < this.tabs.length) {
-                if (x < this.tabs[i] * this.tabSize * this.spaceSize) {
-                    return this.tabs[i] * this.tabSize * this.spaceSize;
-                }
-                i++;
-            }
-            return this.tabs[i-1] * this.tabSize * this.spaceSize;
-        },
-        setFont: function(ctx: any, fontSize: any, font = ctx.font) {
-            this.font = ctx.font = font;
-            this.spaceSize = fontSize;
-        },
+        font: "18 px monospace",
+        controlChars: "{}",
+//        spaceSize: 0,
+//        tabSize: 8, // in spaceSize units
+//        tabs: (function() {var t = []; for(var i=0; i < 100; i += 8){t.push(i);}; return t;})(),
+//        getNextTab: function(x: any) {
+//            var i = 0;
+//            while (i < this.tabs.length) {
+//                if (x < this.tabs[i] * this.tabSize * this.spaceSize) {
+//                    return this.tabs[i] * this.tabSize * this.spaceSize;
+//                }
+//                i++;
+//            }
+//            return this.tabs[i-1] * this.tabSize * this.spaceSize;
+//        },
+ //       setFont: function(ctx: any, fontSize: any, font = ctx.font) {
+ //           this.font = ctx.font = font;
+ //           this.spaceSize = fontSize;
+ //       },
         drawText: function(context: any, text: any, x: any, y: any, size?: any) {
             var i: any, len: any, subText: any;
             var w: any, scale: any;
@@ -137,10 +137,7 @@ const simpleTextStyler = (function(){
             if(text === undefined){ return }
             xx = x;
             yy = y;
-            if (!context.setTransform) { // simple test if this is a 2D context
-                if (context.ctx) { ctx = context.ctx } // may be a image with attached ctx?
-                else{ return }
-            } else { ctx = context }
+			ctx = context;
 
             function renderText(text: any) {
                 ctx.save();
@@ -162,33 +159,18 @@ const simpleTextStyler = (function(){
                 const cc = text.charCodeAt(i);
                 if (cc < 256 || cc > 1000 ) { // only ascii
                     if (this.controlChars.indexOf(c) > -1) {
-                        if (subText !== "") {
+                        
                             scale = size / 16;
                             renderText(subText);
                             x += w;
                             w = 0;
                             subText = "";                        
-                        }
-                        if (c === "\n") {  // return move to new line
-                            x = xx;
-                            y += size;
-                        } else if (c === "\t") { // tab move to next tab
-                            x = this.getNextTab(x - xx) + xx;
-                        } else if (c === "{") {   // Text format delimiter                       
+                        
+                         if (c === "{") {   // Text format delimiter                       
                             state.push({size, colour, x, y})
                             i += 1;
                             const t = text[i];
-                            if (t === "+") {  // Increase size
-                                size *= 1/(3/4);
-                            } else if (t === "-") {  // decrease size
-                                size *= 3/4;
-                            } else if (t === "s") { // sub script
-                                y += size * (1/3);
-                                size  *= (2/3);
-                            } else if (t === "S") { // super script
-                                y -= size * (1/3);
-                                size  *= (2/3);
-                            } else if (t === "#") {
+                            if (t === "#") {
                                 colour = text.substr(i,7);
                                 i+= 6;
                             }
@@ -206,7 +188,6 @@ const simpleTextStyler = (function(){
                  }
                  i += 1;
             }
-            if (subText !== "") { renderText(subText) }
         },
     }
     return simpleTextStyler;
@@ -1016,7 +997,7 @@ export class Canvas {
 for (let ii = 0; ii < line.length; ii++) {
 
 //simpleTextStyler.ctx = this.canvas.getContext("2d");
-simpleTextStyler.setFont(this.canvas.getContext("2d"), fontSize + (1 + "px monospace"), "monospace");
+//simpleTextStyler.setFont(this.canvas.getContext("2d"), fontSize + (1 + "px monospace"), "monospace");
 if (isString(line[ii])) {
 //let iii = ii * 7;
 

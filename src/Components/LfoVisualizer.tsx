@@ -55,7 +55,7 @@ export default React.memo(function LfoVisualizer({
     const ctx = waveCanvasRef.current?.getContext("2d");
     if (!ctx) return;
 
-    const resolution = periodMs / 10;
+    const resolution = Math.min((periodMs / 10), 2000);
     const min = Math.min(lfo.min, lfo.max);
     const max = Math.max(lfo.min, lfo.max);
     const amp = max - min;
